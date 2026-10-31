@@ -69,6 +69,10 @@ export const ScrapbookSection: React.FC = () => {
                   src={memory.photoUrl || '/assets/memories/memory-1.jpg'}
                   alt={memory.altText || memory.title}
                   className="polaroid-image"
+                  style={{
+                    objectPosition: memory.objectPosition || 'center',
+                    filter: memory.filter || undefined,
+                  }}
                   loading="lazy"
                 />
                 

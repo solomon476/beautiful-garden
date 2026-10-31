@@ -19,7 +19,7 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
     { id: 'memories', label: 'Memories' },
     { id: 'notes', label: 'Petal Notes' },
     { id: 'surprise', label: 'Secret' },
-    { id: 'letter', label: 'Love Letter' },
+    { id: 'letter', label: 'A Note' },
   ];
 
   return (

@@ -70,8 +70,8 @@ export const FinalLetterSection: React.FC<FinalLetterSectionProps> = ({ onScroll
           <div className="w-full aspect-[4/3] rounded-2xl bg-gradient-to-b from-slate-800 to-indigo-950/80 border border-white/15 p-6 flex flex-col items-center justify-center relative shadow-inner">
             {/* Stamp Detail */}
             <div className="absolute top-4 right-4 w-12 h-14 rounded border border-dashed border-pink-400/50 flex flex-col items-center justify-center text-[10px] text-pink-300 font-mono">
-              <Sparkles className="w-3 h-3 text-pink-400 mb-0.5" />
-              <span>LOVE</span>
+              <Sparkles className="w-3.5 h-3.5 text-pink-400 mb-0.5" />
+              <span>NOTE</span>
             </div>
 
             {/* Recipient Address */}

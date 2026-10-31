@@ -7,7 +7,7 @@ import { FlowerNotesSection } from './components/FlowerNotesSection';
 import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
 import { FinalLetterSection } from './components/FinalLetterSection';
 import { giftContent } from './data/giftContent';
-import { Heart, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('welcome');
@@ -87,14 +87,14 @@ export const App: React.FC = () => {
       {/* Garden Footer */}
       <footer className="relative z-10 py-8 px-4 text-center border-t border-white/10 bg-slate-950/60 backdrop-blur-md">
         <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-light">
-          <span>Crafted with love for</span>
+          <span>Crafted for</span>
           <span className="text-pink-300 font-medium">{giftContent.recipientName}</span>
           <span>•</span>
-          <Heart className="w-3.5 h-3.5 fill-pink-500 text-pink-500 animate-pulse" />
+          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           <span>{giftContent.senderName}</span>
         </p>
         <p className="text-[10px] text-slate-500 mt-1 font-mono">
-          Perfect Time 🌷 • Private Digital Sanctuary
+          Perfect Time ✨ • A Private Corner
         </p>
       </footer>
     </div>

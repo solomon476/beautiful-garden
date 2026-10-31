@@ -59,6 +59,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             src={memory.photoUrl || '/assets/memories/memory-1.jpg'}
             alt={memory.altText || memory.title}
             className="w-full h-full object-cover"
+            style={{
+              objectPosition: memory.objectPosition || 'center',
+              filter: memory.filter || undefined,
+            }}
           />
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5">
             <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
