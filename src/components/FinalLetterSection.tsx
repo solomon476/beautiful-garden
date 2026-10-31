@@ -53,13 +53,13 @@ export const FinalLetterSection: React.FC<FinalLetterSectionProps> = ({ onScroll
       <div className="mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-400/20 text-pink-300 text-xs font-medium uppercase tracking-wider mb-3">
           <Mail className="w-3.5 h-3.5" />
-          <span>A Birthday Keepsake</span>
+          <span>A Dedicated Keepsake</span>
         </div>
         <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">
-          The Birthday Letter
+          The Keepsake Letter
         </h2>
         <p className="text-slate-300 text-sm max-w-sm mx-auto font-light">
-          A personal birthday note written for you, waiting to be unsealed.
+          A personal note written for you, waiting to be unsealed.
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export const FinalLetterSection: React.FC<FinalLetterSectionProps> = ({ onScroll
             {/* Stamp Detail */}
             <div className="absolute top-4 right-4 w-12 h-14 rounded border border-dashed border-pink-400/50 flex flex-col items-center justify-center text-[10px] text-pink-300 font-mono">
               <Sparkles className="w-3.5 h-3.5 text-pink-400 mb-0.5" />
-              <span>BDAY</span>
+              <span>NOTE</span>
             </div>
 
             {/* Recipient Address */}
