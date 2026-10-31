@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a164d" />
+      <stop offset="100%" stop-color="#0b0e1e" />
+    </radialGradient>
+    <linearGradient id="tulipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="50%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#be185d" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGlow)" />
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-dasharray="8 8" opacity="0.6" />
+  
+  <!-- Stem -->
+  <path d="M256,260 Q260,360 256,410" fill="none" stroke="#22c55e" stroke-width="12" stroke-linecap="round" />
+  <!-- Leaves -->
+  <path d="M256,360 Q200,340 180,310 Q210,380 256,380" fill="#15803d" />
+  <path d="M256,340 Q310,320 330,290 Q300,360 256,360" fill="#16a34a" />
+
+  <!-- Center petal -->
+  <path d="M256,160 C230,160 215,210 215,260 C215,310 256,330 256,330 C256,330 297,310 297,260 C297,210 282,160 256,160 Z" fill="url(#tulipGrad)" />
+  <!-- Left petal -->
+  <path d="M225,180 C190,195 170,230 175,270 C180,305 210,325 240,328 C220,290 215,230 225,180 Z" fill="#f472b6" opacity="0.9" />
+  <!-- Right petal -->
+  <path d="M287,180 C322,195 342,230 337,270 C332,305 302,325 272,328 C292,290 297,230 287,180 Z" fill="#db2777" opacity="0.9" />
+
+  <!-- Sparkles -->
+  <path d="M160,150 L165,165 L180,170 L165,175 L160,190 L155,175 L140,170 L155,165 Z" fill="#fde047" />
+  <path d="M350,140 L354,152 L366,156 L354,160 L350,172 L346,160 L334,156 L346,152 Z" fill="#fde047" />
+  <circle cx="200" cy="120" r="4" fill="#ffffff" opacity="0.8" />
+  <circle cx="320" cy="110" r="3" fill="#ffffff" opacity="0.7" />
+  <circle cx="256" cy="110" r="5" fill="#fde047" />
+</svg>

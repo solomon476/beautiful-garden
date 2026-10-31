@@ -1,0 +1,18 @@
+{
+  "name": "Perfect Time 🌷 — A Private Garden",
+  "short_name": "Perfect Time",
+  "description": "A private garden of memories, little surprises, and appreciation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0e1e",
+  "theme_color": "#0b0e1e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
