@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ParticleBackdrop } from './components/ParticleBackdrop';
 import { GardenHeader } from './components/GardenHeader';
 import { WelcomeScreen } from './components/WelcomeScreen';
+import { TimingSection } from './components/TimingSection';
 import { ScrapbookSection } from './components/ScrapbookSection';
 import { FlowerNotesSection } from './components/FlowerNotesSection';
 import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
@@ -22,7 +23,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['welcome', 'memories', 'notes', 'surprise', 'letter'];
+      const sections = ['welcome', 'timing', 'memories', 'notes', 'surprise', 'letter'];
       const scrollPos = window.scrollY + 200;
 
       for (const s of sections) {
@@ -56,31 +57,21 @@ export const App: React.FC = () => {
       {/* Main Experience Stream */}
       <main className="relative z-10 flex-grow pb-16">
         {/* Step 1: The Welcome Portal */}
-        <WelcomeScreen onEnter={() => scrollToSection('memories')} />
+        <WelcomeScreen onEnter={() => scrollToSection('timing')} />
 
-        {/* Garden Ambiance Quote Divider */}
-        <div className="relative py-12 px-4 max-w-2xl mx-auto text-center">
-          <div className="inline-block p-6 rounded-3xl bg-slate-900/40 backdrop-blur-md border border-white/10 shadow-lg">
-            <p className="font-display italic text-xl sm:text-2xl text-pink-200/90 leading-relaxed">
-              {giftContent.garden.quote}
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-3 text-slate-400 text-xs font-light">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>{giftContent.garden.guideTip}</span>
-            </div>
-          </div>
-        </div>
+        {/* Step 2: Timing Section — Journal Message */}
+        <TimingSection />
 
-        {/* Step 2: The Memories Scrapbook */}
+        {/* Step 3: The Memories Scrapbook */}
         <ScrapbookSection />
 
-        {/* Step 3: Interactive Flower Notes */}
+        {/* Step 4: Interactive Flower Notes */}
         <FlowerNotesSection />
 
-        {/* Step 4: Playful Hidden Surprise */}
+        {/* Step 5: Playful VIP Perk Card */}
         <HiddenSurpriseSection />
 
-        {/* Step 5: The Final Letter */}
+        {/* Step 6: The Final Letter */}
         <FinalLetterSection onScrollToTop={() => scrollToSection('welcome')} />
       </main>
 

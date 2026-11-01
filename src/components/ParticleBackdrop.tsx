@@ -50,23 +50,27 @@ export const ParticleBackdrop: React.FC = () => {
       });
     }
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
       // Draw and update each particle
       particles.forEach((p) => {
-        p.x += p.speedX;
-        p.y += p.speedY;
-        p.alpha += p.alphaSpeed;
+        if (!prefersReducedMotion) {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          p.alpha += p.alphaSpeed;
 
-        if (p.alpha > 0.95 || p.alpha < 0.2) {
-          p.alphaSpeed = -p.alphaSpeed;
+          if (p.alpha > 0.95 || p.alpha < 0.2) {
+            p.alphaSpeed = -p.alphaSpeed;
+          }
+
+          // Loop boundaries smoothly
+          if (p.y < -10) p.y = height + 10;
+          if (p.x < -10) p.x = width + 10;
+          if (p.x > width + 10) p.x = -10;
         }
-
-        // Loop boundaries smoothly
-        if (p.y < -10) p.y = height + 10;
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
 
         // Glow halo
         const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3.5);
@@ -86,7 +90,9 @@ export const ParticleBackdrop: React.FC = () => {
         ctx.fill();
       });
 
-      animationFrameId = requestAnimationFrame(render);
+      if (!prefersReducedMotion) {
+        animationFrameId = requestAnimationFrame(render);
+      }
     };
 
     render();

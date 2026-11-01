@@ -666,3 +666,52 @@ button:hover { opacity: 0.95; }
     box-shadow: 0 0 30px rgba(244, 114, 182, 0.8), 0 0 45px rgba(251, 191, 36, 0.4);
   }
 }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .floating-petal,
+  .particle-canvas {
+    display: none !important;
+  }
+
+  .text-shimmer {
+    background-position: 0% center !important;
+    animation: none !important;
+  }
+
+  .golden-ticket::after {
+    display: none !important;
+  }
+
+  .polaroid-card {
+    transform: none !important;
+  }
+
+  .flower-pulse,
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin,
+  .animate-ping {
+    animation: none !important;
+  }
+}
+
+/* Mobile Touch Target & Safe Inset Adjustments */
+@media (max-width: 640px) {
+  button, [role="button"] {
+    min-height: 44px;
+  }
+  .polaroid-caption {
+    font-size: 1.3rem;
+  }
+}
+

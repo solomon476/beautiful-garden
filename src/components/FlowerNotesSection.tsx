@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, CheckCircle2, X } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { giftContent, type FlowerNoteItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 
@@ -11,7 +12,18 @@ export const FlowerNotesSection: React.FC = () => {
     soundEngine.playSparkle();
 
     if (!unlockedIds.includes(flower.id)) {
-      setUnlockedIds((prev) => [...prev, flower.id]);
+      const nextUnlocked = [...unlockedIds, flower.id];
+      setUnlockedIds(nextUnlocked);
+
+      if (nextUnlocked.length === giftContent.flowerNotes.length) {
+        soundEngine.playHarpStrum();
+        confetti({
+          particleCount: 70,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#f472b6', '#fda4af', '#fde047', '#a855f7'],
+        });
+      }
     }
 
     setActiveNote(flower);
@@ -67,6 +79,12 @@ export const FlowerNotesSection: React.FC = () => {
               }`}
               role="button"
               tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleFlowerClick(flower);
+                }
+              }}
               aria-label={`Open flower note: ${flower.name}`}
             >
               {/* Glow Aura */}

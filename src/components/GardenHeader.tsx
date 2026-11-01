@@ -16,10 +16,11 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
   };
 
   const navItems = [
+    { id: 'timing', label: 'Timing' },
     { id: 'memories', label: 'Memories' },
     { id: 'notes', label: 'Petal Notes' },
-    { id: 'surprise', label: 'Secret' },
-    { id: 'letter', label: 'A Note' },
+    { id: 'surprise', label: 'VIP Pass' },
+    { id: 'letter', label: 'Keepsake' },
   ];
 
   return (

@@ -61,12 +61,18 @@ export const ScrapbookSection: React.FC = () => {
               className={`polaroid-card group transform transition-all duration-300 ${rotationClass}`}
               role="button"
               tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOpenPhoto(index);
+                }
+              }}
               aria-label={`View memory: ${memory.title}`}
             >
               {/* Photo Frame */}
               <div className="polaroid-image-wrapper relative">
                 <img
-                  src={memory.photoUrl || '/assets/memories/memory-1.jpg'}
+                  src={memory.photoUrl || '/assets/memories/photo-desk-selfie.jpg'}
                   alt={memory.altText || memory.title}
                   className="polaroid-image"
                   style={{
@@ -74,6 +80,10 @@ export const ScrapbookSection: React.FC = () => {
                     filter: memory.filter || undefined,
                   }}
                   loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+                  }}
                 />
                 
                 {/* Subtle zoom badge on hover */}

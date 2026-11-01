@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Heart, Sparkles, Download, ArrowUp, Check } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { giftContent } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 
@@ -10,7 +11,9 @@ interface FinalLetterSectionProps {
 export const FinalLetterSection: React.FC<FinalLetterSectionProps> = ({ onScrollToTop }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState<boolean>(false);
+  const [isInstalled, setIsInstalled] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches
+  );
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
@@ -19,16 +22,17 @@ export const FinalLetterSection: React.FC<FinalLetterSectionProps> = ({ onScroll
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-    }
-
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
   const handleOpenLetter = () => {
     soundEngine.playHarpStrum();
+    confetti({
+      particleCount: 50,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ['#fda4af', '#f472b6', '#ffffff', '#fde047'],
+    });
     setIsOpen(true);
   };
 

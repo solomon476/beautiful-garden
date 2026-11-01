@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
+import { soundEngine } from '../utils/audio';
 
 interface PhotoLightboxProps {
   memory: MemoryItem | null;
@@ -19,6 +20,11 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   currentIndex,
   totalCount,
 }) => {
+  const [likes, setLikes] = useState<Record<string, number>>({});
+  const [hasLikedCurrent, setHasLikedCurrent] = useState<boolean>(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   useEffect(() => {
     if (!memory) return;
 
@@ -34,40 +40,99 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   if (!memory) return null;
 
+  const currentLikes = (likes[memory.id] || 0) + (hasLikedCurrent ? 1 : 0);
+
+  const handleLike = () => {
+    soundEngine.playSparkle();
+    setHasLikedCurrent((prev) => !prev);
+    setLikes((prev) => ({
+      ...prev,
+      [memory.id]: (prev[memory.id] || 0) + (hasLikedCurrent ? -1 : 1),
+    }));
+  };
+
+  // Mobile swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      onNext();
+    } else if (isRightSwipe) {
+      onPrev();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       {/* Container to prevent backdrop click closing when touching the card */}
       <div
-        className="relative max-w-lg w-full bg-white rounded-lg p-4 sm:p-5 shadow-2xl border border-white/20 animate-scale-up"
+        className="relative max-w-lg w-full bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border border-white/20 animate-scale-up select-none"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute -top-12 right-0 sm:-right-4 w-10 h-10 rounded-full bg-slate-900/80 text-white border border-white/20 flex items-center justify-center hover:bg-pink-600 transition-colors shadow-lg"
+          className="absolute -top-12 right-0 sm:-right-3 w-10 h-10 rounded-full bg-slate-900/90 text-white border border-white/20 flex items-center justify-center hover:bg-pink-600 transition-colors shadow-lg"
           aria-label="Close photo view"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Polaroid Picture */}
-        <div className="w-full aspect-square bg-slate-900 rounded overflow-hidden shadow-inner relative group">
+        <div className="w-full aspect-square bg-slate-900 rounded-xl overflow-hidden shadow-inner relative group">
           <img
-            src={memory.photoUrl || '/assets/memories/memory-1.jpg'}
+            src={memory.photoUrl || '/assets/memories/photo-desk-selfie.jpg'}
             alt={memory.altText || memory.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300"
             style={{
               objectPosition: memory.objectPosition || 'center',
               filter: memory.filter || undefined,
             }}
+            loading="eager"
+            decoding="async"
+            onError={(e) => {
+              // Graceful fallback to memory placeholder
+              (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+            }}
           />
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5">
-            <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
+            <Sparkles className="w-3 h-3 text-pink-400" />
             <span>{memory.tag}</span>
           </div>
+
+          {/* Interactive Heart Button on Photo */}
+          <button
+            onClick={handleLike}
+            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform"
+            aria-label="Love this memory"
+          >
+            <Heart
+              className={`w-4 h-4 transition-colors ${
+                hasLikedCurrent ? 'fill-pink-500 text-pink-500' : 'text-white'
+              }`}
+            />
+            <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
+          </button>
         </div>
 
         {/* Polaroid Handwritten Caption Area */}
@@ -75,8 +140,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 mb-1">
             {memory.title}
           </h3>
-          <div className="flex items-center justify-center gap-1 text-slate-500 text-xs font-mono uppercase tracking-wider mb-3">
-            <Calendar className="w-3.5 h-3.5" />
+          <div className="flex items-center justify-center gap-1 text-slate-500 text-xs font-mono uppercase tracking-wider mb-2">
+            <Calendar className="w-3.5 h-3.5 text-pink-500" />
             <span>{memory.date}</span>
           </div>
           <p className="font-handwriting text-2xl sm:text-3xl text-slate-700 leading-snug px-2">
@@ -88,7 +153,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100">
           <button
             onClick={onPrev}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Previous</span>
@@ -100,11 +165,16 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
           <button
             onClick={onNext}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:scale-95 transition-all"
           >
             <span>Next</span>
             <ChevronRight className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Mobile Swipe Tip */}
+        <div className="text-center text-[10px] text-slate-400 mt-2 font-mono sm:hidden">
+          Swipe left or right to browse photos
         </div>
       </div>
     </div>

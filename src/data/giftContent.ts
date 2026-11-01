@@ -21,12 +21,21 @@ export interface FlowerNoteItem {
   petalCount: number;
 }
 
+export interface PerkOption {
+  id: string;
+  emoji: string;
+  title: string;
+  description: string;
+  category: string;
+}
+
 export interface SecretSurprise {
   badge: string;
   title: string;
   headline: string;
   subtitle: string;
   perks: string[];
+  perkOptions: PerkOption[];
   couponCode: string;
   validity: string;
   finePrint: string;
@@ -40,6 +49,19 @@ export interface FinalLetter {
   postScript?: string;
 }
 
+export interface TimingNote {
+  badge: string;
+  headline: string;
+  originalContext: string;
+  journalExcerpt: string[];
+  reflection: string;
+  coreThemes: {
+    icon: string;
+    label: string;
+    description: string;
+  }[];
+}
+
 export interface GiftConfig {
   giftTitle: string;
   recipientName: string;
@@ -51,6 +73,7 @@ export interface GiftConfig {
     enterButtonText: string;
     soundPromptText: string;
   };
+  timing: TimingNote;
   garden: {
     quote: string;
     guideTip: string;
@@ -71,6 +94,33 @@ export const giftContent: GiftConfig = {
     subtitle: "A private corner crafted for you—celebrating our favorite moments, inside jokes, and the memories we keep building.",
     enterButtonText: "Step into the Garden ✨",
     soundPromptText: "Tap anywhere to begin with ambient sound",
+  },
+  timing: {
+    badge: "The Heartbeat of the Garden",
+    headline: "Trusting the Timing",
+    originalContext: "From Solomon's journal note on your birthday",
+    journalExcerpt: [
+      "Things might sometimes feel like they're worlds away, but trust me—time doesn't lie.",
+      "Always trust in the timing, celebrate how far we've come, and know that what you'll always have from me is my absolute best."
+    ],
+    reflection: "Moments can't be rushed. Every laugh shared, every quiet talk, and every memory brought us right here to this perfect time.",
+    coreThemes: [
+      {
+        icon: "⏳",
+        label: "Time Doesn't Lie",
+        description: "Everything falls into place right when it's supposed to."
+      },
+      {
+        icon: "🌟",
+        label: "My Absolute Best",
+        description: "No empty cliché promises—just genuine time, energy, and loyalty."
+      },
+      {
+        icon: "🤝",
+        label: "Firmly in Your Corner",
+        description: "A solid friend and steady presence, through every chapter."
+      }
+    ]
   },
   garden: {
     quote: "“Time doesn't lie. Always trust in the timing, celebrate how far we've come, and keep shining.”",
@@ -194,7 +244,7 @@ export const giftContent: GiftConfig = {
     },
   ],
   surprise: {
-    badge: "SPECIAL PERK CARD ✨",
+    badge: "VIP PERK CARD ✨",
     title: "The 'Noella Gets Her Way' Pass",
     headline: "You Found the Secret Pass!",
     subtitle: "A permanent perk card redeemable anytime you want to hang out, grab food, or call in a favor.",
@@ -204,6 +254,43 @@ export const giftContent: GiftConfig = {
       "One 'Get Out of Trouble' card next time we're roasting each other",
       "Guaranteed top-tier energy, laughs, and solid support anytime you need it",
     ],
+    perkOptions: [
+      {
+        id: "food-run",
+        emoji: "🍕",
+        title: "Snack & Dinner Run on Solomon",
+        description: "Your absolute pick, no debates, no budget excuses. Whatever craving hits you.",
+        category: "Treat",
+      },
+      {
+        id: "aux-cord",
+        emoji: "🎵",
+        title: "Aux Cord & Playlist Reign",
+        description: "100% uninterrupted DJ control whenever we're hanging out. Solomon is not allowed to skip.",
+        category: "Music",
+      },
+      {
+        id: "trouble-card",
+        emoji: "🃏",
+        title: "'Get Out of Trouble' Immunity Card",
+        description: "Instant, unconditional victory the next time we're roasting each other or debating.",
+        category: "Immunity",
+      },
+      {
+        id: "hangout-day",
+        emoji: "☕",
+        title: "Spontaneous Hangout & Late-Night Talks",
+        description: "Good food, chill vibes, great laughs, and zero stress on a day of your choice.",
+        category: "Hangout",
+      },
+      {
+        id: "wildcard",
+        emoji: "🌟",
+        title: "The Noella Wildcard Favor",
+        description: "Need a lift, someone to listen, or study backup? Solomon is on call, no questions asked.",
+        category: "VIP",
+      },
+    ],
     couponCode: "NOELLA-VIP-PASS",
     validity: "Non-expiring • Solomon guaranteed",
     finePrint: "Terms: Redeemable anytime. Must be accompanied by good vibes and the usual laughs.",
@@ -211,14 +298,14 @@ export const giftContent: GiftConfig = {
   letter: {
     salutation: "Hey Noella,",
     paragraphs: [
-      "Back on your birthday a couple of months ago, I wrote down a note for you in my book. But words on paper felt like only half the story, so I wanted to turn those thoughts into something lasting—a private little sanctuary you can keep on your phone.",
-      "Like I wrote back then: things might sometimes feel like they're worlds away, but trust me—time doesn't lie. Always trust in the timing, because everything falls into place right when it's meant to.",
-      "I believe in keeping things solid: while I won't make cliché promises about handing you the world, what you'll always have from me is my absolute best—my time, my energy, and a true friend firmly in your corner.",
-      "You've been an incredible person in my life, and I've genuinely appreciated your support since day one, as well as the belief you've consistently had in me and the process.",
-      "Keep that unmatched energy, keep being the amazing person you are, and never lose that spark. Consider this your special gift, perfected just for you.",
+      "Back on your birthday a couple of months ago, I jotted down a note in my journal for you. Words on paper felt like only half the story though, so I wanted to turn those thoughts into something real—a little digital sanctuary you can carry on your phone whenever you need a smile.",
+      "Like I wrote back then: things might sometimes feel like they're worlds away, but trust me—time doesn't lie. Always trust in the timing, celebrate how far we've come, and know that everything falls into place right when it's meant to.",
+      "I've always believed in keeping things genuine: while I won't make cliché promises about handing you the moon and stars, what you'll always have from me is my absolute best—my time, my energy, and a true friend who's firmly in your corner.",
+      "You've been an incredible person in my life. I've genuinely appreciated your support from day one, and the quiet belief you've consistently had in me and the process means more to me than I usually let on.",
+      "Keep that unmatched energy, keep being the funny, sharp, gorgeous soul that you are, and never lose that spark. Consider this your special keepsake, made just for you.",
     ],
     closing: "With high regards & big love,",
     signature: "¡Feliz cumpleaños to you, m'luv — Solomon ✨",
-    postScript: "P.S. Tap the button below to add this garden to your phone's home screen so you can keep this memory handy!",
+    postScript: "P.S. Make sure you redeem that VIP pass above—I'm legally obligated to honor it! 😄",
   },
 };
