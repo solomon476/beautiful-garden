@@ -52,7 +52,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
 
         {/* Sound prompt reassurance */}
         <p className="text-xs text-slate-400 mt-4 flex items-center gap-1.5 opacity-80">
-          <span>🎧 Best experienced with sound on</span>
+          <span>🎧 Best experienced with sound on • Featuring Tom Odell — Flying</span>
         </p>
 
         {/* Down indicator */}

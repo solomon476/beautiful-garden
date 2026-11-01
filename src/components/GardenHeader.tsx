@@ -62,7 +62,7 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
           })}
         </nav>
 
-        {/* Ambient Audio Toggle */}
+        {/* Background Music Toggle */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleToggleSound}
@@ -71,13 +71,13 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
                 ? 'bg-amber-400/20 border border-amber-300/40 text-amber-200 shadow-md shadow-amber-400/20'
                 : 'bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200'
             }`}
-            title={isPlaying ? 'Mute ambient melody' : 'Play ambient melody'}
-            aria-label={isPlaying ? 'Mute ambient melody' : 'Play ambient melody'}
+            title={isPlaying ? 'Mute "Flying" (Tom Odell)' : 'Play "Flying" Instrumental (Tom Odell)'}
+            aria-label={isPlaying ? 'Mute "Flying" (Tom Odell)' : 'Play "Flying" Instrumental (Tom Odell)'}
           >
             {isPlaying ? (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span className="hidden xs:inline text-[11px]">Music Box</span>
+                <span className="hidden xs:inline text-[11px] font-medium">Flying 🎵</span>
                 <span className="flex gap-0.5 items-end h-2.5">
                   <span className="w-0.5 bg-amber-300 rounded-full animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
                   <span className="w-0.5 bg-amber-300 rounded-full animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
@@ -87,7 +87,7 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
             ) : (
               <>
                 <VolumeX className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline text-[11px]">Muted</span>
+                <span className="hidden xs:inline text-[11px]">Play Flying</span>
               </>
             )}
           </button>
