@@ -7,15 +7,20 @@ class AmbientSoundEngine {
   private masterGain: GainNode | null = null;
   private customAudio: HTMLAudioElement | null = null;
   private isMuted: boolean = false;
-  private fadeInterval: number | null = null;
+  private currentTrack: 'piano' | 'vocal' = 'piano';
+
+  private tracks = {
+    piano: '/assets/music.mp3',
+    vocal: '/assets/tom_odell_flying_vocal.mp3',
+  };
 
   constructor() {
     if (typeof window !== 'undefined') {
       try {
-        this.customAudio = new Audio('/assets/music.mp3');
+        this.customAudio = new Audio(this.tracks[this.currentTrack]);
         this.customAudio.loop = true;
         this.customAudio.preload = 'auto';
-        this.customAudio.volume = 0;
+        this.customAudio.volume = 0.75;
       } catch {
         this.customAudio = null;
       }
@@ -36,31 +41,33 @@ class AmbientSoundEngine {
     }
   }
 
+  private listeners: Set<(playing: boolean) => void> = new Set();
+
+  public subscribe(listener: (playing: boolean) => void) {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notify() {
+    this.listeners.forEach((fn) => fn(this.isPlaying));
+  }
+
   public async start(): Promise<boolean> {
     try {
       this.initContext();
       this.isPlaying = true;
+      this.notify();
+
+      if (!this.customAudio && typeof window !== 'undefined') {
+        this.customAudio = new Audio(this.tracks[this.currentTrack]);
+        this.customAudio.loop = true;
+      }
 
       if (this.customAudio) {
-        if (this.fadeInterval) clearInterval(this.fadeInterval);
-        
-        // Start playing the Tom Odell instrumental track
-        const playPromise = this.customAudio.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-        }
-
-        // Smooth fade-in to ~0.5 volume over 2 seconds
-        const targetVolume = 0.5;
-        let vol = this.customAudio.volume;
-        this.fadeInterval = window.setInterval(() => {
-          if (!this.customAudio) return;
-          vol = Math.min(targetVolume, vol + 0.05);
-          this.customAudio.volume = vol;
-          if (vol >= targetVolume) {
-            if (this.fadeInterval) clearInterval(this.fadeInterval);
-          }
-        }, 100);
+        this.customAudio.volume = 0.75;
+        await this.customAudio.play();
       }
       return true;
     } catch (e) {
@@ -70,25 +77,10 @@ class AmbientSoundEngine {
   }
 
   public stop() {
-    if (!this.isPlaying) return;
-
+    this.isPlaying = false;
+    this.notify();
     if (this.customAudio) {
-      if (this.fadeInterval) clearInterval(this.fadeInterval);
-      
-      // Smooth fade-out before pausing
-      let vol = this.customAudio.volume;
-      this.fadeInterval = window.setInterval(() => {
-        if (!this.customAudio) return;
-        vol = Math.max(0, vol - 0.08);
-        this.customAudio.volume = vol;
-        if (vol <= 0.01) {
-          if (this.fadeInterval) clearInterval(this.fadeInterval);
-          this.customAudio.pause();
-          this.isPlaying = false;
-        }
-      }, 80);
-    } else {
-      this.isPlaying = false;
+      this.customAudio.pause();
     }
   }
 
@@ -100,6 +92,23 @@ class AmbientSoundEngine {
       this.start();
       return true;
     }
+  }
+
+  public setTrack(track: 'piano' | 'vocal') {
+    this.currentTrack = track;
+    const wasPlaying = this.isPlaying;
+    if (this.customAudio) {
+      this.customAudio.pause();
+      this.customAudio.src = this.tracks[track];
+      this.customAudio.load();
+      if (wasPlaying) {
+        this.customAudio.play().catch(() => {});
+      }
+    }
+  }
+
+  public getCurrentTrack(): 'piano' | 'vocal' {
+    return this.currentTrack;
   }
 
   public getIsPlaying(): boolean {

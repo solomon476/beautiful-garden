@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Volume2, VolumeX, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Volume2, VolumeX, Heart, Disc3 } from 'lucide-react';
 import { soundEngine } from '../utils/audio';
 
 interface GardenHeaderProps {
@@ -9,10 +9,23 @@ interface GardenHeaderProps {
 
 export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSection }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(soundEngine.getIsPlaying());
+  const [track, setTrack] = useState<'piano' | 'vocal'>(soundEngine.getCurrentTrack());
+
+  useEffect(() => {
+    return soundEngine.subscribe((playing) => {
+      setIsPlaying(playing);
+    });
+  }, []);
 
   const handleToggleSound = () => {
-    const nextState = soundEngine.toggle();
-    setIsPlaying(nextState);
+    soundEngine.toggle();
+  };
+
+  const handleToggleTrack = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextTrack = track === 'piano' ? 'vocal' : 'piano';
+    setTrack(nextTrack);
+    soundEngine.setTrack(nextTrack);
   };
 
   const navItems = [
@@ -62,8 +75,8 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
           })}
         </nav>
 
-        {/* Background Music Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Background Music Toggle & Track Switcher */}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleToggleSound}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
@@ -71,13 +84,15 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
                 ? 'bg-amber-400/20 border border-amber-300/40 text-amber-200 shadow-md shadow-amber-400/20'
                 : 'bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200'
             }`}
-            title={isPlaying ? 'Mute "Flying" (Tom Odell)' : 'Play "Flying" Instrumental (Tom Odell)'}
-            aria-label={isPlaying ? 'Mute "Flying" (Tom Odell)' : 'Play "Flying" Instrumental (Tom Odell)'}
+            title={isPlaying ? `Pause Tom Odell — Flying (${track === 'piano' ? 'Piano Instrumental' : 'Original Vocal'})` : 'Play Tom Odell — Flying'}
+            aria-label={isPlaying ? 'Pause music' : 'Play music'}
           >
             {isPlaying ? (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span className="hidden xs:inline text-[11px] font-medium">Flying 🎵</span>
+                <span className="hidden xs:inline text-[11px] font-medium">
+                  {track === 'piano' ? 'Flying (Piano) 🎵' : 'Flying (Vocal) 🎤'}
+                </span>
                 <span className="flex gap-0.5 items-end h-2.5">
                   <span className="w-0.5 bg-amber-300 rounded-full animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
                   <span className="w-0.5 bg-amber-300 rounded-full animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
@@ -90,6 +105,17 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
                 <span className="hidden xs:inline text-[11px]">Play Flying</span>
               </>
             )}
+          </button>
+
+          {/* Track Switcher Button */}
+          <button
+            onClick={handleToggleTrack}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-mono border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 transition-colors"
+            title={`Switch to ${track === 'piano' ? 'Tom Odell Vocal version' : 'Piano Instrumental version'}`}
+            aria-label="Switch song version"
+          >
+            <Disc3 className={`w-3 h-3 text-pink-400 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
+            <span>{track === 'piano' ? 'Piano' : 'Vocal'}</span>
           </button>
         </div>
       </div>
