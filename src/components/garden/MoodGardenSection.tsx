@@ -3,6 +3,7 @@ import {
   Heart,
   Lock,
   Globe2,
+  Sparkles,
 } from 'lucide-react';
 import {
   moodGardenService,
@@ -58,27 +59,28 @@ export const MoodGardenSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-white/10">
-        <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-          <Heart className="w-3.5 h-3.5" />
+      <div className="pb-4 border-b border-purple-400/15">
+        <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-mono uppercase tracking-wider mb-1">
+          <Heart className="w-3.5 h-3.5 text-fuchsia-400 fill-fuchsia-400/40" />
           <span>The Mood Garden</span>
         </div>
-        <h3 className="font-serif text-2xl font-bold text-white">
-          Gentle Vibes & Atmosphere
+        <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          Gentle Vibes & Daily Atmosphere
         </h3>
-        <p className="text-xs text-slate-400 font-light mt-0.5 max-w-lg">
+        <p className="font-handwriting text-lg text-fuchsia-200/80 mt-0.5 max-w-lg">
           Completely optional. Check in how you're feeling right now with no expectations, explanations, or pressure to respond.
         </p>
       </div>
 
       {/* Mood Selector Card */}
-      <div className="p-6 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-4">
-        <span className="text-xs font-mono uppercase text-pink-300">
+      <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-5 relative overflow-hidden shadow-xl">
+        <span className="text-xs font-mono uppercase text-fuchsia-300 flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
           How is your energy right now?
         </span>
 
         <form onSubmit={handleSetMood} className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {MOOD_OPTIONS.map((m) => {
               const isSelected = selectedMoodKey === m.key;
               return (
@@ -89,47 +91,47 @@ export const MoodGardenSection: React.FC = () => {
                     soundEngine.playSparkle();
                     setSelectedMoodKey(m.key);
                   }}
-                  className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1 ${
+                  className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-pink-500/20 border-pink-400 shadow-md scale-102 text-white'
-                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                      ? 'bg-gradient-to-tr from-fuchsia-500/30 to-purple-500/30 border-fuchsia-400 shadow-lg shadow-fuchsia-500/25 scale-103 text-white font-semibold'
+                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-purple-400/30'
                   }`}
                 >
-                  <span className="text-2xl">{m.emoji}</span>
-                  <span className="text-xs font-medium">{m.label}</span>
+                  <span className="text-3xl filter drop-shadow">{m.emoji}</span>
+                  <span className="text-xs tracking-wide">{m.label}</span>
                 </button>
               );
             })}
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-mono text-fuchsia-200/70 uppercase tracking-wider mb-1">
               Optional Note (Only if you feel like sharing)
             </label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Taking it slow today with some lo-fi..."
-              className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+              placeholder="e.g. Taking it slow today with a cozy cup of tea..."
+              className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-fuchsia-400 shadow-inner"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
               <input
                 type="checkbox"
                 checked={isShared}
                 onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded text-pink-500 focus:ring-0"
+                className="rounded text-fuchsia-500 focus:ring-0"
               />
               <span>
                 {isShared ? (
-                  <span className="text-emerald-300 flex items-center gap-1">
+                  <span className="text-emerald-300 flex items-center gap-1 font-medium">
                     <Globe2 className="w-3.5 h-3.5" /> Visible to {partner.displayName}
                   </span>
                 ) : (
-                  <span className="text-amber-300 flex items-center gap-1">
+                  <span className="text-amber-300 flex items-center gap-1 font-medium">
                     <Lock className="w-3.5 h-3.5" /> Private to you
                   </span>
                 )}
@@ -138,17 +140,17 @@ export const MoodGardenSection: React.FC = () => {
 
             <button
               type="submit"
-              className="px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md self-end transition-all"
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-fuchsia-500/25 border border-white/20 self-end transition-all"
             >
-              Update Mood
+              Update Mood ✨
             </button>
           </div>
         </form>
       </div>
 
       {/* Recent Mood Stream */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+      <div className="space-y-3.5">
+        <h4 className="text-xs font-mono text-purple-300 uppercase tracking-wider">
           Recent Mood Check-ins
         </h4>
 
@@ -157,36 +159,36 @@ export const MoodGardenSection: React.FC = () => {
             Checking moods...
           </div>
         ) : moods.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-center text-xs text-slate-400">
-            No mood entries yet. Feel free to set one whenever you want.
+          <div className="glass-midnight-card p-6 rounded-2xl text-center text-xs text-slate-400 font-light">
+            No mood entries yet. Feel free to check in whenever you wish.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {moods.slice(0, 6).map((item) => {
               const isMine = item.userId === currentUser.id;
 
               return (
                 <div
                   key={item.id}
-                  className="p-4 rounded-2xl bg-slate-900/60 border border-white/10 flex items-center justify-between gap-3"
+                  className="glass-midnight-card p-4 sm:p-5 rounded-2xl border border-purple-400/20 flex items-center justify-between gap-3 shadow-md"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{item.emoji}</span>
+                  <div className="flex items-center gap-3.5">
+                    <span className="text-3xl filter drop-shadow">{item.emoji}</span>
                     <div>
-                      <p className="text-xs font-semibold text-white">
+                      <p className="text-sm font-serif font-bold text-white">
                         {item.moodLabel}
                       </p>
                       {item.note && (
-                        <p className="text-[11px] text-slate-300 font-light italic">
+                        <p className="font-handwriting text-base text-pink-200 leading-snug">
                           “{item.note}”
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="text-right text-[10px] text-slate-400 font-mono">
-                    <p>{isMine ? 'You' : item.userName || partner.displayName}</p>
-                    <p className="text-slate-500">
+                  <div className="text-right text-[11px] text-slate-400 font-mono">
+                    <p className="text-purple-300">{isMine ? 'You' : item.userName || partner.displayName}</p>
+                    <p className="text-slate-500 text-[10px]">
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',

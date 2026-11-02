@@ -80,23 +80,23 @@ export const LittleQuestionsSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
         <div>
-          <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <HelpCircle className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-sky-300 text-xs font-mono uppercase tracking-wider mb-1">
+            <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
             <span>Little Questions</span>
           </div>
-          <h3 className="font-serif text-2xl font-bold text-white">
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
             Playful Prompts & Gentle Thoughts
           </h3>
-          <p className="text-xs text-slate-400 font-light mt-0.5">
+          <p className="font-handwriting text-lg text-sky-200/80 mt-0.5">
             Answer privately, share when you wish, or skip freely with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleNextPrompt}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-pink-200 text-xs font-medium border border-white/10 transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20 hover:from-sky-500/35 hover:to-indigo-500/35 text-sky-200 text-xs font-semibold uppercase tracking-wider border border-sky-400/30 transition-all hover:scale-105"
         >
           <span>Next Prompt</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -104,20 +104,22 @@ export const LittleQuestionsSection: React.FC = () => {
       </div>
 
       {/* Current Question Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-6">
+      <div className="glass-midnight-card p-6 sm:p-9 rounded-3xl space-y-6 relative overflow-hidden shadow-xl">
         <div>
-          <span className="inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest bg-pink-500/15 border border-pink-400/30 text-pink-300 mb-3">
-            Prompt {activePromptIndex + 1} of {CONVERSATION_PROMPTS.length} • {currentPrompt.category}
-          </span>
-          <h4 className="font-serif text-xl sm:text-2xl font-bold text-white leading-snug">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest bg-sky-500/20 border border-sky-400/40 text-sky-200 shadow-sm">
+              Prompt {activePromptIndex + 1} of {CONVERSATION_PROMPTS.length} • {currentPrompt.category}
+            </span>
+          </div>
+          <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-snug">
             “{currentPrompt.question}”
           </h4>
         </div>
 
         {/* Answer submission */}
-        <form onSubmit={handleSaveAnswer} className="space-y-4 pt-2 border-t border-white/10">
+        <form onSubmit={handleSaveAnswer} className="space-y-4 pt-3 border-t border-purple-400/15">
           <div>
-            <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-mono text-sky-200/70 uppercase tracking-wider mb-1.5">
               Your Answer
             </label>
             <textarea
@@ -125,25 +127,25 @@ export const LittleQuestionsSection: React.FC = () => {
               value={myAnswer}
               onChange={(e) => setMyAnswer(e.target.value)}
               placeholder="Jot down whatever comes to mind..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+              className="w-full px-4 py-3 rounded-2xl bg-slate-950/70 border border-sky-400/20 text-white text-sm focus:outline-none focus:border-sky-400 shadow-inner resize-y font-light leading-relaxed"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
               <input
                 type="checkbox"
                 checked={isShared}
                 onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded text-pink-500 focus:ring-0"
+                className="rounded text-sky-500 focus:ring-0"
               />
               <span>
                 {isShared ? (
-                  <span className="text-emerald-300 flex items-center gap-1">
+                  <span className="text-emerald-300 flex items-center gap-1 font-medium">
                     <Globe2 className="w-3.5 h-3.5" /> Shared with {partner.displayName}
                   </span>
                 ) : (
-                  <span className="text-amber-300 flex items-center gap-1">
+                  <span className="text-amber-300 flex items-center gap-1 font-medium">
                     <Lock className="w-3.5 h-3.5" /> Private to you (Unshared)
                   </span>
                 )}
@@ -152,21 +154,21 @@ export const LittleQuestionsSection: React.FC = () => {
 
             <button
               type="submit"
-              className="px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md transition-all self-end"
+              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-sky-500/25 transition-all self-end border border-white/20"
             >
-              Save Answer
+              Save Answer ✨
             </button>
           </div>
         </form>
 
         {/* Partner's answer if shared */}
         {partnerResponse && (
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5 animate-fade-in">
-            <span className="text-[11px] font-mono text-pink-300 flex items-center gap-1">
-              <MessageCircle className="w-3.5 h-3.5" />
+          <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-400/30 space-y-2 animate-fade-in shadow-inner">
+            <span className="text-xs font-mono text-pink-300 flex items-center gap-1.5 uppercase tracking-wider">
+              <MessageCircle className="w-4 h-4 text-pink-400" />
               {partner.displayName}'s Shared Answer:
             </span>
-            <p className="text-xs text-slate-200 font-light leading-relaxed italic">
+            <p className="font-handwriting text-2xl text-pink-100 leading-relaxed">
               “{partnerResponse.answer}”
             </p>
           </div>

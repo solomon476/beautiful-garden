@@ -12,12 +12,12 @@ import type { PetalNoteEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 
 const PALETTE = [
-  { color: '#f472b6', emoji: '🌸', name: 'Cherry Blossom' },
-  { color: '#fb7185', emoji: '🌹', name: 'Velvet Rose' },
-  { color: '#f59e0b', emoji: '🌼', name: 'Golden Daisy' },
-  { color: '#a855f7', emoji: '🪻', name: 'Twilight Lavender' },
-  { color: '#38bdf8', emoji: '🪷', name: 'Water Lily' },
-  { color: '#34d399', emoji: '🌿', name: 'Fresh Fern' },
+  { color: '#f472b6', bgGradient: 'from-pink-500/25 via-rose-500/15 to-transparent', emoji: '🌸', name: 'Cherry Blossom' },
+  { color: '#fb7185', bgGradient: 'from-rose-500/25 via-red-500/15 to-transparent', emoji: '🌹', name: 'Velvet Rose' },
+  { color: '#f59e0b', bgGradient: 'from-amber-500/25 via-yellow-500/15 to-transparent', emoji: '🌼', name: 'Golden Daisy' },
+  { color: '#c084fc', bgGradient: 'from-purple-500/25 via-fuchsia-500/15 to-transparent', emoji: '🪻', name: 'Twilight Lavender' },
+  { color: '#38bdf8', bgGradient: 'from-sky-500/25 via-cyan-500/15 to-transparent', emoji: '🪷', name: 'Water Lily' },
+  { color: '#34d399', bgGradient: 'from-emerald-500/25 via-teal-500/15 to-transparent', emoji: '🌿', name: 'Fresh Fern' },
 ];
 
 export const PetalNotesSpace: React.FC = () => {
@@ -79,7 +79,7 @@ export const PetalNotesSpace: React.FC = () => {
       setIsComposing(false);
       await loadPetals();
     } catch (err: any) {
-      alert(err?.message || 'Could not save note.');
+      alert(err?.message || 'Could not save petal note.');
     }
   };
 
@@ -100,23 +100,23 @@ export const PetalNotesSpace: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
         <div>
-          <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-rose-300 text-xs font-mono uppercase tracking-wider mb-1">
+            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
             <span>Interactive Petal Notes</span>
           </div>
-          <h3 className="font-serif text-2xl font-bold text-white">
-            Little Whispers, Compliments & Funny Thoughts
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+            Little Whispers, Compliments & Flower Messages
           </h3>
-          <p className="text-xs text-slate-400 font-light mt-0.5">
-            Short, spontaneous notes that bloom when tapped. Private by default.
+          <p className="font-handwriting text-lg text-rose-200/80 mt-0.5">
+            Spontaneous notes that unfurl like fresh petals when opened. Private by default.
           </p>
         </div>
 
         <button
           onClick={handleOpenCompose}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white text-xs font-medium shadow-md shadow-pink-500/20 hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Leave a Petal Note</span>
@@ -125,11 +125,11 @@ export const PetalNotesSpace: React.FC = () => {
 
       {/* Composing Note */}
       {isComposing && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-4 animate-fade-in">
+        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase text-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Write a Petal Note
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+              Craft a Flower Note
             </span>
             <button
               onClick={() => setIsComposing(false)}
@@ -141,8 +141,8 @@ export const PetalNotesSpace: React.FC = () => {
 
           <form onSubmit={handleSave} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                Choose Flower Essence
+              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-2">
+                Choose Floral Essence
               </label>
               <div className="flex gap-2 flex-wrap">
                 {PALETTE.map((p) => (
@@ -150,22 +150,22 @@ export const PetalNotesSpace: React.FC = () => {
                     key={p.name}
                     type="button"
                     onClick={() => setSelectedTheme(p)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition-all ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs border transition-all ${
                       selectedTheme.name === p.name
-                        ? 'border-white bg-white/15 scale-105 shadow-md'
-                        : 'border-white/10 bg-white/5 opacity-70 hover:opacity-100'
+                        ? 'border-pink-300 bg-pink-500/30 scale-105 shadow-md shadow-pink-500/20 text-white font-semibold'
+                        : 'border-white/10 bg-white/5 opacity-70 hover:opacity-100 text-slate-200'
                     }`}
                   >
                     <span>{p.emoji}</span>
-                    <span className="text-slate-200">{p.name}</span>
+                    <span>{p.name}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                Message Body
+              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                Petal Whisper (Up to 240 characters)
               </label>
               <textarea
                 rows={3}
@@ -173,15 +173,15 @@ export const PetalNotesSpace: React.FC = () => {
                 maxLength={240}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="A compliment, a funny thought, or a word of encouragement..."
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                placeholder="A compliment, a teasing observation, or a warm thought for the day..."
+                className="w-full px-4 py-3 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner resize-y font-light leading-relaxed"
               />
               <span className="text-[10px] text-slate-500 font-mono float-right mt-1">
                 {body.length}/240
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+            <div className="p-3.5 rounded-2xl bg-purple-950/40 border border-purple-400/25 flex items-center justify-between">
               <span className="text-xs text-slate-300 flex items-center gap-1.5">
                 {isShared ? <Globe2 className="w-4 h-4 text-emerald-400" /> : <Lock className="w-4 h-4 text-amber-400" />}
                 {isShared ? `Share with ${partner.displayName}` : 'Private to you'}
@@ -189,17 +189,17 @@ export const PetalNotesSpace: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsShared(!isShared)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
                   isShared
-                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30'
+                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 shadow-sm'
                     : 'bg-white/10 text-slate-300 border-white/20'
                 }`}
               >
-                {isShared ? 'Shared ✨' : 'Make Shared'}
+                {isShared ? 'Shared ✨' : 'Make Shared 💌'}
               </button>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setIsComposing(false)}
@@ -209,9 +209,9 @@ export const PetalNotesSpace: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 border border-white/20"
               >
-                Leave Petal
+                Bloom Petal Note 🌸
               </button>
             </div>
           </form>
@@ -221,26 +221,26 @@ export const PetalNotesSpace: React.FC = () => {
       {/* Grid of Petals */}
       {loading ? (
         <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
-          Gathering petals...
+          Gathering flower blossoms...
         </div>
       ) : petals.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/10 text-center space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full bg-pink-500/10 border border-pink-400/20 flex items-center justify-center text-pink-300">
-            <Sparkles className="w-5 h-5" />
+        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-300 shadow-inner">
+            <Sparkles className="w-6 h-6 animate-pulse" />
           </div>
-          <h4 className="font-serif text-lg text-white">No Custom Petal Notes Yet</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto font-light">
+          <h4 className="font-serif text-xl text-white">No Added Petal Notes Yet</h4>
+          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
             Leave a spontaneous sweet note, funny observation, or encouragement for {partner.displayName}.
           </p>
           <button
             onClick={handleOpenCompose}
-            className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-pink-200 text-xs font-medium border border-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500/20 to-pink-500/20 hover:from-rose-500/30 hover:to-pink-500/30 text-rose-200 text-xs font-medium border border-rose-400/30 transition-all hover:scale-105"
           >
-            Leave First Note
+            Leave First Note 🌸
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
           {petals.map((petal) => {
             const isMine = petal.authorId === currentUser.id;
 
@@ -248,22 +248,26 @@ export const PetalNotesSpace: React.FC = () => {
               <div
                 key={petal.id}
                 onClick={() => handleViewPetal(petal)}
-                className="group relative p-5 rounded-2xl bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 hover:border-pink-400/30 transition-all cursor-pointer flex flex-col justify-between space-y-3 shadow-md"
+                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-pink-400/50 transition-all cursor-pointer flex flex-col justify-between space-y-3.5 shadow-md relative overflow-hidden"
               >
+                {/* Glow Aura */}
                 <div
-                  className="absolute -top-2 -right-2 w-12 h-12 rounded-full opacity-20 blur-lg pointer-events-none"
+                  className="absolute -top-3 -right-3 w-20 h-20 rounded-full opacity-35 blur-xl pointer-events-none"
                   style={{ backgroundColor: petal.color }}
                 />
 
                 <div className="flex items-start justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform">
-                    {petal.emoji}
+                  <div
+                    className="w-12 h-12 rounded-2xl border flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform"
+                    style={{ backgroundColor: `${petal.color}20`, borderColor: `${petal.color}40` }}
+                  >
+                    <span>{petal.emoji}</span>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono border ${
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
                       petal.isShared
-                        ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
-                        : 'bg-amber-500/15 border-amber-400/30 text-amber-300'
+                        ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
+                        : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
                     }`}
                   >
                     {petal.isShared ? <Globe2 className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
@@ -271,22 +275,24 @@ export const PetalNotesSpace: React.FC = () => {
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-200 font-light line-clamp-3 leading-relaxed">
+                <p className="text-sm text-slate-100 font-light line-clamp-3 leading-relaxed">
                   “{petal.body}”
                 </p>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-                  <span>From: {isMine ? 'You' : petal.authorName || partner.displayName}</span>
+                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span className="font-handwriting text-base text-pink-300">
+                    From: {isMine ? 'You' : petal.authorName || partner.displayName}
+                  </span>
                   {isMine && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(petal);
                       }}
-                      className="p-1 hover:text-rose-400 transition-colors opacity-70 hover:opacity-100"
+                      className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-70 hover:opacity-100"
                       title="Delete petal"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -299,11 +305,11 @@ export const PetalNotesSpace: React.FC = () => {
       {/* Read Petal Dialog */}
       {activePetal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in"
           onClick={() => setActivePetal(null)}
         >
           <div
-            className="max-w-sm w-full bg-slate-900 border border-pink-400/40 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-2xl relative animate-scale-up"
+            className="max-w-sm w-full glass-midnight-card border border-pink-400/50 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-2xl relative animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -314,19 +320,19 @@ export const PetalNotesSpace: React.FC = () => {
             </button>
 
             <div
-              className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-white/20"
-              style={{ backgroundColor: `${activePetal.color}25` }}
+              className="w-18 h-18 mx-auto rounded-3xl flex items-center justify-center text-4xl shadow-xl border border-white/25 animate-bounce"
+              style={{ backgroundColor: `${activePetal.color}30` }}
             >
               <span>{activePetal.emoji}</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-              <p className="text-slate-100 text-sm sm:text-base leading-relaxed font-light">
+            <div className="p-5 rounded-2xl bg-black/30 border border-purple-400/20 shadow-inner">
+              <p className="font-handwriting text-2xl text-pink-100 leading-relaxed">
                 “{activePetal.body}”
               </p>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-2 border-t border-purple-400/15">
               <span>From: {activePetal.authorId === currentUser.id ? 'You' : activePetal.authorName || partner.displayName}</span>
               <span>{new Date(activePetal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
             </div>

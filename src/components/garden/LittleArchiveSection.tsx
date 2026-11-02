@@ -8,10 +8,20 @@ import {
   Globe2,
   X,
   ZoomIn,
+  Heart,
 } from 'lucide-react';
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+
+const ROTATIONS = [
+  'rotate-[-1.5deg] hover:rotate-0',
+  'rotate-[1.8deg] hover:rotate-0',
+  'rotate-[-2deg] hover:rotate-0',
+  'rotate-[1.2deg] hover:rotate-0',
+  'rotate-[-1deg] hover:rotate-0',
+  'rotate-[2deg] hover:rotate-0',
+];
 
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
@@ -102,36 +112,36 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
         <div>
           <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <Camera className="w-3.5 h-3.5" />
+            <Camera className="w-3.5 h-3.5 text-pink-400" />
             <span>Our Little Archive</span>
           </div>
-          <h3 className="font-serif text-2xl font-bold text-white">
-            Personal Keepsakes & New Memories
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+            Scrapbook Moments & Added Keepsakes
           </h3>
-          <p className="text-xs text-slate-400 font-light mt-0.5">
-            Add new polaroids, spontaneous snapshots, and memories to your private vault.
+          <p className="font-handwriting text-lg text-pink-200/80 mt-0.5">
+            A growing polaroid album for snapshots, dates, and inside memories.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white text-xs font-medium shadow-md shadow-pink-500/20 hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-rose-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Add New Memory</span>
+          <span>Add New Snapshot</span>
         </button>
       </div>
 
       {/* Add Form */}
       {isAdding && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-4 animate-fade-in">
+        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase text-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Add a Snapshot to Archive
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+              Pin a Snapshot to the Scrapbook
             </span>
             <button
               onClick={() => setIsAdding(false)}
@@ -141,39 +151,39 @@ export const LittleArchiveSection: React.FC = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form onSubmit={handleSave} className="space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                  Title *
+                <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                  Memory Title *
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Afternoon Tea Run"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                  placeholder="e.g. Afternoon Boba Run"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                   Date / Moment
                 </label>
                 <input
                   type="text"
                   value={dateTaken}
                   onChange={(e) => setDateTaken(e.target.value)}
-                  placeholder="e.g. Summer Evening, 2026"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                  placeholder="e.g. Late Sunday, 2026"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                Photo URL or Asset Link *
+              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                Photo URL or Image Link *
               </label>
               <input
                 type="url"
@@ -181,51 +191,56 @@ export const LittleArchiveSection: React.FC = () => {
                 value={photoUrl}
                 onChange={(e) => setPhotoUrl(e.target.value)}
                 placeholder="https://... or /assets/..."
-                className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                Caption
+              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                Handwritten Caption
               </label>
               <input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="A quick, fun one-liner..."
-                className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                placeholder="A playful quote or inside joke..."
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                Full Story / Description
+              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                Story / Memory Details
               </label>
               <textarea
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What happened, inside jokes, or why it matters..."
-                className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                placeholder="What made this moment memorable..."
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner resize-y font-light"
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={isShared}
-                  onChange={(e) => setIsShared(e.target.checked)}
-                  className="rounded text-pink-500 focus:ring-0"
-                />
-                <span>Share this memory with {partner.displayName} (Uncheck to keep private)</span>
-              </label>
+            <div className="p-3.5 rounded-2xl bg-purple-950/40 border border-purple-400/25 flex items-center justify-between">
+              <span className="text-xs text-slate-300">
+                {isShared ? `Visible in shared scrapbook with ${partner.displayName}` : 'Kept in private album only'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsShared(!isShared)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  isShared
+                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 shadow-sm'
+                    : 'bg-white/10 text-slate-300 border-white/20'
+                }`}
+              >
+                {isShared ? 'Shared Memory ✨' : 'Make Private'}
+              </button>
             </div>
 
-            {errorMsg && <p className="text-xs text-rose-400">{errorMsg}</p>}
+            {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
@@ -235,9 +250,9 @@ export const LittleArchiveSection: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 border border-white/20"
               >
-                Save to Archive
+                Pin to Scrapbook 📷
               </button>
             </div>
           </form>
@@ -247,35 +262,39 @@ export const LittleArchiveSection: React.FC = () => {
       {/* Grid of Archive Memories */}
       {loading ? (
         <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
-          Opening archive...
+          Flipping scrapbook pages...
         </div>
       ) : memories.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/10 text-center space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full bg-pink-500/10 border border-pink-400/20 flex items-center justify-center text-pink-300">
-            <Camera className="w-5 h-5" />
+        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center text-pink-300 shadow-inner">
+            <Camera className="w-6 h-6" />
           </div>
-          <h4 className="font-serif text-lg text-white">No Additional Memories Added Yet</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto font-light">
-            The core scrapbook on the main path remains preserved. Use this archive space to build and share new memories over time.
+          <h4 className="font-serif text-xl text-white">Your Additional Album is Fresh</h4>
+          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+            The core scrapbook on the main path remains preserved. Use this space to build and pin new polaroid snapshots over time.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-pink-200 text-xs font-medium border border-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-200 text-xs font-medium border border-pink-400/30 transition-all hover:scale-105"
           >
-            Add a Memory
+            Pin First Memory
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {memories.map((m) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+          {memories.map((m, index) => {
             const isMine = m.contributorId === currentUser.id;
+            const rotClass = ROTATIONS[index % ROTATIONS.length];
 
             return (
               <div
                 key={m.id}
                 onClick={() => setLightboxMemory(m)}
-                className="polaroid-card group cursor-pointer"
+                className={`polaroid-card group cursor-pointer transition-all duration-300 transform ${rotClass} hover:scale-103`}
               >
+                {/* Washi tape visual detail */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-5 bg-gradient-to-r from-pink-300/30 via-purple-300/40 to-pink-300/30 rounded-sm shadow-sm backdrop-blur-sm z-20 pointer-events-none transform -rotate-1" />
+
                 <div className="polaroid-image-wrapper relative">
                   <img
                     src={m.photoUrl}
@@ -286,13 +305,13 @@ export const LittleArchiveSection: React.FC = () => {
                       (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
                     }}
                   />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] text-pink-200 border border-white/20 flex items-center gap-1">
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] text-pink-200 border border-white/20 flex items-center gap-1">
                     {m.isShared ? <Globe2 className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
                     <span>{m.isShared ? 'Shared' : 'Private'}</span>
                   </div>
 
                   <div className="absolute inset-0 bg-pink-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="p-2 rounded-full bg-white/80 text-slate-800 shadow-md backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
+                    <span className="p-2.5 rounded-full bg-white/90 text-slate-900 shadow-lg backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
                       <ZoomIn className="w-4 h-4 text-pink-600" />
                     </span>
                   </div>
@@ -300,7 +319,13 @@ export const LittleArchiveSection: React.FC = () => {
 
                 <div className="polaroid-caption">{m.title}</div>
 
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1">
+                {m.caption && (
+                  <p className="font-handwriting text-base text-pink-700/80 -mt-1 text-center line-clamp-1">
+                    “{m.caption}”
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1.5 px-1">
                   <span>{m.dateTaken || 'Archive'}</span>
                   {isMine && (
                     <button
@@ -308,10 +333,10 @@ export const LittleArchiveSection: React.FC = () => {
                         e.stopPropagation();
                         handleDelete(m);
                       }}
-                      className="p-1 hover:text-rose-400 transition-colors opacity-70 hover:opacity-100"
+                      className="p-1 hover:text-rose-500 transition-colors opacity-70 hover:opacity-100"
                       title="Delete memory"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -324,14 +349,18 @@ export const LittleArchiveSection: React.FC = () => {
       {/* Lightbox */}
       {lightboxMemory && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fade-in"
           onClick={() => setLightboxMemory(null)}
         >
           <div
-            className="max-w-xl w-full bg-slate-900 border border-pink-400/30 rounded-3xl overflow-hidden shadow-2xl space-y-4 p-6 text-center animate-scale-up"
+            className="max-w-xl w-full glass-midnight-card border border-pink-400/40 rounded-3xl overflow-hidden shadow-2xl space-y-4 p-6 sm:p-7 text-center animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <span className="inline-flex items-center gap-1 text-xs font-mono text-pink-300 uppercase">
+                <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" />
+                Scrapbook Memory
+              </span>
               <button
                 onClick={() => setLightboxMemory(null)}
                 className="p-1.5 rounded-full bg-white/10 text-slate-300 hover:text-white"
@@ -343,29 +372,29 @@ export const LittleArchiveSection: React.FC = () => {
             <img
               src={lightboxMemory.photoUrl}
               alt={lightboxMemory.title}
-              className="w-full max-h-80 object-cover rounded-2xl border border-white/10"
+              className="w-full max-h-80 object-cover rounded-2xl border border-white/15 shadow-md"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
               }}
             />
 
-            <h3 className="font-serif text-2xl font-bold text-white mt-2">
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white mt-2">
               {lightboxMemory.title}
             </h3>
 
             {lightboxMemory.caption && (
-              <p className="text-sm font-handwriting text-pink-200 text-xl">
+              <p className="font-handwriting text-2xl text-pink-200">
                 “{lightboxMemory.caption}”
               </p>
             )}
 
             {lightboxMemory.description && (
-              <p className="text-xs text-slate-300 font-light leading-relaxed max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-slate-200/90 font-light leading-relaxed max-w-md mx-auto">
                 {lightboxMemory.description}
               </p>
             )}
 
-            <div className="flex items-center justify-between text-xs text-slate-500 font-mono pt-2 border-t border-white/10">
+            <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-3 border-t border-purple-400/15">
               <span>Added by: {lightboxMemory.contributorId === currentUser.id ? 'You' : lightboxMemory.contributorName || partner.displayName}</span>
               <span>{lightboxMemory.dateTaken}</span>
             </div>

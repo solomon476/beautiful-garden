@@ -11,12 +11,12 @@ import { hangoutService, authService } from '../../services/gardenService';
 import type { HangoutEntry, HangoutStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 
-const STATUS_MAP: Record<HangoutStatus, { label: string; color: string }> = {
-  proposed: { label: 'Proposed', color: 'bg-amber-500/15 border-amber-400/30 text-amber-300' },
-  interested: { label: 'Interested! 🙋‍♀️', color: 'bg-sky-500/15 border-sky-400/30 text-sky-300' },
-  confirmed: { label: 'Confirmed ✨', color: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300' },
-  completed: { label: 'Completed 💖', color: 'bg-purple-500/15 border-purple-400/30 text-purple-300' },
-  declined: { label: 'Maybe another time', color: 'bg-white/10 border-white/15 text-slate-400' },
+const STATUS_MAP: Record<HangoutStatus, { label: string; color: string; badge: string }> = {
+  proposed: { label: 'Proposed', color: 'text-amber-200', badge: 'bg-amber-500/20 border-amber-400/40 text-amber-200' },
+  interested: { label: 'Interested! 🙋‍♀️', color: 'text-sky-200', badge: 'bg-sky-500/20 border-sky-400/40 text-sky-200' },
+  confirmed: { label: 'Confirmed ✨', color: 'text-emerald-200', badge: 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200 shadow-sm shadow-emerald-500/20' },
+  completed: { label: 'Completed 💖', color: 'text-purple-200', badge: 'bg-purple-500/20 border-purple-400/40 text-purple-200' },
+  declined: { label: 'Maybe another time', color: 'text-slate-400', badge: 'bg-white/10 border-white/20 text-slate-300' },
 };
 
 export const OurTimeSection: React.FC = () => {
@@ -102,23 +102,23 @@ export const OurTimeSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
         <div>
-          <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <CalendarDays className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-teal-300 text-xs font-mono uppercase tracking-wider mb-1">
+            <CalendarDays className="w-3.5 h-3.5 text-teal-400" />
             <span>Our Time</span>
           </div>
-          <h3 className="font-serif text-2xl font-bold text-white">
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
             Hangout Ideas & Activity Planning
           </h3>
-          <p className="text-xs text-slate-400 font-light mt-0.5">
-            Suggest spontaneous plans, cafe runs, or weekend activities with zero pressure.
+          <p className="font-handwriting text-lg text-teal-200/80 mt-0.5">
+            Suggest spontaneous hangouts, dinner runs, or weekend plans with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white text-xs font-medium shadow-md shadow-pink-500/20 hover:scale-105 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>Suggest an Activity</span>
@@ -127,11 +127,11 @@ export const OurTimeSection: React.FC = () => {
 
       {/* Add Form */}
       {isAdding && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-4 animate-fade-in">
+        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Suggest a Hangout
+            <span className="text-xs font-mono uppercase text-teal-300 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+              Propose a New Experience
             </span>
             <button
               onClick={() => setIsAdding(false)}
@@ -141,9 +141,9 @@ export const OurTimeSection: React.FC = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3">
+          <form onSubmit={handleSave} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
                 Activity or Place *
               </label>
               <input
@@ -151,42 +151,42 @@ export const OurTimeSection: React.FC = () => {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Try that new matcha cafe downtown..."
-                className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                placeholder="e.g. Try that new matcha spot or late-night dessert..."
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                  Proposed Date or Timeframe (Optional)
+                <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
+                  Proposed Date or Timing (Optional)
                 </label>
                 <input
                   type="text"
                   value={proposedDate}
                   onChange={(e) => setProposedDate(e.target.value)}
-                  placeholder="e.g. This Saturday afternoon, or next week"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                  placeholder="e.g. This Saturday evening or next weekend"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
-                  Details / Thoughts
+                <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
+                  Extra Details / Vibe
                 </label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Their reviews look amazing, let's go when free"
-                  className="w-full px-4 py-2 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+                  placeholder="e.g. Looks super chill, great music and cozy booths"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
                 />
               </div>
             </div>
 
-            {errorMsg && <p className="text-xs text-rose-400">{errorMsg}</p>}
+            {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
@@ -196,9 +196,9 @@ export const OurTimeSection: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-teal-500/25 border border-white/20"
               >
-                Send Suggestion
+                Propose Activity ✨
               </button>
             </div>
           </form>
@@ -208,26 +208,26 @@ export const OurTimeSection: React.FC = () => {
       {/* Plans List */}
       {loading ? (
         <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
-          Checking plans...
+          Opening activity calendar...
         </div>
       ) : plans.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/10 text-center space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full bg-pink-500/10 border border-pink-400/20 flex items-center justify-center text-pink-300">
-            <CalendarDays className="w-5 h-5" />
+        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-300 shadow-inner">
+            <CalendarDays className="w-6 h-6" />
           </div>
-          <h4 className="font-serif text-lg text-white">No Hangouts Suggested Yet</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto font-light">
-            Suggest an activity or spontaneous plan. Both of you can vote or confirm interest.
+          <h4 className="font-serif text-xl text-white">No Hangouts Suggested Yet</h4>
+          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+            Suggest a spontaneous hangout or activity. Both of you can vote or confirm interest whenever convenient.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-pink-200 text-xs font-medium border border-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-200 text-xs font-medium border border-teal-400/30 transition-all hover:scale-105"
           >
             Suggest an Activity
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {plans.map((plan) => {
             const isMine = plan.suggestedBy === currentUser.id;
             const statusCfg = STATUS_MAP[plan.status] || STATUS_MAP.proposed;
@@ -235,43 +235,45 @@ export const OurTimeSection: React.FC = () => {
             return (
               <div
                 key={plan.id}
-                className="p-5 rounded-2xl bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 hover:border-pink-400/30 transition-all flex flex-col justify-between space-y-3 shadow-md group"
+                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-teal-400/40 transition-all flex flex-col justify-between space-y-3 shadow-md relative"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border ${statusCfg.color}`}
+                      className={`px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${statusCfg.badge}`}
                     >
                       {statusCfg.label}
                     </span>
 
                     {plan.proposedDate && (
-                      <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-pink-400" />
+                      <span className="text-[11px] text-teal-300/90 font-mono flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-teal-400" />
                         {plan.proposedDate}
                       </span>
                     )}
                   </div>
 
-                  <h4 className="font-serif text-base font-semibold text-white mb-1 group-hover:text-pink-200 transition-colors">
+                  <h4 className="font-serif text-lg font-bold text-white mb-1.5 group-hover:text-teal-200 transition-colors">
                     {plan.title}
                   </h4>
 
                   {plan.description && (
-                    <p className="text-xs text-slate-300/80 font-light leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-300/90 font-light leading-relaxed">
                       {plan.description}
                     </p>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Suggested by: {isMine ? 'You' : plan.suggestedByName || partner.displayName}</span>
+                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-base text-teal-300">
+                    Suggested by: {isMine ? 'You' : plan.suggestedByName || partner.displayName}
+                  </span>
 
                   <div className="flex items-center gap-2">
                     <select
                       value={plan.status}
                       onChange={(e) => handleStatusChange(plan.id, e.target.value as HangoutStatus)}
-                      className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-slate-300 hover:text-white focus:outline-none"
+                      className="px-2.5 py-1 rounded-xl bg-slate-950/70 border border-teal-400/30 text-[11px] text-teal-200 hover:text-white focus:outline-none"
                     >
                       <option value="proposed">Proposed</option>
                       <option value="interested">Interested! 🙋‍♀️</option>
@@ -283,7 +285,7 @@ export const OurTimeSection: React.FC = () => {
                     {isMine && (
                       <button
                         onClick={() => handleDelete(plan)}
-                        className="p-1 hover:text-rose-400 transition-colors opacity-70 hover:opacity-100"
+                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-70 hover:opacity-100"
                         title="Delete suggestion"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

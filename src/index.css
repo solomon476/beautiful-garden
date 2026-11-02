@@ -22,6 +22,7 @@
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-handwriting: 'Caveat', cursive, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -757,4 +758,99 @@ button:hover { opacity: 0.95; }
     font-size: 1.3rem;
   }
 }
+
+/* ==========================================================================
+   Midnight Garden & Soft Petals Styling Engine (Our Garden Additions)
+   ========================================================================== */
+.font-body { font-family: var(--font-body); }
+
+.text-gradient-garden {
+  background: linear-gradient(135deg, #fbcfe8 0%, #e9d5ff 50%, #fed7aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-lavender {
+  background: linear-gradient(135deg, #f5d0fe 0%, #c084fc 60%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-rose {
+  background: linear-gradient(135deg, #fecdd3 0%, #fb7185 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-mint {
+  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 60%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Midnight Garden Layered Glass Card */
+.glass-midnight-card {
+  background: linear-gradient(145deg, rgba(30, 20, 52, 0.72) 0%, rgba(16, 11, 32, 0.88) 100%);
+  border: 1px solid rgba(216, 180, 254, 0.22);
+  box-shadow: 0 16px 36px -10px rgba(12, 6, 26, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.glass-midnight-card:hover {
+  border-color: rgba(244, 114, 182, 0.38);
+  box-shadow: 0 20px 42px -10px rgba(192, 132, 252, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+
+/* Parchment / Letter Note Glass */
+.glass-parchment-card {
+  background: linear-gradient(145deg, rgba(42, 28, 48, 0.75) 0%, rgba(24, 16, 32, 0.88) 100%);
+  border: 1px solid rgba(251, 207, 232, 0.25);
+  box-shadow: 0 16px 32px -8px rgba(244, 114, 182, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
+}
+
+/* Sound Garden Vinyl Glow Glass */
+.glass-vinyl-card {
+  background: linear-gradient(145deg, rgba(28, 18, 54, 0.75) 0%, rgba(14, 10, 30, 0.9) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.28);
+  box-shadow: 0 16px 36px -10px rgba(168, 85, 247, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+}
+
+/* Verified Mint Glass */
+.glass-mint-card {
+  background: linear-gradient(145deg, rgba(16, 38, 36, 0.72) 0%, rgba(10, 24, 22, 0.88) 100%);
+  border: 1px solid rgba(52, 211, 153, 0.32);
+  box-shadow: 0 16px 32px -8px rgba(16, 185, 129, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+}
+
+/* Atmospheric Glow Background Lighting Orbs */
+.garden-glow-orb-top {
+  position: absolute;
+  top: -80px;
+  right: 15%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(216, 180, 254, 0.18) 0%, rgba(244, 114, 182, 0.12) 45%, transparent 70%);
+  border-radius: 9999px;
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.garden-glow-orb-bottom {
+  position: absolute;
+  bottom: -60px;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.15) 0%, rgba(129, 140, 248, 0.1) 50%, transparent 70%);
+  border-radius: 9999px;
+  filter: blur(48px);
+  pointer-events: none;
+  z-index: 0;
+}
+
 

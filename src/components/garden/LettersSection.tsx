@@ -11,6 +11,7 @@ import {
   Clock,
   Send,
   AlertCircle,
+  Heart,
 } from 'lucide-react';
 import { notesService, authService } from '../../services/gardenService';
 import type { NoteEntry, UserProfile } from '../../types/garden';
@@ -59,7 +60,7 @@ export const LettersSection: React.FC = () => {
     setEditingId(null);
     setTitle('');
     setBody('');
-    setIsShared(false); // Default private!
+    setIsShared(false); // Default private
     setErrorMsg(null);
     setIsComposing(true);
   };
@@ -77,7 +78,7 @@ export const LettersSection: React.FC = () => {
 
   const handleSave = async () => {
     if (!body.trim()) {
-      setErrorMsg('Please write a message before saving.');
+      setErrorMsg('Please write your letter before saving.');
       return;
     }
 
@@ -116,7 +117,6 @@ export const LettersSection: React.FC = () => {
 
   const handleToggleSharePrompt = () => {
     if (!isShared) {
-      // Prompt user explicitly before sharing
       setConfirmShareModal(true);
     } else {
       setIsShared(false);
@@ -126,24 +126,24 @@ export const LettersSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
         <div>
-          <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <PenLine className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 text-rose-300 text-xs font-mono uppercase tracking-wider mb-1">
+            <PenLine className="w-3.5 h-3.5 text-pink-400" />
             <span>Letters in the Garden</span>
           </div>
-          <h3 className="font-serif text-2xl font-bold text-white">
-            Thoughts, Letters & Quiet Notes
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+            Thoughts, Letters & Keepsake Notes
           </h3>
-          <p className="text-xs text-slate-400 font-light mt-0.5">
-            Private by default. Only letters you deliberately share will be visible to {partner.displayName}.
+          <p className="font-handwriting text-lg text-pink-200/80 mt-0.5">
+            Private journal by default. Deliberate sharing keeps your writing personal and safe.
           </p>
         </div>
 
         {!isComposing && (
           <button
             onClick={handleStartCompose}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white text-xs font-medium shadow-md shadow-pink-500/20 hover:scale-105 active:scale-95 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
           >
             <PenLine className="w-3.5 h-3.5" />
             <span>Write New Letter</span>
@@ -153,11 +153,17 @@ export const LettersSection: React.FC = () => {
 
       {/* Composing / Editing Card */}
       {isComposing && (
-        <div className="p-6 rounded-3xl bg-slate-900/80 border border-pink-400/30 backdrop-blur-xl shadow-xl space-y-4 animate-fade-in">
-          <div className="flex items-center justify-between">
+        <div className="glass-parchment-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
+          {/* Subtle stamp accent */}
+          <div className="absolute top-4 right-4 w-11 h-13 rounded border border-dashed border-pink-400/40 flex flex-col items-center justify-center text-[9px] text-pink-300 font-mono opacity-80 pointer-events-none">
+            <Heart className="w-3.5 h-3.5 text-rose-400 mb-0.5" />
+            <span>SEAL</span>
+          </div>
+
+          <div className="flex items-center justify-between pr-14">
             <span className="text-xs font-mono uppercase text-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              {editingId ? 'Editing Letter' : 'Compose a Letter'}
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              {editingId ? 'Editing Keepsake Letter' : 'Compose in Your Journal'}
             </span>
             <button
               onClick={() => setIsComposing(false)}
@@ -168,51 +174,51 @@ export const LettersSection: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
               Title (Optional)
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. A thought from tonight..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm focus:outline-none focus:border-pink-400/50"
+              placeholder="e.g. A thought from this afternoon..."
+              className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-pink-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
               Letter Body *
             </label>
             <textarea
-              rows={6}
+              rows={7}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Write your thoughts freely here..."
-              className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-white/10 text-white text-sm leading-relaxed focus:outline-none focus:border-pink-400/50 resize-y"
+              placeholder="Write freely... This letter starts completely private to you."
+              className="w-full px-4 py-3 rounded-2xl bg-slate-950/70 border border-pink-400/20 text-white text-sm leading-relaxed focus:outline-none focus:border-pink-400 shadow-inner resize-y font-light"
             />
           </div>
 
           {/* Privacy Toggle: Deliberate Action */}
-          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-400/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-3">
               <div
                 className={`p-2 rounded-xl ${
                   isShared
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
+                    : 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
                 }`}
               >
                 {isShared ? <Globe2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">
-                  {isShared ? 'Visibility: Shared Letter' : 'Visibility: Private to You'}
+                  {isShared ? 'Visibility: Shared with ' + partner.displayName : 'Visibility: Private to You (Default)'}
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-300/80">
                   {isShared
-                    ? `This letter will be readable by ${partner.displayName}.`
-                    : 'Only you can see this entry. Nobody else has access.'}
+                    ? `Readable by ${partner.displayName} in their Letters feed.`
+                    : 'Strictly locked to your profile. No one else can view this.'}
                 </p>
               </div>
             </div>
@@ -220,39 +226,39 @@ export const LettersSection: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleSharePrompt}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-4 py-2 rounded-full text-xs font-medium border transition-all ${
                 isShared
-                  ? 'bg-white/10 border-white/20 text-slate-300 hover:text-white'
-                  : 'bg-emerald-500/20 border-emerald-400/30 text-emerald-200 hover:bg-emerald-500/30'
+                  ? 'bg-white/10 border-white/20 text-slate-200 hover:text-white'
+                  : 'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border-emerald-400/40 text-emerald-200 hover:scale-105 shadow-sm'
               }`}
             >
-              {isShared ? 'Make Private' : `Share with ${partner.displayName}`}
+              {isShared ? 'Change to Private' : `Share with ${partner.displayName} 💌`}
             </button>
           </div>
 
           {errorMsg && (
-            <div className="flex items-center gap-2 text-rose-400 text-xs p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+            <div className="flex items-center gap-2 text-rose-300 text-xs p-3 rounded-xl bg-rose-500/15 border border-rose-500/30">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2.5 pt-2">
             <button
               type="button"
               onClick={() => setIsComposing(false)}
-              className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="flex items-center gap-2 px-5 py-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-semibold shadow-md shadow-pink-500/30 transition-all"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 transition-all hover:scale-105 active:scale-95 border border-white/20"
             >
               <Check className="w-3.5 h-3.5" />
-              <span>{editingId ? 'Update Letter' : 'Save Letter'}</span>
+              <span>{editingId ? 'Update Letter' : 'Save to Garden'}</span>
             </button>
           </div>
         </div>
@@ -260,18 +266,18 @@ export const LettersSection: React.FC = () => {
 
       {/* Confirmation Modal to Share */}
       {confirmShareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="max-w-sm w-full bg-slate-900 border border-emerald-400/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300">
-              <Send className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="max-w-sm w-full glass-midnight-card border border-emerald-400/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl animate-scale-up">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-500/30 to-teal-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-lg shadow-emerald-500/15">
+              <Send className="w-6 h-6" />
             </div>
-            <h4 className="font-serif text-lg font-bold text-white">
+            <h4 className="font-serif text-xl font-bold text-white">
               Share with {partner.displayName}?
             </h4>
             <p className="text-xs text-slate-300 font-light leading-relaxed">
-              Once shared, {partner.displayName} will be able to read this letter in their Letters tab. You can turn it back to private anytime.
+              Once confirmed, this letter will be visible to {partner.displayName} in their garden letters tab. You can make it private again at any time.
             </p>
-            <div className="flex gap-2 justify-center pt-2">
+            <div className="flex gap-2.5 justify-center pt-2">
               <button
                 onClick={() => setConfirmShareModal(false)}
                 className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white"
@@ -283,9 +289,9 @@ export const LettersSection: React.FC = () => {
                   setIsShared(true);
                   setConfirmShareModal(false);
                 }}
-                className="px-5 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-md"
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-semibold shadow-lg shadow-emerald-500/20"
               >
-                Yes, Share
+                Yes, Share 💌
               </button>
             </div>
           </div>
@@ -295,26 +301,26 @@ export const LettersSection: React.FC = () => {
       {/* Letters List / Empty State */}
       {loading ? (
         <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
-          Retrieving letters...
+          Opening parchment letters...
         </div>
       ) : notes.length === 0 ? (
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-white/10 text-center space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full bg-pink-500/10 border border-pink-400/20 flex items-center justify-center text-pink-300">
-            <PenLine className="w-5 h-5" />
+        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center text-pink-300 shadow-inner">
+            <PenLine className="w-6 h-6" />
           </div>
-          <h4 className="font-serif text-lg text-white">Your Garden Parchment is Empty</h4>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto font-light">
-            Write your first letter or private thought. It starts completely private to you until you decide otherwise.
+          <h4 className="font-serif text-xl text-white">The Letter Parchment is Quiet</h4>
+          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+            Write your first letter or private thought. Every letter begins completely private to you until you explicitly choose to share.
           </p>
           <button
             onClick={handleStartCompose}
-            className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-pink-200 text-xs font-medium border border-white/10 transition-colors"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-200 text-xs font-medium border border-pink-400/30 transition-all hover:scale-105"
           >
             Start Writing
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {notes.map((note) => {
             const isAuthor = note.authorId === currentUser.id;
             const dateStr = new Date(note.createdAt).toLocaleDateString('en-US', {
@@ -327,45 +333,47 @@ export const LettersSection: React.FC = () => {
               <div
                 key={note.id}
                 onClick={() => setSelectedNote(note)}
-                className="group relative p-5 rounded-2xl bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 hover:border-pink-400/30 transition-all cursor-pointer flex flex-col justify-between space-y-3 shadow-md"
+                className="glass-parchment-card group p-5 sm:p-6 rounded-2xl hover:border-pink-400/50 transition-all cursor-pointer flex flex-col justify-between space-y-3 shadow-md relative"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${
                         note.isShared
-                          ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
-                          : 'bg-amber-500/15 border-amber-400/30 text-amber-300'
+                          ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
+                          : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
                       }`}
                     >
                       {note.isShared ? (
                         <>
-                          <Globe2 className="w-2.5 h-2.5" /> Shared Letter
+                          <Globe2 className="w-3 h-3 text-emerald-300" /> Shared Letter
                         </>
                       ) : (
                         <>
-                          <Lock className="w-2.5 h-2.5" /> Private Draft
+                          <Lock className="w-3 h-3 text-amber-300" /> Private Draft
                         </>
                       )}
                     </span>
 
-                    <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-pink-400/70" />
                       {dateStr}
                     </span>
                   </div>
 
-                  <h4 className="font-serif text-base font-semibold text-white line-clamp-1 mb-1">
+                  <h4 className="font-serif text-lg font-bold text-white line-clamp-1 mb-1.5 group-hover:text-pink-200 transition-colors">
                     {note.title || 'Untitled Letter'}
                   </h4>
 
-                  <p className="text-xs text-slate-300/80 line-clamp-3 font-light leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-200/90 line-clamp-3 font-light leading-relaxed">
                     {note.body}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>From: {isAuthor ? 'You' : note.authorName || partner.displayName}</span>
+                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-base text-pink-300">
+                    From: {isAuthor ? 'You' : note.authorName || partner.displayName}
+                  </span>
 
                   {isAuthor && (
                     <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100">
@@ -374,7 +382,7 @@ export const LettersSection: React.FC = () => {
                           e.stopPropagation();
                           handleEditNote(note);
                         }}
-                        className="p-1 hover:text-pink-300 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-pink-300 hover:text-white transition-colors"
                         title="Edit Letter"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -384,7 +392,7 @@ export const LettersSection: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(note);
                         }}
-                        className="p-1 hover:text-rose-400 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors"
                         title="Delete Letter"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -401,11 +409,11 @@ export const LettersSection: React.FC = () => {
       {/* Reader Modal */}
       {selectedNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in"
           onClick={() => setSelectedNote(null)}
         >
           <div
-            className="max-w-lg w-full bg-slate-900 border border-pink-400/30 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl relative animate-scale-up"
+            className="max-w-lg w-full glass-parchment-card border border-pink-400/40 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl relative animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -417,10 +425,10 @@ export const LettersSection: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border ${
                   selectedNote.isShared
-                    ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
-                    : 'bg-amber-500/15 border-amber-400/30 text-amber-300'
+                    ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
+                    : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
                 }`}
               >
                 {selectedNote.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
@@ -435,18 +443,18 @@ export const LettersSection: React.FC = () => {
               </span>
             </div>
 
-            <h3 className="font-serif text-2xl font-bold text-white">
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
               {selectedNote.title || 'Untitled Letter'}
             </h3>
 
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 max-h-72 overflow-y-auto">
-              <p className="text-sm text-slate-200 leading-relaxed font-light whitespace-pre-line">
+            <div className="p-5 rounded-2xl bg-black/30 border border-purple-400/20 max-h-72 overflow-y-auto shadow-inner">
+              <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-light whitespace-pre-line">
                 {selectedNote.body}
               </p>
             </div>
 
-            <div className="flex items-center justify-between pt-2 text-xs text-slate-400 font-mono">
-              <span>
+            <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+              <span className="font-handwriting text-lg text-pink-300">
                 Author: {selectedNote.authorId === currentUser.id ? 'You' : selectedNote.authorName || partner.displayName}
               </span>
 
