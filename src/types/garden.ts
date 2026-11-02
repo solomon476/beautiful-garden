@@ -125,3 +125,57 @@ export interface MoodEntry {
   isShared: boolean;
   createdAt: string;
 }
+
+export interface WorldCause {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  whyItMatters: string;
+  resourceLink?: string;
+  resourceName?: string;
+  addedBy: string;
+  addedByName?: string;
+  createdAt: string;
+}
+
+export interface WorldArticle {
+  id: string;
+  title: string;
+  source: string;
+  link: string;
+  type: 'article' | 'video' | 'post' | 'book';
+  whyItMatters: string;
+  addedBy: string;
+  addedByName?: string;
+  createdAt: string;
+  isShared: boolean;
+}
+
+export interface WorldPromptResponse {
+  id: string;
+  authorId: string;
+  authorName: string;
+  reflection: string;
+  createdAt: string;
+}
+
+export interface WorldPrompt {
+  id: string;
+  promptText: string;
+  category: string;
+  contextNote?: string;
+  responses: WorldPromptResponse[];
+}
+
+export interface WorldSmallAction {
+  id: string;
+  title: string;
+  description: string;
+  category: 'listening' | 'care' | 'learning' | 'perspective';
+  suggestedBy: string;
+  suggestedByName?: string;
+  heartsCount: number;
+  hasHeartedByMe?: boolean;
+  createdAt: string;
+}

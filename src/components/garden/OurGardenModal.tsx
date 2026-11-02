@@ -14,6 +14,7 @@ import {
   ArrowRightLeft,
   CheckCircle2,
   Lock,
+  Globe,
 } from 'lucide-react';
 import { LettersSection } from './LettersSection';
 import { SoundGardenSection } from './SoundGardenSection';
@@ -24,6 +25,7 @@ import { OurTimeSection } from './OurTimeSection';
 import { LittleQuestionsSection } from './LittleQuestionsSection';
 import { TimeCapsuleSection } from './TimeCapsuleSection';
 import { MoodGardenSection } from './MoodGardenSection';
+import { WorldAroundUsSection } from './WorldAroundUsSection';
 import { authService } from '../../services/gardenService';
 import type { UserProfile } from '../../types/garden';
 import { runPrivacyAndSecurityAudit, type PrivacyTestResult } from '../../utils/privacyTests';
@@ -44,6 +46,7 @@ type TabKey =
   | 'questions'
   | 'capsule'
   | 'moods'
+  | 'world'
   | 'security';
 
 const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
@@ -56,6 +59,7 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'from-sky-400 to-indigo-400' },
   { id: 'capsule', label: 'Time Capsule', icon: Hourglass, color: 'from-amber-300 to-yellow-500' },
   { id: 'moods', label: 'Moods', icon: Heart, color: 'from-fuchsia-400 to-pink-400' },
+  { id: 'world', label: 'The World Around Us', icon: Globe, color: 'from-blue-400 to-teal-400' },
   { id: 'security', label: 'Privacy Test', icon: ShieldCheck, color: 'from-emerald-400 to-teal-400' },
 ];
 
@@ -218,6 +222,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
           {activeTab === 'questions' && <LittleQuestionsSection />}
           {activeTab === 'capsule' && <TimeCapsuleSection />}
           {activeTab === 'moods' && <MoodGardenSection />}
+          {activeTab === 'world' && <WorldAroundUsSection />}
 
           {/* Privacy & Security Audit Tab */}
           {activeTab === 'security' && (

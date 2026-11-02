@@ -140,6 +140,25 @@ body {
 .text-amber-900 { color: #78350f; }
 .text-amber-950 { color: #451a03; }
 .text-emerald-700 { color: #047857; }
+.text-rose-400 { color: #fb7185; }
+.text-blue-100 { color: #dbeafe; }
+.text-blue-100\/90 { color: rgba(219, 234, 254, 0.9); }
+.text-blue-200 { color: #bfdbfe; }
+.text-blue-300 { color: #93c5fd; }
+.text-blue-400 { color: #60a5fa; }
+.text-blue-500 { color: #3b82f6; }
+.text-indigo-200 { color: #c7d2fe; }
+.text-indigo-300 { color: #a5b4fc; }
+.text-indigo-400 { color: #818cf8; }
+.text-teal-100 { color: #ccfbf1; }
+.text-teal-200 { color: #99f6e4; }
+.text-teal-300 { color: #5eead4; }
+.text-teal-400 { color: #2dd4bf; }
+.text-purple-100 { color: #f3e8ff; }
+.text-purple-100\/90 { color: rgba(243, 232, 255, 0.9); }
+.text-purple-200 { color: #e9d5ff; }
+.text-purple-300 { color: #d8b4fe; }
+.text-purple-400 { color: #c084fc; }
 
 /* Fills & Strokes */
 .fill-white { fill: #ffffff; }
@@ -425,6 +444,22 @@ body {
 .border-amber-900\/15 { border-color: rgba(120, 53, 15, 0.15); }
 .border-amber-900\/20 { border-color: rgba(120, 53, 15, 0.2); }
 .border-slate-100 { border-color: #f1f5f9; }
+.border-blue-400\/20 { border-color: rgba(96, 165, 250, 0.2); }
+.border-blue-400\/25 { border-color: rgba(96, 165, 250, 0.25); }
+.border-blue-400\/30 { border-color: rgba(96, 165, 250, 0.3); }
+.border-blue-400\/40 { border-color: rgba(96, 165, 250, 0.4); }
+.border-blue-400\/50 { border-color: rgba(96, 165, 250, 0.5); }
+.border-teal-400\/20 { border-color: rgba(45, 212, 191, 0.2); }
+.border-teal-400\/25 { border-color: rgba(45, 212, 191, 0.25); }
+.border-teal-400\/30 { border-color: rgba(45, 212, 191, 0.3); }
+.border-teal-400\/40 { border-color: rgba(45, 212, 191, 0.4); }
+.border-teal-400\/50 { border-color: rgba(45, 212, 191, 0.5); }
+.border-purple-400\/15 { border-color: rgba(192, 132, 252, 0.15); }
+.border-purple-400\/20 { border-color: rgba(192, 132, 252, 0.2); }
+.border-purple-400\/30 { border-color: rgba(192, 132, 252, 0.3); }
+.border-purple-400\/40 { border-color: rgba(192, 132, 252, 0.4); }
+.border-purple-400\/50 { border-color: rgba(192, 132, 252, 0.5); }
+.border-rose-400\/40 { border-color: rgba(251, 113, 133, 0.4); }
 
 .rounded { border-radius: 4px; }
 .rounded-lg { border-radius: 8px; }
@@ -464,12 +499,41 @@ body {
 .bg-amber-900\/15 { background-color: rgba(120, 53, 15, 0.15); }
 .bg-amber-950 { background-color: #451a03; }
 .bg-emerald-800 { background-color: #065f46; }
+.bg-blue-500\/10 { background-color: rgba(59, 130, 246, 0.1); }
+.bg-blue-500\/15 { background-color: rgba(59, 130, 246, 0.15); }
+.bg-blue-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
+.bg-blue-500\/30 { background-color: rgba(59, 130, 246, 0.3); }
+.bg-blue-500 { background-color: #3b82f6; }
+.bg-blue-600 { background-color: #2563eb; }
+.bg-blue-950\/30 { background-color: rgba(23, 37, 84, 0.3); }
+.bg-teal-500\/15 { background-color: rgba(20, 184, 166, 0.15); }
+.bg-teal-500\/20 { background-color: rgba(20, 184, 166, 0.2); }
+.bg-teal-500\/30 { background-color: rgba(20, 184, 166, 0.3); }
+.bg-teal-500 { background-color: #14b8a6; }
+.bg-teal-400 { background-color: #2dd4bf; }
+.bg-purple-500\/15 { background-color: rgba(168, 85, 247, 0.15); }
+.bg-purple-500\/20 { background-color: rgba(168, 85, 247, 0.2); }
+.bg-purple-500\/30 { background-color: rgba(168, 85, 247, 0.3); }
+.bg-purple-950\/30 { background-color: rgba(59, 7, 100, 0.3); }
+.bg-amber-500\/30 { background-color: rgba(245, 158, 11, 0.3); }
 
 .bg-gradient-to-r {
   background-image: linear-gradient(to right, var(--tw-gradient-stops, #ec4899, #f43f5e, #f59e0b));
 }
 .from-pink-500 { --tw-gradient-stops: #ec4899, #f43f5e, #f59e0b; }
 .to-rose-500 { --tw-gradient-stops: #ec4899, #f43f5e; }
+.from-blue-500 { --tw-gradient-stops: #3b82f6, #4f46e5; }
+.to-indigo-600 { --tw-gradient-stops: #3b82f6, #4f46e5; }
+.from-blue-500\/30 { --tw-gradient-stops: rgba(59, 130, 246, 0.3), rgba(79, 70, 229, 0.3); }
+.to-indigo-500\/30 { --tw-gradient-stops: rgba(59, 130, 246, 0.3), rgba(79, 70, 229, 0.3); }
+.from-teal-500 { --tw-gradient-stops: #14b8a6, #059669; }
+.to-emerald-600 { --tw-gradient-stops: #14b8a6, #059669; }
+.from-teal-500\/30 { --tw-gradient-stops: rgba(20, 184, 166, 0.3), rgba(5, 150, 105, 0.3); }
+.to-emerald-500\/30 { --tw-gradient-stops: rgba(20, 184, 166, 0.3), rgba(5, 150, 105, 0.3); }
+.from-purple-500\/30 { --tw-gradient-stops: rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3); }
+.to-pink-500\/30 { --tw-gradient-stops: rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3); }
+.from-amber-500\/30 { --tw-gradient-stops: rgba(245, 158, 11, 0.3), rgba(244, 63, 94, 0.3); }
+.to-rose-500\/30 { --tw-gradient-stops: rgba(245, 158, 11, 0.3), rgba(244, 63, 94, 0.3); }
 .bg-gradient-to-tr {
   background-image: linear-gradient(to top right, #ec4899, #fb7185);
 }
@@ -489,6 +553,16 @@ body {
 .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4); }
 .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); }
 .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4); }
+.shadow-blue-500\/10 { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1); }
+.shadow-blue-500\/15 { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15); }
+.shadow-blue-500\/20 { box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); }
+.shadow-teal-500\/15 { box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.15); }
+.shadow-teal-500\/20 { box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.2); }
+.shadow-purple-500\/10 { box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.1); }
+.shadow-purple-500\/15 { box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.15); }
+.shadow-purple-500\/20 { box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.2); }
+.shadow-amber-500\/15 { box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.15); }
+.shadow-amber-500\/20 { box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
 .drop-shadow { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 .drop-shadow-xl { filter: drop-shadow(0 8px 16px rgba(0,0,0,0.7)); }
 
@@ -1260,6 +1334,25 @@ input[type="checkbox"].decorated-checkbox:hover {
   transform: scale(1.05);
 }
 
+/* Smooth Scrollbarless Navigation for Mobile & Desktop */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
 
+/* Mobile Touch & Viewport Polishing */
+@media (max-width: 640px) {
+  body, html {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
 
-
+  .garden-input, .garden-textarea {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+}

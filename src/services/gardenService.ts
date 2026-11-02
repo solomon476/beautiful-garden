@@ -13,6 +13,11 @@ import type {
   ShelfCategory,
   SongStatus,
   HangoutStatus,
+  WorldCause,
+  WorldArticle,
+  WorldPrompt,
+  WorldPromptResponse,
+  WorldSmallAction,
 } from '../types/garden';
 
 // Default Profiles for Noella & Solomon
@@ -144,6 +149,182 @@ export const DEFAULT_INITIAL_CAPSULES: TimeCapsuleEntry[] = [
   },
 ];
 
+export const DEFAULT_INITIAL_WORLD_CAUSES: WorldCause[] = [
+  {
+    id: 'seed-cause-1',
+    title: "Men's Mental Health & Emotional Wellbeing",
+    category: 'Mental Wellbeing',
+    description: 'Creating space for emotional honesty, breaking the silence around vulnerability, and ensuring men have safe, judgement-free support.',
+    whyItMatters: 'Men often feel conditioned to carry burdens silently. Giving voice to internal struggles saves lives and nurtures deeper empathy.',
+    resourceLink: 'https://us.movember.com/mens-health/mental-health',
+    resourceName: 'Movember & Mental Health Foundation',
+    addedBy: DEFAULT_PROFILES.solomon.id,
+    addedByName: DEFAULT_PROFILES.solomon.displayName,
+    createdAt: '2026-11-01T10:00:00.000Z',
+  },
+  {
+    id: 'seed-cause-2',
+    title: 'Epilepsy & Invisible Neurological Health',
+    category: 'Health & Awareness',
+    description: 'Raising understanding of seizure disorders, first-aid response, and dismantling the stigma that surrounds unseen physical and neurological conditions.',
+    whyItMatters: 'Millions navigate life with neurological conditions that are invisible on good days but isolating on tough ones. Compassionate awareness dispels fear.',
+    resourceLink: 'https://www.epilepsy.org.uk/',
+    resourceName: 'Epilepsy Society & Global Awareness',
+    addedBy: DEFAULT_PROFILES.noella.id,
+    addedByName: DEFAULT_PROFILES.noella.displayName,
+    createdAt: '2026-11-01T11:00:00.000Z',
+  },
+  {
+    id: 'seed-cause-3',
+    title: 'Everyday Gender Equality & Human Dignity',
+    category: 'Equality & Dignity',
+    description: "Advocating for mutual respect, equal access, honoring each person's agency, and celebrating diverse strengths in daily conversations.",
+    whyItMatters: "Equality isn't just about legislation—it lives in how we listen, honor each other's opinions, and share credit.",
+    resourceLink: 'https://www.unwomen.org/',
+    resourceName: 'UN Women & Human Rights Watch',
+    addedBy: DEFAULT_PROFILES.noella.id,
+    addedByName: DEFAULT_PROFILES.noella.displayName,
+    createdAt: '2026-11-02T09:00:00.000Z',
+  },
+  {
+    id: 'seed-cause-4',
+    title: 'Everyday Kindness & Gentle Community Care',
+    category: 'Kindness & Society',
+    description: 'Reminding society to value human pacing over endless burnout, and encouraging people to check on one another without strings attached.',
+    whyItMatters: 'In a hurried world, intentional care, active listening, and softness are forms of quiet courage.',
+    resourceLink: 'https://www.mind.org.uk/',
+    resourceName: 'Mind UK & Rest as Resistance',
+    addedBy: DEFAULT_PROFILES.solomon.id,
+    addedByName: DEFAULT_PROFILES.solomon.displayName,
+    createdAt: '2026-11-02T10:00:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_WORLD_ARTICLES: WorldArticle[] = [
+  {
+    id: 'seed-article-1',
+    title: 'How Successful People Use Journaling to Process Inner Truths (2026)',
+    source: 'Journaling & Reflection',
+    link: 'https://images.openai.com/static-rsc-4/_JBwtqcwOefXi77Hie5R9MyqvC2B_glrp8qT_TtP-nYTpJqe_-4hY_RLl360V_hlmj8muupnCgDOimxkaeWNq2lqWUoqSFafCCQsmIzcalB1RaIXWLBNhzCRRGzj-EipAfmbuW_N3-nDixohqC44WScBjxxW_kxK0YbaxLHSEw4?purpose=inline',
+    type: 'article',
+    whyItMatters: 'Writing down our thoughts and worries privately gives clarity when the outside world feels chaotic or noisy.',
+    addedBy: DEFAULT_PROFILES.solomon.id,
+    addedByName: DEFAULT_PROFILES.solomon.displayName,
+    createdAt: '2026-11-01T14:30:00.000Z',
+    isShared: true,
+  },
+  {
+    id: 'seed-article-2',
+    title: 'Epilepsy Awareness Campaign: Illuminating the Unseen',
+    source: 'Behance / Visual Storytelling',
+    link: 'https://images.openai.com/static-rsc-4/9G8vfgKSdug1INxvGxMH6UDh9gLkmtybHF97YIji7-zspp6nnPmjQcYwOVQa4rmOgl-W8UaVv73PApN6r8KWK_CTZeV8rodZA0euO0YBkuLZ8Xn3h8acxGT2reSp-rY_r3yC05baRGR3vQH6Qhy5rUps4nWnbpmFCegeG6zJdUc?purpose=inline',
+    type: 'post',
+    whyItMatters: 'A powerful awareness campaign that proves thoughtful visual design can de-stigmatize invisible medical conditions.',
+    addedBy: DEFAULT_PROFILES.noella.id,
+    addedByName: DEFAULT_PROFILES.noella.displayName,
+    createdAt: '2026-11-02T09:15:00.000Z',
+    isShared: true,
+  },
+  {
+    id: 'seed-article-3',
+    title: 'The Courage to Be Vulnerable in Modern Life',
+    source: 'TED / Deep Conversation',
+    link: 'https://www.ted.com/talks',
+    type: 'video',
+    whyItMatters: 'A reminder that emotional honesty and asking for help are the truest measures of inner strength.',
+    addedBy: DEFAULT_PROFILES.solomon.id,
+    addedByName: DEFAULT_PROFILES.solomon.displayName,
+    createdAt: '2026-11-02T11:00:00.000Z',
+    isShared: true,
+  },
+];
+
+export const DEFAULT_INITIAL_WORLD_PROMPTS: WorldPrompt[] = [
+  {
+    id: 'prompt-1',
+    promptText: "What do you think people misunderstand the most about men's mental health?",
+    category: "Men's Mental Health",
+    contextNote: 'A gentle space to reflect on silent burdens, stoicism, and expectations.',
+    responses: [
+      {
+        id: 'resp-seed-1',
+        authorId: DEFAULT_PROFILES.solomon.id,
+        authorName: DEFAULT_PROFILES.solomon.displayName,
+        reflection: "People often assume that if a man isn't visibly distressed or breaking down, everything must be fine. But silence is often where the heaviest weight is carried alone.",
+        createdAt: '2026-11-02T13:00:00.000Z',
+      },
+      {
+        id: 'resp-seed-2',
+        authorId: DEFAULT_PROFILES.noella.id,
+        authorName: DEFAULT_PROFILES.noella.displayName,
+        reflection: "I think creating an everyday environment where nobody feels mocked or judged for resting, crying, or saying 'I am struggling today' is what truly builds safety.",
+        createdAt: '2026-11-02T14:20:00.000Z',
+      },
+    ],
+  },
+  {
+    id: 'prompt-2',
+    promptText: 'What is an invisible challenge or issue you wish more people approached with patient curiosity instead of judgement?',
+    category: 'Empathy & Understanding',
+    contextNote: 'Invisible illnesses, sensory overload, neurodiversity, or quiet grief.',
+    responses: [],
+  },
+  {
+    id: 'prompt-3',
+    promptText: 'How can we cultivate the habit of listening to understand, rather than listening to immediately give advice?',
+    category: 'Everyday Presence',
+    contextNote: 'Being a safe haven for others without rushing them toward a fix.',
+    responses: [],
+  },
+];
+
+export const DEFAULT_INITIAL_WORLD_ACTIONS: WorldSmallAction[] = [
+  {
+    id: 'act-1',
+    title: 'Listen without jumping to offer a quick solution',
+    description: 'When someone opens up, pause and hold space before offering advice. Often, knowing you are heard is the entire remedy.',
+    category: 'listening',
+    suggestedBy: DEFAULT_PROFILES.noella.id,
+    suggestedByName: DEFAULT_PROFILES.noella.displayName,
+    heartsCount: 7,
+    hasHeartedByMe: true,
+    createdAt: '2026-11-01T12:00:00.000Z',
+  },
+  {
+    id: 'act-2',
+    title: 'Check in on someone with zero hidden agenda',
+    description: 'Send a genuine message without expecting anything back: "Just thinking of you today, no need to reply, hope your heart feels light."',
+    category: 'care',
+    suggestedBy: DEFAULT_PROFILES.solomon.id,
+    suggestedByName: DEFAULT_PROFILES.solomon.displayName,
+    heartsCount: 9,
+    hasHeartedByMe: true,
+    createdAt: '2026-11-01T15:00:00.000Z',
+  },
+  {
+    id: 'act-3',
+    title: 'Gently challenge a harmful stereotype in casual conversation',
+    description: 'Speak up with kindness when someone makes a dismissive comment about emotional vulnerability or invisible illness.',
+    category: 'perspective',
+    suggestedBy: DEFAULT_PROFILES.noella.id,
+    suggestedByName: DEFAULT_PROFILES.noella.displayName,
+    heartsCount: 5,
+    hasHeartedByMe: false,
+    createdAt: '2026-11-02T10:00:00.000Z',
+  },
+  {
+    id: 'act-4',
+    title: 'Share a trustworthy helpline or resource quietly',
+    description: 'Keep verified helplines and wellness contacts saved, and share them without stigma when a friend is having a difficult time.',
+    category: 'learning',
+    suggestedBy: DEFAULT_PROFILES.solomon.id,
+    suggestedByName: DEFAULT_PROFILES.solomon.displayName,
+    heartsCount: 6,
+    hasHeartedByMe: false,
+    createdAt: '2026-11-02T11:30:00.000Z',
+  },
+];
+
 const STORAGE_KEYS = {
   CURRENT_USER: 'perfect_time_current_user',
   NOTES: 'perfect_time_notes',
@@ -155,6 +336,10 @@ const STORAGE_KEYS = {
   QUESTIONS: 'perfect_time_questions',
   CAPSULES: 'perfect_time_capsules',
   MOODS: 'perfect_time_moods',
+  WORLD_CAUSES: 'perfect_time_world_causes',
+  WORLD_ARTICLES: 'perfect_time_world_articles',
+  WORLD_PROMPTS: 'perfect_time_world_prompts',
+  WORLD_ACTIONS: 'perfect_time_world_actions',
 };
 
 // Safe LocalStorage helpers with smart seed fallback
@@ -974,6 +1159,196 @@ export const moodGardenService = {
     const all = loadLocal<MoodEntry[]>(STORAGE_KEYS.MOODS, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.MOODS, all);
+    return entry;
+  },
+};
+
+// The World Around Us service
+type WorldListener = () => void;
+const worldListeners = new Set<WorldListener>();
+const notifyWorldSubscribers = () => {
+  worldListeners.forEach((l) => {
+    try {
+      l();
+    } catch (e) {
+      console.error(e);
+    }
+  });
+};
+
+export const worldAroundUsService = {
+  subscribe(listener: WorldListener): () => void {
+    worldListeners.add(listener);
+    return () => worldListeners.delete(listener);
+  },
+
+  async getCauses(): Promise<WorldCause[]> {
+    return loadLocal<WorldCause[]>(STORAGE_KEYS.WORLD_CAUSES, DEFAULT_INITIAL_WORLD_CAUSES);
+  },
+
+  async addCause(data: {
+    title: string;
+    category: string;
+    description: string;
+    whyItMatters: string;
+    resourceLink?: string;
+    resourceName?: string;
+  }): Promise<WorldCause> {
+    const user = authService.getCurrentUser();
+    const entry: WorldCause = {
+      id: `cause-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: data.title.trim(),
+      category: data.category.trim() || 'General Awareness',
+      description: data.description.trim(),
+      whyItMatters: data.whyItMatters.trim(),
+      resourceLink: data.resourceLink?.trim() || undefined,
+      resourceName: data.resourceName?.trim() || undefined,
+      addedBy: user.id,
+      addedByName: user.displayName,
+      createdAt: new Date().toISOString(),
+    };
+
+    const all = loadLocal<WorldCause[]>(STORAGE_KEYS.WORLD_CAUSES, DEFAULT_INITIAL_WORLD_CAUSES);
+    all.unshift(entry);
+    saveLocal(STORAGE_KEYS.WORLD_CAUSES, all);
+    notifyWorldSubscribers();
+    return entry;
+  },
+
+  async deleteCause(id: string): Promise<boolean> {
+    const all = loadLocal<WorldCause[]>(STORAGE_KEYS.WORLD_CAUSES, DEFAULT_INITIAL_WORLD_CAUSES);
+    const filtered = all.filter((c) => c.id !== id);
+    saveLocal(STORAGE_KEYS.WORLD_CAUSES, filtered);
+    notifyWorldSubscribers();
+    return true;
+  },
+
+  async getArticles(): Promise<WorldArticle[]> {
+    return loadLocal<WorldArticle[]>(STORAGE_KEYS.WORLD_ARTICLES, DEFAULT_INITIAL_WORLD_ARTICLES);
+  },
+
+  async addArticle(data: {
+    title: string;
+    source: string;
+    link: string;
+    type: 'article' | 'video' | 'post' | 'book';
+    whyItMatters: string;
+    isShared?: boolean;
+  }): Promise<WorldArticle> {
+    const user = authService.getCurrentUser();
+    const entry: WorldArticle = {
+      id: `art-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: data.title.trim(),
+      source: data.source.trim() || 'Curated Resource',
+      link: data.link.trim(),
+      type: data.type,
+      whyItMatters: data.whyItMatters.trim(),
+      addedBy: user.id,
+      addedByName: user.displayName,
+      createdAt: new Date().toISOString(),
+      isShared: data.isShared !== undefined ? data.isShared : true,
+    };
+
+    const all = loadLocal<WorldArticle[]>(STORAGE_KEYS.WORLD_ARTICLES, DEFAULT_INITIAL_WORLD_ARTICLES);
+    all.unshift(entry);
+    saveLocal(STORAGE_KEYS.WORLD_ARTICLES, all);
+    notifyWorldSubscribers();
+    return entry;
+  },
+
+  async deleteArticle(id: string): Promise<boolean> {
+    const all = loadLocal<WorldArticle[]>(STORAGE_KEYS.WORLD_ARTICLES, DEFAULT_INITIAL_WORLD_ARTICLES);
+    const filtered = all.filter((a) => a.id !== id);
+    saveLocal(STORAGE_KEYS.WORLD_ARTICLES, filtered);
+    notifyWorldSubscribers();
+    return true;
+  },
+
+  async getPrompts(): Promise<WorldPrompt[]> {
+    return loadLocal<WorldPrompt[]>(STORAGE_KEYS.WORLD_PROMPTS, DEFAULT_INITIAL_WORLD_PROMPTS);
+  },
+
+  async addPromptReflection(promptId: string, reflection: string): Promise<WorldPromptResponse> {
+    const user = authService.getCurrentUser();
+    const response: WorldPromptResponse = {
+      id: `resp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      authorId: user.id,
+      authorName: user.displayName,
+      reflection: reflection.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const all = loadLocal<WorldPrompt[]>(STORAGE_KEYS.WORLD_PROMPTS, DEFAULT_INITIAL_WORLD_PROMPTS);
+    const prompt = all.find((p) => p.id === promptId);
+    if (prompt) {
+      if (!prompt.responses) prompt.responses = [];
+      prompt.responses.push(response);
+      saveLocal(STORAGE_KEYS.WORLD_PROMPTS, all);
+      notifyWorldSubscribers();
+    }
+    return response;
+  },
+
+  async addCustomPrompt(promptText: string, category: string, contextNote?: string): Promise<WorldPrompt> {
+    const entry: WorldPrompt = {
+      id: `prompt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      promptText: promptText.trim(),
+      category: category.trim() || 'Reflection',
+      contextNote: contextNote?.trim() || undefined,
+      responses: [],
+    };
+
+    const all = loadLocal<WorldPrompt[]>(STORAGE_KEYS.WORLD_PROMPTS, DEFAULT_INITIAL_WORLD_PROMPTS);
+    all.push(entry);
+    saveLocal(STORAGE_KEYS.WORLD_PROMPTS, all);
+    notifyWorldSubscribers();
+    return entry;
+  },
+
+  async getSmallActions(): Promise<WorldSmallAction[]> {
+    return loadLocal<WorldSmallAction[]>(STORAGE_KEYS.WORLD_ACTIONS, DEFAULT_INITIAL_WORLD_ACTIONS);
+  },
+
+  async toggleHeartAction(actionId: string): Promise<number> {
+    const all = loadLocal<WorldSmallAction[]>(STORAGE_KEYS.WORLD_ACTIONS, DEFAULT_INITIAL_WORLD_ACTIONS);
+    const item = all.find((a) => a.id === actionId);
+    if (item) {
+      if (item.hasHeartedByMe) {
+        item.hasHeartedByMe = false;
+        item.heartsCount = Math.max(0, item.heartsCount - 1);
+      } else {
+        item.hasHeartedByMe = true;
+        item.heartsCount = (item.heartsCount || 0) + 1;
+      }
+      saveLocal(STORAGE_KEYS.WORLD_ACTIONS, all);
+      notifyWorldSubscribers();
+      return item.heartsCount;
+    }
+    return 0;
+  },
+
+  async addSmallAction(
+    title: string,
+    description: string,
+    category: WorldSmallAction['category']
+  ): Promise<WorldSmallAction> {
+    const user = authService.getCurrentUser();
+    const entry: WorldSmallAction = {
+      id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      suggestedBy: user.id,
+      suggestedByName: user.displayName,
+      heartsCount: 1,
+      hasHeartedByMe: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    const all = loadLocal<WorldSmallAction[]>(STORAGE_KEYS.WORLD_ACTIONS, DEFAULT_INITIAL_WORLD_ACTIONS);
+    all.unshift(entry);
+    saveLocal(STORAGE_KEYS.WORLD_ACTIONS, all);
+    notifyWorldSubscribers();
     return entry;
   },
 };
