@@ -7,11 +7,13 @@ import { ScrapbookSection } from './components/ScrapbookSection';
 import { FlowerNotesSection } from './components/FlowerNotesSection';
 import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
 import { FinalLetterSection } from './components/FinalLetterSection';
+import { OurGardenModal } from './components/garden/OurGardenModal';
 import { giftContent } from './data/giftContent';
 import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('welcome');
+  const [isOurGardenOpen, setIsOurGardenOpen] = useState<boolean>(false);
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
@@ -58,6 +60,13 @@ export const App: React.FC = () => {
       <GardenHeader
         onScrollTo={scrollToSection}
         activeSection={activeSection}
+        onOpenOurGarden={() => setIsOurGardenOpen(true)}
+      />
+
+      {/* Our Garden Collaborative Suite Modal */}
+      <OurGardenModal
+        isOpen={isOurGardenOpen}
+        onClose={() => setIsOurGardenOpen(false)}
       />
 
       {/* Main Experience Stream */}
