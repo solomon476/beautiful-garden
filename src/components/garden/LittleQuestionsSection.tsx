@@ -80,31 +80,31 @@ export const LittleQuestionsSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-sky-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-sky-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sky-500/20 to-indigo-500/20 border border-sky-400/40 text-sky-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
             <span>Little Questions</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
             Playful Prompts & Gentle Thoughts
           </h3>
-          <p className="font-handwriting text-lg text-sky-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-sky-200/90 leading-relaxed max-w-xl">
             Answer privately, share when you wish, or skip freely with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleNextPrompt}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20 hover:from-sky-500/35 hover:to-indigo-500/35 text-sky-200 text-xs font-semibold uppercase tracking-wider border border-sky-400/30 transition-all hover:scale-105"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
           <span>Next Prompt</span>
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-4 h-4 text-white" />
         </button>
       </div>
 
       {/* Current Question Card */}
-      <div className="glass-midnight-card p-6 sm:p-9 rounded-3xl space-y-6 relative overflow-hidden shadow-xl">
+      <div className="glass-midnight-card p-8 sm:p-12 rounded-[2.5rem] space-y-8 relative overflow-hidden shadow-2xl">
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest bg-sky-500/20 border border-sky-400/40 text-sky-200 shadow-sm">

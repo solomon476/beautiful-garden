@@ -102,25 +102,25 @@ export const OurTimeSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-teal-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-teal-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/20 to-emerald-500/20 border border-teal-400/40 text-teal-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <CalendarDays className="w-3.5 h-3.5 text-teal-400" />
             <span>Our Time</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
             Hangout Ideas & Activity Planning
           </h3>
-          <p className="font-handwriting text-lg text-teal-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-teal-200/90 leading-relaxed max-w-xl">
             Suggest spontaneous hangouts, dinner runs, or weekend plans with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 text-white" />
           <span>Suggest an Activity</span>
         </button>
       </div>
@@ -227,7 +227,7 @@ export const OurTimeSection: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {plans.map((plan) => {
             const isMine = plan.suggestedBy === currentUser.id;
             const statusCfg = STATUS_MAP[plan.status] || STATUS_MAP.proposed;
@@ -235,45 +235,45 @@ export const OurTimeSection: React.FC = () => {
             return (
               <div
                 key={plan.id}
-                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-teal-400/40 transition-all flex flex-col justify-between space-y-3 shadow-md relative"
+                className="glass-midnight-card group p-7 sm:p-8 rounded-[2rem] hover:border-teal-400/50 transition-all flex flex-col justify-between space-y-4 shadow-xl relative min-h-[220px]"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-3.5">
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${statusCfg.badge}`}
+                      className={`px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${statusCfg.badge}`}
                     >
                       {statusCfg.label}
                     </span>
 
                     {plan.proposedDate && (
-                      <span className="text-[11px] text-teal-300/90 font-mono flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-teal-400" />
+                      <span className="text-xs text-teal-300 font-mono flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-teal-400" />
                         {plan.proposedDate}
                       </span>
                     )}
                   </div>
 
-                  <h4 className="font-serif text-lg font-bold text-white mb-1.5 group-hover:text-teal-200 transition-colors">
+                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-teal-200 transition-colors">
                     {plan.title}
                   </h4>
 
                   {plan.description && (
-                    <p className="text-xs sm:text-sm text-slate-300/90 font-light leading-relaxed">
+                    <p className="text-sm text-slate-200/90 font-light leading-relaxed">
                       {plan.description}
                     </p>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
-                  <span className="font-handwriting text-base text-teal-300">
-                    Suggested by: {isMine ? 'You' : plan.suggestedByName || partner.displayName}
+                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-2xl text-teal-300 font-medium">
+                    Suggested by: {isMine ? 'You 🌷' : (plan.suggestedByName || partner.displayName) + ' ✨'}
                   </span>
 
                   <div className="flex items-center gap-2">
                     <select
                       value={plan.status}
                       onChange={(e) => handleStatusChange(plan.id, e.target.value as HangoutStatus)}
-                      className="px-2.5 py-1 rounded-xl bg-slate-950/70 border border-teal-400/30 text-[11px] text-teal-200 hover:text-white focus:outline-none"
+                      className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-teal-400/30 text-xs text-teal-200 hover:text-white focus:outline-none"
                     >
                       <option value="proposed">Proposed</option>
                       <option value="interested">Interested! 🙋‍♀️</option>
@@ -285,10 +285,10 @@ export const OurTimeSection: React.FC = () => {
                     {isMine && (
                       <button
                         onClick={() => handleDelete(plan)}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-70 hover:opacity-100"
+                        className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
                         title="Delete suggestion"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -296,6 +296,29 @@ export const OurTimeSection: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Invitation Card */}
+          {plans.length < 3 && (
+            <div
+              onClick={handleOpenAdd}
+              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-teal-400/30 hover:border-teal-300/60 bg-gradient-to-br from-teal-500/5 via-indigo-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-teal-500/10 min-h-[220px] shadow-sm"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500/20 to-emerald-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 group-hover:scale-110 transition-transform shadow-inner">
+                <CalendarDays className="w-6 h-6 text-teal-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-white group-hover:text-teal-200 transition-colors">
+                  Suggest Another Date Idea
+                </h4>
+                <p className="font-handwriting text-xl text-teal-200/80 max-w-xs mx-auto leading-snug">
+                  Propose a fun dinner, movie night, walk, or spontaneous road trip...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-teal-200 border border-teal-300/30 group-hover:bg-teal-500/30 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Plan Together ✨
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

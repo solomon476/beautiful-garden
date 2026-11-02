@@ -112,25 +112,25 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-pink-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-pink-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <Camera className="w-3.5 h-3.5 text-pink-400" />
             <span>Our Little Archive</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
             Scrapbook Moments & Added Keepsakes
           </h3>
-          <p className="font-handwriting text-lg text-pink-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-pink-200/90 leading-relaxed max-w-xl">
             A growing polaroid album for snapshots, dates, and inside memories.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-rose-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 text-white" />
           <span>Add New Snapshot</span>
         </button>
       </div>
@@ -343,6 +343,29 @@ export const LittleArchiveSection: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Invitation Polaroid Card */}
+          {memories.length < 3 && (
+            <div
+              onClick={handleOpenAdd}
+              className="polaroid-card group cursor-pointer transition-all duration-300 transform hover:scale-103 border-2 border-dashed border-pink-400/40 flex flex-col items-center justify-center p-8 text-center space-y-4 min-h-[320px] bg-white/5"
+            >
+              <div className="w-16 h-16 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-pink-300 group-hover:scale-110 transition-transform">
+                <Camera className="w-8 h-8 text-pink-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-slate-800">
+                  Pin a Snapshot
+                </h4>
+                <p className="font-handwriting text-lg text-pink-700/80 max-w-[200px] leading-snug">
+                  Add a photo from your latest adventure together...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-500 text-white shadow-md shadow-pink-500/30 group-hover:scale-105 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Add Photo 📸
+              </span>
+            </div>
+          )}
         </div>
       )}
 

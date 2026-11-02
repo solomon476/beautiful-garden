@@ -59,21 +59,21 @@ export const MoodGardenSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-purple-400/15">
-        <div className="flex items-center gap-2 text-fuchsia-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="pb-8 border-b border-fuchsia-400/20 space-y-2">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 border border-fuchsia-400/40 text-fuchsia-200 text-xs font-mono uppercase tracking-widest shadow-sm">
           <Heart className="w-3.5 h-3.5 text-fuchsia-400 fill-fuchsia-400/40" />
           <span>The Mood Garden</span>
         </div>
-        <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+        <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
           Gentle Vibes & Daily Atmosphere
         </h3>
-        <p className="font-handwriting text-lg text-fuchsia-200/80 mt-0.5 max-w-lg">
+        <p className="font-handwriting text-2xl text-fuchsia-200/90 leading-relaxed max-w-xl">
           Completely optional. Check in how you're feeling right now with no expectations, explanations, or pressure to respond.
         </p>
       </div>
 
       {/* Mood Selector Card */}
-      <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-5 relative overflow-hidden shadow-xl">
+      <div className="glass-midnight-card p-8 sm:p-10 rounded-[2.5rem] space-y-6 relative overflow-hidden shadow-2xl">
         <span className="text-xs font-mono uppercase text-fuchsia-300 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
           How is your energy right now?

@@ -31,6 +31,119 @@ export const DEFAULT_PROFILES: Record<string, UserProfile> = {
   },
 };
 
+export const DEFAULT_INITIAL_SONGS: SongEntry[] = [
+  {
+    id: 'seed-song-1',
+    addedBy: DEFAULT_PROFILES.solomon.id,
+    addedByName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'Flying',
+    artist: 'Tom Odell',
+    musicUrl: 'https://open.spotify.com/track/6UelLqGlWMcVH1E5c4H7gY',
+    message: 'The song that plays whenever you step into our garden 🌷',
+    status: 'listened',
+    createdAt: '2026-11-01T12:00:00.000Z',
+  },
+  {
+    id: 'seed-song-2',
+    addedBy: DEFAULT_PROFILES.noella.id,
+    addedByName: DEFAULT_PROFILES.noella.displayName,
+    title: 'Golden Hour',
+    artist: 'JVKE',
+    musicUrl: 'https://open.spotify.com/track/5odlY52u43F5BjByFp9vMw',
+    message: 'For sunset drives, peaceful mornings, and starry nights ✨',
+    status: 'recommend_back',
+    createdAt: '2026-11-02T10:30:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_SHELF: ShelfEntry[] = [
+  {
+    id: 'seed-shelf-1',
+    contributorId: DEFAULT_PROFILES.solomon.id,
+    contributorName: DEFAULT_PROFILES.solomon.displayName,
+    category: 'films',
+    title: 'About Time (2013)',
+    description: 'A reminder that ordinary, gentle moments shared together are the most precious.',
+    link: 'https://www.imdb.com/title/tt2194499/',
+    status: 'loved',
+    createdAt: '2026-11-01T14:00:00.000Z',
+  },
+  {
+    id: 'seed-shelf-2',
+    contributorId: DEFAULT_PROFILES.noella.id,
+    contributorName: DEFAULT_PROFILES.noella.displayName,
+    category: 'food',
+    title: 'Matcha Strawberry Boba & Macarons',
+    description: 'We have to try that new French bakery downtown this Saturday afternoon 🍰',
+    link: '',
+    status: 'to_explore',
+    createdAt: '2026-11-02T11:15:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [
+  {
+    id: 'seed-mem-1',
+    contributorId: DEFAULT_PROFILES.solomon.id,
+    contributorName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'First Walk in the Garden',
+    caption: 'The moment everything clicked and time stood still.',
+    photoUrl: '/assets/dreamy_night_garden.jpg',
+    dateTaken: 'Nov 2026',
+    isShared: true,
+    createdAt: '2026-11-01T16:00:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_PETALS: PetalNoteEntry[] = [
+  {
+    id: 'seed-petal-1',
+    authorId: DEFAULT_PROFILES.solomon.id,
+    authorName: DEFAULT_PROFILES.solomon.displayName,
+    body: 'Your laugh brightens up even the longest day. Never forget how loved you are 🌸',
+    color: '#f472b6',
+    emoji: '🌸',
+    isShared: true,
+    createdAt: '2026-11-02T09:00:00.000Z',
+  },
+  {
+    id: 'seed-petal-2',
+    authorId: DEFAULT_PROFILES.noella.id,
+    authorName: DEFAULT_PROFILES.noella.displayName,
+    body: 'Thank you for always listening and for being my favorite person to talk to ✨',
+    color: '#a855f7',
+    emoji: '🌷',
+    isShared: true,
+    createdAt: '2026-11-02T10:00:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_HANGOUTS: HangoutEntry[] = [
+  {
+    id: 'seed-plan-1',
+    suggestedBy: DEFAULT_PROFILES.solomon.id,
+    suggestedByName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'Sunset Picnic & Gelato Run 🍦',
+    description: 'Blanket on the grass, favorite snacks, music, and catching the golden sunset.',
+    proposedDate: 'This Saturday @ 5:30 PM',
+    status: 'interested',
+    createdAt: '2026-11-02T11:00:00.000Z',
+  },
+];
+
+export const DEFAULT_INITIAL_CAPSULES: TimeCapsuleEntry[] = [
+  {
+    id: 'seed-cap-1',
+    authorId: DEFAULT_PROFILES.solomon.id,
+    authorName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'Open on Your Next Birthday 🎂',
+    body: 'Happy birthday Noella! I wrote this months ago hoping we would be celebrating today even happier, closer, and more in love than before. You mean the world to me.',
+    releaseAt: '2027-11-02T00:00:00.000Z',
+    isShared: true,
+    createdAt: '2026-11-02T12:00:00.000Z',
+  },
+];
+
 const STORAGE_KEYS = {
   CURRENT_USER: 'perfect_time_current_user',
   NOTES: 'perfect_time_notes',
@@ -44,12 +157,17 @@ const STORAGE_KEYS = {
   MOODS: 'perfect_time_moods',
 };
 
-// Safe LocalStorage helpers
+// Safe LocalStorage helpers with smart seed fallback
 function loadLocal<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(fallback) && fallback.length > 0) {
+      return fallback;
+    }
+    return parsed;
   } catch {
     return fallback;
   }
@@ -227,7 +345,7 @@ export const soundGardenService = {
       }
     }
 
-    return loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, []);
+    return loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
   },
 
   async addSong(song: {
@@ -261,7 +379,7 @@ export const soundGardenService = {
       });
     }
 
-    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, []);
+    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.SONGS, all);
     return entry;
@@ -271,7 +389,7 @@ export const soundGardenService = {
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('songs').update({ status }).eq('id', id);
     }
-    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, []);
+    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
     const updated = all.map((s) => (s.id === id ? { ...s, status } : s));
     saveLocal(STORAGE_KEYS.SONGS, updated);
   },
@@ -281,7 +399,7 @@ export const soundGardenService = {
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('songs').delete().eq('id', id).eq('added_by', user.id);
     }
-    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, []);
+    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
     const target = all.find((s) => s.id === id);
     if (target && target.addedBy !== user.id) {
       throw new Error('Unauthorized: You can only remove songs you recommended.');
@@ -315,7 +433,7 @@ export const shelfService = {
         }));
       }
     }
-    return loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, []);
+    return loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, DEFAULT_INITIAL_SHELF);
   },
 
   async addItem(item: {
@@ -403,7 +521,7 @@ export const memoryArchiveService = {
         }));
       }
     }
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     return all.filter((m) => m.contributorId === user.id || m.isShared);
   },
 
@@ -487,7 +605,7 @@ export const petalNotesService = {
         }));
       }
     }
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, []);
+    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
     return all.filter((p) => p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id)));
   },
 
@@ -561,7 +679,7 @@ export const hangoutService = {
         }));
       }
     }
-    return loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, []);
+    return loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
   },
 
   async addHangout(plan: { title: string; description?: string; proposedDate?: string }): Promise<HangoutEntry> {
@@ -714,7 +832,7 @@ export const timeCapsuleService = {
     // 1. Author sees all their capsules (including previewing the message).
     // 2. Intended recipient sees capsule ONLY IF isShared is true.
     // 3. If releaseAt > now and viewer is NOT the author, the body is completely locked/redacted!
-    const all = loadLocal<TimeCapsuleEntry[]>(STORAGE_KEYS.CAPSULES, []);
+    const all = loadLocal<TimeCapsuleEntry[]>(STORAGE_KEYS.CAPSULES, DEFAULT_INITIAL_CAPSULES);
     return all
       .filter((c) => {
         if (c.authorId === user.id) return true;

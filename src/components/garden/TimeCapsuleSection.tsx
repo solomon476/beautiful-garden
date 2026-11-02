@@ -102,25 +102,25 @@ export const TimeCapsuleSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-amber-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-amber-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 text-amber-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <Hourglass className="w-3.5 h-3.5 text-amber-400" />
             <span>Time Capsule</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
             Future Letters & Sealed Milestone Envelopes
           </h3>
-          <p className="font-handwriting text-lg text-amber-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-amber-200/90 leading-relaxed max-w-xl">
             Write a message to be unlocked on a specific future date. Server-enforced privacy keeps it sealed until then.
           </p>
         </div>
 
         <button
           onClick={handleOpenCreate}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 text-white" />
           <span>Seal a New Capsule</span>
         </button>
       </div>
@@ -246,7 +246,7 @@ export const TimeCapsuleSection: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {capsules.map((cap) => {
             const isAuthor = cap.authorId === currentUser.id;
             const release = new Date(cap.releaseAt);
@@ -261,26 +261,26 @@ export const TimeCapsuleSection: React.FC = () => {
                     setSelectedCapsule(cap);
                   }
                 }}
-                className={`glass-midnight-card group p-5 sm:p-6 rounded-2xl border transition-all flex flex-col justify-between space-y-3.5 shadow-md relative ${
+                className={`glass-midnight-card group p-7 sm:p-8 rounded-[2rem] border transition-all flex flex-col justify-between space-y-4 shadow-xl relative min-h-[220px] ${
                   isUnlocked
-                    ? 'border-emerald-400/40 hover:border-emerald-300 cursor-pointer shadow-emerald-500/10'
-                    : 'border-amber-400/30 cursor-default shadow-amber-500/10'
+                    ? 'border-emerald-400/50 hover:border-emerald-300 cursor-pointer shadow-emerald-500/10'
+                    : 'border-amber-400/40 cursor-default shadow-amber-500/10'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-3.5">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${
                         isUnlocked
                           ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
                           : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
                       }`}
                     >
-                      {isUnlocked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      {isUnlocked ? 'Unlocked & Ready to Read' : `Sealed (${diffDays} days left)`}
+                      {isUnlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                      {isUnlocked ? 'Unlocked & Ready to Read ✨' : `Sealed (${diffDays} days left) 🔐`}
                     </span>
 
-                    <span className="text-[11px] text-amber-200/90 font-mono flex items-center gap-1">
+                    <span className="text-xs text-amber-200/90 font-mono flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-amber-400" />
                       {release.toLocaleDateString('en-US', {
                         month: 'short',
@@ -290,25 +290,25 @@ export const TimeCapsuleSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <h4 className="font-serif text-lg font-bold text-white mb-1.5 group-hover:text-amber-200 transition-colors">
+                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-amber-200 transition-colors">
                     {cap.title}
                   </h4>
 
-                  <p className="text-xs sm:text-sm text-slate-200 font-light leading-relaxed">
+                  <p className="text-sm text-slate-200 font-light leading-relaxed">
                     {isUnlocked || isAuthor ? (
                       cap.body
                     ) : (
-                      <span className="italic text-slate-400 flex items-center gap-1.5 font-light">
-                        <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="italic text-slate-400 flex items-center gap-2 font-light">
+                        <Lock className="w-4 h-4 text-amber-400 shrink-0" />
                         This message is locked until {release.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.
                       </span>
                     )}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <span className="font-handwriting text-base text-amber-300">
-                    Author: {isAuthor ? 'You' : cap.authorName || partner.displayName}
+                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-2xl text-amber-300 font-medium">
+                    From: {isAuthor ? 'You 🌷' : (cap.authorName || partner.displayName) + ' ✨'}
                   </span>
 
                   <div className="flex items-center gap-2">
@@ -324,10 +324,10 @@ export const TimeCapsuleSection: React.FC = () => {
                     {isAuthor && (
                       <button
                         onClick={() => handleDelete(cap)}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-70 hover:opacity-100"
+                        className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
                         title="Delete capsule"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -335,6 +335,29 @@ export const TimeCapsuleSection: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Invitation Card */}
+          {capsules.length < 3 && (
+            <div
+              onClick={handleOpenCreate}
+              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-amber-400/30 hover:border-amber-300/60 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-amber-500/10 min-h-[220px] shadow-sm"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-yellow-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform shadow-inner">
+                <Hourglass className="w-6 h-6 text-amber-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-white group-hover:text-amber-200 transition-colors">
+                  Seal a Future Letter
+                </h4>
+                <p className="font-handwriting text-xl text-amber-200/80 max-w-xs mx-auto leading-snug">
+                  Write a letter to unlock on a birthday, anniversary, or special future date...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-amber-200 border border-amber-300/30 group-hover:bg-amber-500/30 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Seal Envelope ⏳
+              </span>
+            </div>
+          )}
         </div>
       )}
 

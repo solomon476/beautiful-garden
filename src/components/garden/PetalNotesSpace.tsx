@@ -100,25 +100,25 @@ export const PetalNotesSpace: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-rose-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-rose-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-rose-500/20 to-pink-500/20 border border-rose-400/40 text-rose-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-rose-400" />
             <span>Interactive Petal Notes</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
             Little Whispers, Compliments & Flower Messages
           </h3>
-          <p className="font-handwriting text-lg text-rose-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-rose-200/90 leading-relaxed max-w-xl">
             Spontaneous notes that unfurl like fresh petals when opened. Private by default.
           </p>
         </div>
 
         <button
           onClick={handleOpenCompose}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 text-white" />
           <span>Leave a Petal Note</span>
         </button>
       </div>
@@ -240,7 +240,7 @@ export const PetalNotesSpace: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {petals.map((petal) => {
             const isMine = petal.authorId === currentUser.id;
 
@@ -248,30 +248,30 @@ export const PetalNotesSpace: React.FC = () => {
               <div
                 key={petal.id}
                 onClick={() => handleViewPetal(petal)}
-                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-pink-400/50 transition-all cursor-pointer flex flex-col justify-between space-y-3.5 shadow-md relative overflow-hidden"
+                className="glass-midnight-card group p-7 sm:p-8 rounded-[2rem] hover:border-pink-400/50 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden min-h-[220px]"
               >
                 {/* Glow Aura */}
                 <div
-                  className="absolute -top-3 -right-3 w-20 h-20 rounded-full opacity-35 blur-xl pointer-events-none"
+                  className="absolute -top-3 -right-3 w-28 h-28 rounded-full opacity-35 blur-xl pointer-events-none"
                   style={{ backgroundColor: petal.color }}
                 />
 
                 <div className="flex items-start justify-between">
                   <div
-                    className="w-12 h-12 rounded-2xl border flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform"
+                    className="w-14 h-14 rounded-2xl border flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition-transform"
                     style={{ backgroundColor: `${petal.color}20`, borderColor: `${petal.color}40` }}
                   >
                     <span>{petal.emoji}</span>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono border ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-mono border shadow-sm ${
                       petal.isShared
                         ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
                         : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
                     }`}
                   >
-                    {petal.isShared ? <Globe2 className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
-                    <span>{petal.isShared ? 'Shared' : 'Private'}</span>
+                    {petal.isShared ? <Globe2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                    <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
                   </span>
                 </div>
 
@@ -279,9 +279,9 @@ export const PetalNotesSpace: React.FC = () => {
                   “{petal.body}”
                 </p>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <span className="font-handwriting text-base text-pink-300">
-                    From: {isMine ? 'You' : petal.authorName || partner.displayName}
+                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-2xl text-pink-300 font-medium">
+                    From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
                   </span>
                   {isMine && (
                     <button
@@ -289,16 +289,39 @@ export const PetalNotesSpace: React.FC = () => {
                         e.stopPropagation();
                         handleDelete(petal);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-70 hover:opacity-100"
+                      className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
                       title="Delete petal"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>
               </div>
             );
           })}
+
+          {/* Invitation Card */}
+          {petals.length < 3 && (
+            <div
+              onClick={handleOpenCompose}
+              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-rose-400/30 hover:border-rose-300/60 bg-gradient-to-br from-rose-500/5 via-pink-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-rose-500/10 min-h-[220px] shadow-sm"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-500/20 to-pink-500/20 border border-rose-400/40 flex items-center justify-center text-rose-300 group-hover:scale-110 transition-transform shadow-inner">
+                <Sparkles className="w-6 h-6 text-pink-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-white group-hover:text-pink-200 transition-colors">
+                  Plant a New Petal
+                </h4>
+                <p className="font-handwriting text-xl text-rose-200/80 max-w-xs mx-auto leading-snug">
+                  Leave a spontaneous whisper, flower note, or sweet thought...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-rose-200 border border-rose-300/30 group-hover:bg-rose-500/30 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Plant Petal 🌸
+              </span>
+            </div>
+          )}
         </div>
       )}
 

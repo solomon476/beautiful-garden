@@ -120,25 +120,25 @@ export const SoundGardenSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-purple-300 text-xs font-mono uppercase tracking-wider mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-purple-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-400/40 text-purple-200 text-xs font-mono uppercase tracking-widest shadow-sm">
             <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
             <span>The Sound Garden</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-            Shared Soundtracks & Music Recommendations
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+            Soundtracks & Shared Playlists
           </h3>
-          <p className="font-handwriting text-lg text-purple-200/80 mt-0.5">
+          <p className="font-handwriting text-2xl text-purple-200/90 leading-relaxed max-w-xl">
             Songs for road trips, quiet late nights, and inside memories.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+          className="btn-glow-romantic self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4 text-white" />
           <span>Recommend a Song</span>
         </button>
       </div>
@@ -275,7 +275,7 @@ export const SoundGardenSection: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {songs.map((song) => {
             const isAddedByMe = song.addedBy === currentUser.id;
             const badge = getStatusBadge(song.status);
@@ -283,17 +283,17 @@ export const SoundGardenSection: React.FC = () => {
             return (
               <div
                 key={song.id}
-                className="glass-vinyl-card group p-5 sm:p-6 rounded-2xl hover:border-purple-400/50 transition-all flex flex-col justify-between space-y-3 shadow-md relative"
+                className="glass-vinyl-card group p-7 sm:p-8 rounded-[2rem] hover:border-purple-400/50 transition-all flex flex-col justify-between space-y-4 shadow-xl relative min-h-[220px]"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-3.5">
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${badge.color}`}
+                      className={`px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${badge.color}`}
                     >
                       {badge.label}
                     </span>
 
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-xs text-slate-400 font-mono">
                       {new Date(song.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -301,17 +301,17 @@ export const SoundGardenSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3.5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
                       {/* Vinyl Groove Icon */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-900 to-indigo-950 border border-purple-400/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-500/15 shrink-0 group-hover:scale-110 transition-transform">
-                        <Disc3 className="w-6 h-6 animate-spin text-pink-300" style={{ animationDuration: '8s' }} />
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-900 to-indigo-950 border border-purple-400/30 flex items-center justify-center text-purple-300 shadow-lg shadow-purple-500/20 shrink-0 group-hover:scale-110 transition-transform">
+                        <Disc3 className="w-7 h-7 animate-spin text-pink-300" style={{ animationDuration: '8s' }} />
                       </div>
                       <div>
-                        <h4 className="font-serif text-lg font-bold text-white group-hover:text-purple-200 transition-colors">
+                        <h4 className="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-purple-200 transition-colors">
                           {song.title}
                         </h4>
-                        <p className="text-xs text-purple-200/80 font-mono">{song.artist}</p>
+                        <p className="text-sm text-purple-200/80 font-mono mt-0.5">{song.artist}</p>
                       </div>
                     </div>
 
@@ -319,7 +319,7 @@ export const SoundGardenSection: React.FC = () => {
                       href={song.musicUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/40 hover:to-pink-500/40 text-purple-200 border border-purple-400/30 transition-all hover:scale-110 shrink-0 shadow-sm"
+                      className="p-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/40 hover:to-pink-500/40 text-purple-200 border border-purple-400/30 transition-all hover:scale-110 shrink-0 shadow-sm"
                       title="Listen via Spotify / YouTube"
                       aria-label={`Open link for ${song.title}`}
                     >
@@ -328,16 +328,16 @@ export const SoundGardenSection: React.FC = () => {
                   </div>
 
                   {song.message && (
-                    <div className="mt-3.5 p-3 rounded-xl bg-purple-950/30 border border-purple-400/20 flex items-start gap-2 text-xs text-slate-200 font-light italic">
-                      <MessageSquare className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
+                    <div className="mt-4 p-3.5 rounded-2xl bg-purple-950/40 border border-purple-400/20 flex items-start gap-2.5 text-xs text-slate-200 font-light italic">
+                      <MessageSquare className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
                       <span>“{song.message}”</span>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400 font-mono">
-                  <span className="font-handwriting text-base text-purple-300">
-                    Rec by: {isAddedByMe ? 'You' : song.addedByName || partner.displayName}
+                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span className="font-handwriting text-2xl text-purple-300 font-medium">
+                    Rec by: {isAddedByMe ? 'You 🌷' : (song.addedByName || partner.displayName) + ' ✨'}
                   </span>
 
                   <div className="flex items-center gap-2">
@@ -345,7 +345,7 @@ export const SoundGardenSection: React.FC = () => {
                     <select
                       value={song.status}
                       onChange={(e) => handleStatusChange(song.id, e.target.value as SongStatus)}
-                      className="px-2.5 py-1 rounded-xl bg-purple-950/50 border border-purple-400/30 text-[11px] text-purple-200 hover:text-white focus:outline-none"
+                      className="px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-400/30 text-xs text-purple-200 hover:text-white focus:outline-none"
                     >
                       <option value="want_to_listen">Want to listen</option>
                       <option value="listened">Listened ✨</option>
@@ -355,10 +355,10 @@ export const SoundGardenSection: React.FC = () => {
                     {isAddedByMe && (
                       <button
                         onClick={() => handleDelete(song)}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors opacity-80 hover:opacity-100"
+                        className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
                         title="Delete recommendation"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -366,6 +366,29 @@ export const SoundGardenSection: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Invitation Card */}
+          {songs.length < 3 && (
+            <div
+              onClick={handleOpenAdd}
+              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-purple-400/30 hover:border-purple-300/60 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-purple-500/10 min-h-[220px] shadow-sm"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-pink-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform shadow-inner">
+                <Music className="w-6 h-6 text-pink-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-white group-hover:text-purple-200 transition-colors">
+                  Recommend Another Song
+                </h4>
+                <p className="font-handwriting text-xl text-purple-200/80 max-w-xs mx-auto leading-snug">
+                  Add a track for late-night listening or your next road trip...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-purple-200 border border-purple-300/30 group-hover:bg-purple-500/30 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Add Track 🎵
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

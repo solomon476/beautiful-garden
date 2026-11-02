@@ -124,28 +124,28 @@ export const LettersSection: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 sm:space-y-10">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-purple-400/15">
-        <div>
-          <div className="flex items-center gap-2 text-rose-300 text-xs font-mono uppercase tracking-wider mb-1">
-            <PenLine className="w-3.5 h-3.5 text-pink-400" />
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-pink-400/20">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono uppercase tracking-widest shadow-sm">
+            <PenLine className="w-3.5 h-3.5 text-pink-300" />
             <span>Letters in the Garden</span>
           </div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-            Thoughts, Letters & Keepsake Notes
+          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+            Thoughts, Letters & Keepsakes
           </h3>
-          <p className="font-handwriting text-lg text-pink-200/80 mt-0.5">
-            Private journal by default. Deliberate sharing keeps your writing personal and safe.
+          <p className="font-handwriting text-2xl text-pink-200/90 leading-relaxed max-w-xl">
+            A quiet desk for thoughts, letters, and feelings you wish to keep in bloom.
           </p>
         </div>
 
         {!isComposing && (
           <button
             onClick={handleStartCompose}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+            className="btn-glow-romantic self-start sm:self-auto"
           >
-            <PenLine className="w-3.5 h-3.5" />
+            <Sparkles className="w-4 h-4 text-white" />
             <span>Write New Letter</span>
           </button>
         )}
@@ -320,7 +320,7 @@ export const LettersSection: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {notes.map((note) => {
             const isAuthor = note.authorId === currentUser.id;
             const dateStr = new Date(note.createdAt).toLocaleDateString('en-US', {
@@ -333,12 +333,18 @@ export const LettersSection: React.FC = () => {
               <div
                 key={note.id}
                 onClick={() => setSelectedNote(note)}
-                className="glass-parchment-card group p-5 sm:p-6 rounded-2xl hover:border-pink-400/50 transition-all cursor-pointer flex flex-col justify-between space-y-3 shadow-md relative"
+                className="glass-parchment-card group p-7 sm:p-8 rounded-[2rem] hover:border-pink-300/60 transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-5 shadow-xl hover:-translate-y-1 relative overflow-hidden min-h-[260px]"
               >
+                {/* Cute Washi Tape Accent */}
+                <div className="washi-tape" />
+
+                {/* Subtle decorative wax watermark */}
+                <div className="absolute -bottom-6 -right-6 w-28 h-28 rounded-full bg-pink-500/10 blur-xl pointer-events-none group-hover:bg-pink-500/25 transition-all duration-500" />
+
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-4 mt-1">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${
                         note.isShared
                           ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
                           : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
@@ -346,43 +352,43 @@ export const LettersSection: React.FC = () => {
                     >
                       {note.isShared ? (
                         <>
-                          <Globe2 className="w-3 h-3 text-emerald-300" /> Shared Letter
+                          <Globe2 className="w-3.5 h-3.5 text-emerald-300" /> Shared Letter 💌
                         </>
                       ) : (
                         <>
-                          <Lock className="w-3 h-3 text-amber-300" /> Private Draft
+                          <Lock className="w-3.5 h-3.5 text-amber-300" /> Private Draft 🔒
                         </>
                       )}
                     </span>
 
-                    <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-pink-400/70" />
+                    <span className="text-xs text-pink-200/70 font-mono flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-pink-400/70" />
                       {dateStr}
                     </span>
                   </div>
 
-                  <h4 className="font-serif text-lg font-bold text-white line-clamp-1 mb-1.5 group-hover:text-pink-200 transition-colors">
+                  <h4 className="font-serif text-2xl font-bold text-white mb-2 leading-snug group-hover:text-pink-200 transition-colors line-clamp-1">
                     {note.title || 'Untitled Letter'}
                   </h4>
 
-                  <p className="text-xs sm:text-sm text-slate-200/90 line-clamp-3 font-light leading-relaxed">
+                  <p className="text-sm sm:text-base text-slate-200/90 line-clamp-3 font-light leading-relaxed min-h-[4rem]">
                     {note.body}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
-                  <span className="font-handwriting text-base text-pink-300">
-                    From: {isAuthor ? 'You' : note.authorName || partner.displayName}
+                <div className="pt-4 border-t border-pink-400/20 flex items-center justify-between text-xs text-slate-400">
+                  <span className="font-handwriting text-2xl text-pink-300 font-medium flex items-center gap-1">
+                    From: {isAuthor ? 'You 🌷' : (note.authorName || partner.displayName) + ' ✨'}
                   </span>
 
                   {isAuthor && (
-                    <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditNote(note);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-white/10 text-pink-300 hover:text-white transition-colors"
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-pink-200 hover:text-white flex items-center justify-center transition-all hover:scale-110 shadow-sm"
                         title="Edit Letter"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -392,7 +398,7 @@ export const LettersSection: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(note);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition-colors"
+                        className="w-8 h-8 rounded-full bg-rose-500/20 hover:bg-rose-500/35 text-rose-300 hover:text-rose-100 flex items-center justify-center transition-all hover:scale-110 shadow-sm"
                         title="Delete Letter"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -403,6 +409,29 @@ export const LettersSection: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Invitation / Inspiration Card when fewer notes exist */}
+          {notes.length < 3 && (
+            <div
+              onClick={handleStartCompose}
+              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-pink-400/30 hover:border-pink-300/60 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-pink-500/10 min-h-[260px] shadow-sm relative overflow-hidden"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500/20 to-rose-400/20 border border-pink-400/40 flex items-center justify-center text-pink-300 group-hover:scale-110 transition-transform shadow-inner">
+                <Sparkles className="w-6 h-6 text-pink-300" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-xl font-bold text-white group-hover:text-pink-200 transition-colors">
+                  Write a Keepsake Note
+                </h4>
+                <p className="font-handwriting text-xl text-pink-200/80 max-w-xs mx-auto leading-snug">
+                  Leave a sweet note, an inside joke, or a loving thought for {partner.displayName}...
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-pink-200 border border-pink-300/30 group-hover:bg-pink-500/30 transition-all">
+                <PenLine className="w-3.5 h-3.5" /> Start Writing 🌸
+              </span>
+            </div>
+          )}
         </div>
       )}
 
