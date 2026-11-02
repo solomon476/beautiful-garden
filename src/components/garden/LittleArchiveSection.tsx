@@ -112,7 +112,7 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-pink-400/15">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-pink-400/15">
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-400/30 text-pink-200 text-[10px] font-mono uppercase tracking-widest">
             <Camera className="w-3 h-3 text-pink-300" />
@@ -128,7 +128,7 @@ export const LittleArchiveSection: React.FC = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="btn-glow-romantic self-start sm:self-auto shrink-0"
+          className="btn-glow-romantic shrink-0"
         >
           <Plus className="w-4 h-4 text-white" />
           <span>Add New Snapshot</span>

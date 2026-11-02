@@ -15,7 +15,10 @@ import {
   CheckCircle2,
   Lock,
   Globe,
+  Flower2,
+  ArrowLeft,
 } from 'lucide-react';
+import { GardenDashboardOverview } from './GardenDashboardOverview';
 import { LettersSection } from './LettersSection';
 import { SoundGardenSection } from './SoundGardenSection';
 import { ExchangeShelfSection } from './ExchangeShelfSection';
@@ -37,6 +40,7 @@ interface OurGardenModalProps {
 }
 
 type TabKey =
+  | 'garden'
   | 'letters'
   | 'sound'
   | 'shelf'
@@ -50,6 +54,7 @@ type TabKey =
   | 'security';
 
 const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
+  { id: 'garden', label: 'Our Garden', icon: Flower2, color: 'from-pink-500 to-rose-400' },
   { id: 'letters', label: 'Letters', icon: PenLine, color: 'from-pink-500 to-rose-400' },
   { id: 'sound', label: 'Sound Garden', icon: Headphones, color: 'from-purple-500 to-indigo-400' },
   { id: 'shelf', label: 'Exchange Shelf', icon: Layers, color: 'from-amber-400 to-orange-400' },
@@ -64,7 +69,7 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
 ];
 
 export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<TabKey>('letters');
+  const [activeTab, setActiveTab] = useState<TabKey>('garden');
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
   const [auditResults, setAuditResults] = useState<PrivacyTestResult[] | null>(null);
   const [testingAudit, setTestingAudit] = useState<boolean>(false);
@@ -122,8 +127,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
       style={{ zIndex: 1000, backgroundColor: '#070311' }}
     >
       <div
-        className="relative w-full h-full flex flex-col overflow-hidden bg-garden-canvas"
+        className="relative w-full h-full flex flex-col min-h-0 overflow-hidden bg-garden-canvas"
         style={{
+          minHeight: 0,
           backgroundColor: '#070311',
           background: 'radial-gradient(circle at 80% 5%, rgba(244, 114, 182, 0.18) 0%, transparent 45%), radial-gradient(circle at 15% 95%, rgba(192, 132, 252, 0.16) 0%, transparent 50%), linear-gradient(175deg, #130a24 0%, #070311 100%)',
         }}
@@ -133,47 +139,42 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         <div className="garden-glow-orb-top" />
         <div className="garden-glow-orb-bottom" />
 
-        {/* Top Header — Cleanly Docked at Top of Sanctuary */}
+        {/* Top Header — Matching Image 2 */}
         <header
-          className="relative z-10 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-purple-400/15 flex items-center justify-between gap-3 bg-garden-header backdrop-blur-xl shrink-0"
+          className="relative z-10 px-4 sm:px-8 py-3 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-3 bg-garden-header backdrop-blur-xl shrink-0"
           style={{ backgroundColor: 'rgba(13, 8, 30, 0.96)' }}
         >
-          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500/80 via-purple-500/80 to-rose-400/80 flex items-center justify-center text-white shadow-md shadow-pink-500/20 shrink-0 border border-white/20">
-              <Sparkles className="w-5 h-5 fill-white/80" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
+              <Sparkles className="w-4 h-4 fill-white text-white" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 sm:gap-2.5">
-                <h2 className="font-serif text-xl sm:text-2xl font-bold text-gradient-garden tracking-tight truncate">
-                  Our Garden
-                </h2>
-                <span className="text-[10px] sm:text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-pink-500/15 text-pink-200 border border-pink-400/30 whitespace-nowrap hidden xs:inline-block">
-                  Shared Sanctuary 🌿
-                </span>
-              </div>
-              <p className="font-handwriting text-base sm:text-lg text-pink-200/80 leading-none mt-0.5 truncate">
-                A private corner for laughs, playlists, keepsakes & memories
-              </p>
+              <h2 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
+                <span>Perfect Time</span>
+                <span className="text-pink-400 font-sans">|</span>
+                <span className="text-xs sm:text-sm text-pink-200/90 font-medium">💖 — A Private Garden for Us ♡</span>
+              </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Account Switcher Pill — Tastefully Secondary */}
-            <button
-              onClick={handleSwitchUser}
-              className="group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white text-xs backdrop-blur-md transition-all focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
-              title={`Switch active user to ${currentUser.username === 'noella' ? 'Solomon' : 'Noella'}`}
-            >
-              <span className="text-slate-400 font-mono text-[11px] hidden md:inline">Viewing as:</span>
-              <span className="font-medium text-pink-200 text-xs">
-                {currentUser.displayName}
-              </span>
-              <span className="text-purple-300/40 text-[10px] hidden sm:inline">|</span>
-              <span className="text-[11px] text-purple-300 group-hover:text-pink-200 flex items-center gap-1">
-                <ArrowRightLeft className="w-3 h-3 text-purple-300 transition-transform group-hover:rotate-180 duration-300" />
-                <span className="hidden sm:inline">Switch to {currentUser.username === 'noella' ? 'Solomon' : 'Noella'}</span>
-              </span>
-            </button>
+            {/* Account Switcher Matching Image 2 */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-slate-300 text-xs font-mono">
+                <span className="text-slate-400">Viewing as:</span>
+                <span className="text-white font-medium">{currentUser.displayName}</span>
+                <span>👤</span>
+              </div>
+
+              <button
+                onClick={handleSwitchUser}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 border border-white/20 active:scale-95 transition-all"
+                title={`Switch active user to ${currentUser.username === 'noella' ? 'Solomon' : 'Noella'}`}
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" />
+                <span>Switch to {currentUser.username === 'noella' ? 'Solomon 🌿' : 'Noella ✨'}</span>
+              </button>
+            </div>
 
             {/* Clean Frosted Close Button */}
             <button
@@ -212,7 +213,42 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         </nav>
 
         {/* Tab Content Canvas with Balanced Proportions */}
-        <main className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-8 max-w-6xl mx-auto w-full">
+        <main
+          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-8 mx-auto w-full ${
+            activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
+          }`}
+          style={{ minHeight: 0 }}
+        >
+          {/* Quick Back to Sanctuary Bar when inside a specific tab */}
+          {activeTab !== 'garden' && (
+            <div className="flex items-center justify-between pb-3 border-b border-purple-400/15">
+              <button
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  setActiveTab('garden');
+                }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 hover:border-pink-300/50 text-pink-200 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-pink-300" />
+                <span>← Back to Garden Sanctuary Overview</span>
+              </button>
+
+              <span className="text-[11px] font-mono text-purple-300/70 hidden sm:inline">
+                🌸 Shared Sanctuary Desk
+              </span>
+            </div>
+          )}
+
+          {activeTab === 'garden' && (
+            <GardenDashboardOverview
+              onSelectTab={(tab) => {
+                soundEngine.playSparkle();
+                setActiveTab(tab);
+              }}
+              currentUser={currentUser}
+            />
+          )}
+
           {activeTab === 'letters' && <LettersSection />}
           {activeTab === 'sound' && <SoundGardenSection />}
           {activeTab === 'shelf' && <ExchangeShelfSection />}
