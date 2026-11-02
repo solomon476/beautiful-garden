@@ -80,23 +80,23 @@ export const LittleQuestionsSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-sky-400/20">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sky-500/20 to-indigo-500/20 border border-sky-400/40 text-sky-200 text-xs font-mono uppercase tracking-widest shadow-sm">
-            <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-sky-400/15">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-400/30 text-sky-200 text-[10px] font-mono uppercase tracking-widest">
+            <HelpCircle className="w-3 h-3 text-sky-300" />
             <span>Little Questions</span>
           </div>
-          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+          <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gradient-garden">
             Playful Prompts & Gentle Thoughts
           </h3>
-          <p className="font-handwriting text-2xl text-sky-200/90 leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-sm text-sky-200/80 font-light leading-relaxed max-w-xl">
             Answer privately, share when you wish, or skip freely with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleNextPrompt}
-          className="btn-glow-romantic self-start sm:self-auto"
+          className="btn-glow-romantic self-start sm:self-auto shrink-0"
         >
           <span>Next Prompt</span>
           <ChevronRight className="w-4 h-4 text-white" />
@@ -104,20 +104,20 @@ export const LittleQuestionsSection: React.FC = () => {
       </div>
 
       {/* Current Question Card */}
-      <div className="glass-midnight-card p-8 sm:p-12 rounded-[2.5rem] space-y-8 relative overflow-hidden shadow-2xl">
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest bg-sky-500/20 border border-sky-400/40 text-sky-200 shadow-sm">
+      <div className="glass-midnight-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl space-y-6 relative overflow-hidden shadow-2xl border border-sky-400/20">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-block px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-widest bg-sky-500/15 border border-sky-400/30 text-sky-200">
               Prompt {activePromptIndex + 1} of {CONVERSATION_PROMPTS.length} • {currentPrompt.category}
             </span>
           </div>
-          <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-snug">
+          <h4 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-snug">
             “{currentPrompt.question}”
           </h4>
         </div>
 
         {/* Answer submission */}
-        <form onSubmit={handleSaveAnswer} className="space-y-4 pt-3 border-t border-purple-400/15">
+        <form onSubmit={handleSaveAnswer} className="space-y-4 pt-4 border-t border-purple-400/15">
           <div>
             <label className="block text-xs font-mono text-sky-200/70 uppercase tracking-wider mb-1.5">
               Your Answer
@@ -127,7 +127,7 @@ export const LittleQuestionsSection: React.FC = () => {
               value={myAnswer}
               onChange={(e) => setMyAnswer(e.target.value)}
               placeholder="Jot down whatever comes to mind..."
-              className="w-full px-4 py-3 rounded-2xl bg-slate-950/70 border border-sky-400/20 text-white text-sm focus:outline-none focus:border-sky-400 shadow-inner resize-y font-light leading-relaxed"
+              className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-sky-400/20 text-white text-sm focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40 shadow-inner resize-y font-light leading-relaxed placeholder:text-slate-500"
             />
           </div>
 
@@ -137,15 +137,15 @@ export const LittleQuestionsSection: React.FC = () => {
                 type="checkbox"
                 checked={isShared}
                 onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded text-sky-500 focus:ring-0"
+                className="rounded border-sky-400/30 bg-purple-950/60 text-sky-500 focus:ring-0"
               />
               <span>
                 {isShared ? (
-                  <span className="text-emerald-300 flex items-center gap-1 font-medium">
+                  <span className="text-emerald-300 flex items-center gap-1.5 font-medium">
                     <Globe2 className="w-3.5 h-3.5" /> Shared with {partner.displayName}
                   </span>
                 ) : (
-                  <span className="text-amber-300 flex items-center gap-1 font-medium">
+                  <span className="text-amber-300 flex items-center gap-1.5 font-medium">
                     <Lock className="w-3.5 h-3.5" /> Private to you (Unshared)
                   </span>
                 )}
@@ -154,7 +154,7 @@ export const LittleQuestionsSection: React.FC = () => {
 
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-sky-500/25 transition-all self-end border border-white/20"
+              className="px-5 py-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-sky-500/25 transition-all self-end sm:self-auto border border-white/20"
             >
               Save Answer ✨
             </button>
@@ -163,12 +163,12 @@ export const LittleQuestionsSection: React.FC = () => {
 
         {/* Partner's answer if shared */}
         {partnerResponse && (
-          <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-400/30 space-y-2 animate-fade-in shadow-inner">
-            <span className="text-xs font-mono text-pink-300 flex items-center gap-1.5 uppercase tracking-wider">
-              <MessageCircle className="w-4 h-4 text-pink-400" />
-              {partner.displayName}'s Shared Answer:
+          <div className="quote-whisper-bubble p-5 rounded-2xl space-y-2 animate-fade-in border border-pink-400/20">
+            <span className="text-xs font-mono text-pink-300 flex items-center gap-1.5 uppercase tracking-wider font-medium">
+              <MessageCircle className="w-3.5 h-3.5 text-pink-400" />
+              {partner.displayName}'s Shared Answer
             </span>
-            <p className="font-handwriting text-2xl text-pink-100 leading-relaxed">
+            <p className="font-serif italic text-lg sm:text-xl text-pink-100 leading-relaxed pl-1">
               “{partnerResponse.answer}”
             </p>
           </div>

@@ -113,10 +113,14 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#070311] animate-fade-in overflow-hidden font-body">
+    <div
+      className="fixed inset-0 z-modal flex flex-col bg-garden-canvas animate-fade-in overflow-hidden font-body"
+      style={{ zIndex: 1000, backgroundColor: '#070311' }}
+    >
       <div
-        className="relative w-full h-full flex flex-col overflow-hidden"
+        className="relative w-full h-full flex flex-col overflow-hidden bg-garden-canvas"
         style={{
+          backgroundColor: '#070311',
           background: 'radial-gradient(circle at 80% 5%, rgba(244, 114, 182, 0.18) 0%, transparent 45%), radial-gradient(circle at 15% 95%, rgba(192, 132, 252, 0.16) 0%, transparent 50%), linear-gradient(175deg, #130a24 0%, #070311 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -126,56 +130,60 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         <div className="garden-glow-orb-bottom" />
 
         {/* Top Header — Cleanly Docked at Top of Sanctuary */}
-        <header className="relative z-10 px-6 sm:px-12 py-5 border-b border-pink-400/20 flex flex-wrap items-center justify-between gap-4 bg-[#0d071d]/85 backdrop-blur-xl shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-rose-400 flex items-center justify-center text-white shadow-lg shadow-pink-500/25 shrink-0 border border-white/20">
-              <Sparkles className="w-6 h-6 fill-white/80" />
+        <header
+          className="relative z-10 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-purple-400/15 flex items-center justify-between gap-3 bg-garden-header backdrop-blur-xl shrink-0"
+          style={{ backgroundColor: 'rgba(13, 8, 30, 0.96)' }}
+        >
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-500/80 via-purple-500/80 to-rose-400/80 flex items-center justify-center text-white shadow-md shadow-pink-500/20 shrink-0 border border-white/20">
+              <Sparkles className="w-5 h-5 fill-white/80" />
             </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-gradient-garden tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-gradient-garden tracking-tight truncate">
                   Our Garden
                 </h2>
-                <span className="text-[11px] font-mono px-3 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-200 border border-pink-400/40 shadow-sm">
+                <span className="text-[10px] sm:text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-pink-500/15 text-pink-200 border border-pink-400/30 whitespace-nowrap hidden xs:inline-block">
                   Shared Sanctuary 🌿
                 </span>
               </div>
-              <p className="font-handwriting text-xl text-pink-200/90 leading-none mt-1">
+              <p className="font-handwriting text-base sm:text-lg text-pink-200/80 leading-none mt-0.5 truncate">
                 A private corner for laughs, playlists, keepsakes & memories
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Account Switcher Pill */}
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/80 border border-pink-400/35 text-xs backdrop-blur-md shadow-md">
-              <span className="text-slate-300 hidden sm:inline font-mono text-[11px]">Viewing as:</span>
-              <span className="font-semibold text-pink-200 flex items-center gap-1">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Account Switcher Pill — Tastefully Secondary */}
+            <button
+              onClick={handleSwitchUser}
+              className="group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white text-xs backdrop-blur-md transition-all focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
+              title={`Switch active user to ${currentUser.username === 'noella' ? 'Solomon' : 'Noella'}`}
+            >
+              <span className="text-slate-400 font-mono text-[11px] hidden md:inline">Viewing as:</span>
+              <span className="font-medium text-pink-200 text-xs">
                 {currentUser.displayName}
               </span>
-              <button
-                onClick={handleSwitchUser}
-                className="flex items-center gap-1.5 ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-rose-500/30 hover:from-pink-500/50 hover:to-rose-500/50 text-white text-[11px] font-medium border border-pink-300/40 transition-all hover:scale-105 active:scale-95 shadow-sm shadow-pink-500/20"
-                title={`Switch active user to ${currentUser.username === 'noella' ? 'Solomon' : 'Noella'}`}
-              >
-                <ArrowRightLeft className="w-3 h-3 text-pink-300" />
-                <span>Switch to {currentUser.username === 'noella' ? 'Solomon 🌿' : 'Noella ✨'}</span>
-              </button>
-            </div>
+              <span className="text-purple-300/40 text-[10px] hidden sm:inline">|</span>
+              <span className="text-[11px] text-purple-300 group-hover:text-pink-200 flex items-center gap-1">
+                <ArrowRightLeft className="w-3 h-3 text-purple-300 transition-transform group-hover:rotate-180 duration-300" />
+                <span className="hidden sm:inline">Switch to {currentUser.username === 'noella' ? 'Solomon' : 'Noella'}</span>
+              </span>
+            </button>
 
-            {/* Prominent Frosted Close Button */}
+            {/* Clean Frosted Close Button */}
             <button
               onClick={onClose}
-              className="w-11 h-11 rounded-full bg-white/10 hover:bg-rose-500/30 border border-white/20 hover:border-pink-300/50 text-slate-200 hover:text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-md ml-1"
+              className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
               aria-label="Close Our Garden"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* Feature Tab Navigation Bar */}
-        <nav className="relative z-10 px-6 sm:px-12 py-3.5 border-b border-pink-400/15 bg-[#0b0518]/70 flex items-center gap-3 overflow-x-auto scrollbar-none shrink-0">
+        {/* Feature Tab Navigation Bar — Streamlined & Uncluttered */}
+        <nav className="relative z-10 px-4 sm:px-8 py-2.5 border-b border-purple-400/10 bg-[#090514]/75 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none shrink-0" aria-label="Garden feature sections">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -187,19 +195,20 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
                   soundEngine.playSparkle();
                   setActiveTab(tab.id);
                 }}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none ${
                   isActive ? 'nav-tab-active' : 'nav-tab-inactive'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-pink-300'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-pink-300' : 'text-purple-300/70'}`} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Tab Content Canvas with Luxurious Padding */}
-        <main className="relative z-10 flex-1 overflow-y-auto px-6 sm:px-12 py-8 sm:py-10 space-y-10 max-w-7xl mx-auto w-full">
+        {/* Tab Content Canvas with Balanced Proportions */}
+        <main className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-8 max-w-6xl mx-auto w-full">
           {activeTab === 'letters' && <LettersSection />}
           {activeTab === 'sound' && <SoundGardenSection />}
           {activeTab === 'shelf' && <ExchangeShelfSection />}
@@ -256,11 +265,11 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
                         {res.passed ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5">
                           <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-200">
                             {res.name}
                           </h4>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 shrink-0">
                             {res.passed ? 'PASSED (RLS Active)' : 'FAILED'}
                           </span>
                         </div>

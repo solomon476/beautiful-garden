@@ -140,23 +140,23 @@ export const ExchangeShelfSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-amber-400/20">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/40 text-amber-200 text-xs font-mono uppercase tracking-widest shadow-sm">
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span>The Exchange Shelf</span>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-amber-400/15">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[10px] font-mono uppercase tracking-widest">
+            <Layers className="w-3 h-3 text-amber-300" />
+            <span>Exchange Shelf</span>
           </div>
-          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+          <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gradient-garden">
             Films, Books, Food & Discoveries
           </h3>
-          <p className="font-handwriting text-2xl text-amber-200/90 leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-sm text-amber-200/80 font-light leading-relaxed max-w-xl">
             A shared cabinet of things to watch, read, taste, visit and experience together.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="btn-glow-romantic self-start sm:self-auto"
+          className="btn-glow-romantic self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 text-white" />
           <span>Add Recommendation</span>
@@ -167,10 +167,10 @@ export const ExchangeShelfSection: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => setSelectedCategory('all')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 ${
+          className={`px-3.5 py-1.5 rounded-full text-xs transition-all shrink-0 ${
             selectedCategory === 'all'
-              ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/50 shadow-sm font-semibold'
-              : 'bg-white/5 text-slate-300/80 hover:text-white border border-white/10 hover:bg-white/10'
+              ? 'bg-pink-500/20 text-white border border-pink-400/40 shadow-sm font-semibold'
+              : 'bg-white/[0.04] text-purple-200/70 hover:text-white hover:bg-white/[0.08] border border-white/10'
           }`}
         >
           All Recommendations ({items.length})
@@ -185,10 +185,10 @@ export const ExchangeShelfSection: React.FC = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs transition-all shrink-0 flex items-center gap-1.5 ${
                 isActive
-                  ? 'bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-rose-500/30 text-white border border-pink-400/50 shadow-sm font-semibold'
-                  : 'bg-white/5 text-slate-300/80 hover:text-white border border-white/10 hover:bg-white/10'
+                  ? 'bg-pink-500/20 text-white border border-pink-400/40 shadow-sm font-semibold'
+                  : 'bg-white/[0.04] text-purple-200/70 hover:text-white hover:bg-white/[0.08] border border-white/10'
               }`}
             >
               <span>{cfg.label}</span>
@@ -200,15 +200,16 @@ export const ExchangeShelfSection: React.FC = () => {
 
       {/* Add Item Form */}
       {isAdding && (
-        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-amber-300 flex items-center gap-1.5">
+        <div className="glass-midnight-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-amber-400/30 shadow-2xl">
+          <div className="flex items-center justify-between pb-2 border-b border-amber-400/15">
+            <span className="text-xs font-mono uppercase tracking-wider text-amber-200 flex items-center gap-1.5 font-medium">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               Add to the Exchange Shelf
             </span>
             <button
               onClick={() => setIsAdding(false)}
-              className="p-1 rounded-full text-slate-400 hover:text-white transition-colors"
+              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
@@ -217,7 +218,7 @@ export const ExchangeShelfSection: React.FC = () => {
           <form onSubmit={handleSave} className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
                   Title *
                 </label>
                 <input
@@ -226,18 +227,18 @@ export const ExchangeShelfSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Past Lives (2023)"
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 shadow-inner"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
                   Category *
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ShelfCategory)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 shadow-inner"
+                  className="garden-select w-full py-2 px-3 text-xs"
                 >
                   <option value="films">Films & Series 🎬</option>
                   <option value="books">Books & Reads 📚</option>
@@ -250,7 +251,7 @@ export const ExchangeShelfSection: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
                 Description / Notes
               </label>
               <textarea
@@ -258,12 +259,12 @@ export const ExchangeShelfSection: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Why you recommend it, when we should try it, or what makes it special..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 shadow-inner resize-y font-light"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner resize-y font-light leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
                 Reference Link / Maps Link (Optional)
               </label>
               <input
@@ -271,13 +272,13 @@ export const ExchangeShelfSection: React.FC = () => {
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
                 placeholder="https://..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 shadow-inner"
+                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner"
               />
             </div>
 
             {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-amber-400/15">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
@@ -287,7 +288,7 @@ export const ExchangeShelfSection: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-amber-500/25 border border-white/20"
+                className="btn-glow-romantic text-xs"
               >
                 Place on Shelf ✨
               </button>
@@ -298,27 +299,28 @@ export const ExchangeShelfSection: React.FC = () => {
 
       {/* Grid of Items */}
       {loading ? (
-        <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
+        <div className="py-12 text-center text-purple-300/60 text-xs font-mono animate-pulse">
           Opening cabinet shelves...
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-inner">
-            <Layers className="w-6 h-6" />
+        <div className="glass-midnight-card p-10 rounded-2xl text-center space-y-3.5 border border-amber-400/25">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-inner">
+            <Layers className="w-5 h-5" />
           </div>
           <h4 className="font-serif text-xl text-white">This Shelf Section is Clean & Ready</h4>
-          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+          <p className="text-xs sm:text-sm text-purple-200/80 max-w-md mx-auto font-light leading-relaxed">
             Share a movie to watch together, a dessert recipe to try, or an adventure destination.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500/20 to-rose-500/20 hover:from-amber-500/30 hover:to-rose-500/30 text-amber-200 text-xs font-medium border border-amber-400/30 transition-all hover:scale-105"
+            className="btn-glow-romantic text-xs mx-auto"
           >
-            Add an Item
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add an Item</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
           {filteredItems.map((item) => {
             const isMine = item.contributorId === currentUser.id;
             const catInfo = CATEGORY_MAP[item.category] || CATEGORY_MAP.films;
@@ -327,18 +329,18 @@ export const ExchangeShelfSection: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="glass-midnight-card group p-7 sm:p-8 rounded-[2rem] hover:border-amber-400/50 transition-all flex flex-col justify-between space-y-4 shadow-xl relative min-h-[220px]"
+                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-amber-400/40 transition-all flex flex-col justify-between space-y-4 shadow-lg relative min-h-[200px]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3.5">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${catInfo.badge}`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${catInfo.badge}`}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon className="w-3 h-3" />
                       {catInfo.label}
                     </span>
 
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-[11px] text-purple-300/60 font-mono">
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -346,12 +348,12 @@ export const ExchangeShelfSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-amber-200 transition-colors">
+                  <h4 className="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-amber-200 transition-colors line-clamp-1">
                     {item.title}
                   </h4>
 
                   {item.description && (
-                    <p className="text-sm text-slate-200/90 line-clamp-3 font-light leading-relaxed">
+                    <p className="text-xs sm:text-sm text-purple-100/80 line-clamp-3 font-light leading-relaxed">
                       {item.description}
                     </p>
                   )}
@@ -361,26 +363,27 @@ export const ExchangeShelfSection: React.FC = () => {
                       href={item.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 mt-3 hover:underline font-medium"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] hover:bg-amber-500/20 text-amber-200 hover:text-white border border-amber-300/20 text-[11px] font-medium transition-all w-fit"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Open reference link</span>
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Reference Link</span>
                     </a>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
-                  <span className="font-handwriting text-2xl text-amber-200 font-medium">
+                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs">
+                  <span className="font-handwriting text-xl text-amber-200 font-medium truncate">
                     Rec by: {isMine ? 'You 🌷' : (item.contributorName || partner.displayName) + ' ✨'}
                   </span>
 
                   {isMine && (
                     <button
                       onClick={() => handleDelete(item)}
-                      className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
+                      className="p-1.5 rounded-full hover:bg-rose-500/20 text-purple-300/70 hover:text-rose-300 transition-colors"
                       title="Delete recommendation"
+                      aria-label={`Delete ${item.title}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -389,24 +392,24 @@ export const ExchangeShelfSection: React.FC = () => {
           })}
 
           {/* Invitation Card */}
-          {filteredItems.length < 3 && (
+          {filteredItems.length < 4 && (
             <div
               onClick={handleOpenAdd}
-              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-amber-400/30 hover:border-amber-300/60 bg-gradient-to-br from-amber-500/5 via-pink-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-amber-500/10 min-h-[220px] shadow-sm"
+              className="group p-5 sm:p-6 rounded-2xl border border-dashed border-amber-400/25 hover:border-amber-300/50 bg-gradient-to-br from-amber-500/[0.04] to-transparent hover:bg-amber-500/[0.08] flex flex-col justify-center items-center text-center space-y-3 cursor-pointer transition-all duration-300 min-h-[200px]"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform shadow-inner">
-                <Layers className="w-6 h-6 text-amber-300" />
+              <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-105 transition-transform">
+                <Layers className="w-5 h-5 text-amber-300" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-serif text-xl font-bold text-white group-hover:text-amber-200 transition-colors">
+                <h4 className="font-serif text-lg font-bold text-white group-hover:text-amber-200 transition-colors">
                   Add to the Shelf
                 </h4>
-                <p className="font-handwriting text-xl text-amber-200/80 max-w-xs mx-auto leading-snug">
+                <p className="text-xs text-amber-200/70 max-w-xs mx-auto leading-relaxed font-light">
                   Recommend a film, cozy read, or delicious place to try...
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-amber-200 border border-amber-300/30 group-hover:bg-amber-500/30 transition-all">
-                <Plus className="w-3.5 h-3.5" /> Place on Shelf ✨
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/[0.06] text-amber-200 border border-amber-300/20 group-hover:border-amber-300/40 group-hover:bg-amber-500/20 transition-all">
+                <Plus className="w-3.5 h-3.5" /> Place on Shelf
               </span>
             </div>
           )}

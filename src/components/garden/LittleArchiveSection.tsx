@@ -112,23 +112,23 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-pink-400/20">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono uppercase tracking-widest shadow-sm">
-            <Camera className="w-3.5 h-3.5 text-pink-400" />
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-pink-400/15">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/15 border border-pink-400/30 text-pink-200 text-[10px] font-mono uppercase tracking-widest">
+            <Camera className="w-3 h-3 text-pink-300" />
             <span>Our Little Archive</span>
           </div>
-          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+          <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gradient-garden">
             Scrapbook Moments & Added Keepsakes
           </h3>
-          <p className="font-handwriting text-2xl text-pink-200/90 leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-sm text-pink-200/80 font-light leading-relaxed max-w-xl">
             A growing polaroid album for snapshots, dates, and inside memories.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="btn-glow-romantic self-start sm:self-auto"
+          className="btn-glow-romantic self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 text-white" />
           <span>Add New Snapshot</span>
@@ -137,15 +137,16 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* Add Form */}
       {isAdding && (
-        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-pink-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+        <div className="glass-midnight-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-pink-400/30 shadow-2xl">
+          <div className="flex items-center justify-between pb-2 border-b border-pink-400/15">
+            <span className="text-xs font-mono uppercase tracking-wider text-pink-200 flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-pink-300" />
               Pin a Snapshot to the Scrapbook
             </span>
             <button
               onClick={() => setIsAdding(false)}
-              className="p-1 rounded-full text-slate-400 hover:text-white"
+              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
@@ -154,7 +155,7 @@ export const LittleArchiveSection: React.FC = () => {
           <form onSubmit={handleSave} className="space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                   Memory Title *
                 </label>
                 <input
@@ -163,12 +164,12 @@ export const LittleArchiveSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Afternoon Boba Run"
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                   Date / Moment
                 </label>
                 <input
@@ -176,13 +177,13 @@ export const LittleArchiveSection: React.FC = () => {
                   value={dateTaken}
                   onChange={(e) => setDateTaken(e.target.value)}
                   placeholder="e.g. Late Sunday, 2026"
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                 Photo URL or Image Link *
               </label>
               <input
@@ -191,12 +192,12 @@ export const LittleArchiveSection: React.FC = () => {
                 value={photoUrl}
                 onChange={(e) => setPhotoUrl(e.target.value)}
                 placeholder="https://... or /assets/..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
+                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                 Handwritten Caption
               </label>
               <input
@@ -204,12 +205,12 @@ export const LittleArchiveSection: React.FC = () => {
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="A playful quote or inside joke..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner"
+                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-pink-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
                 Story / Memory Details
               </label>
               <textarea
@@ -217,18 +218,18 @@ export const LittleArchiveSection: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What made this moment memorable..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-purple-400/20 text-white text-sm focus:outline-none focus:border-pink-400 shadow-inner resize-y font-light"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner resize-y font-light leading-relaxed"
               />
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-purple-950/40 border border-purple-400/25 flex items-center justify-between">
-              <span className="text-xs text-slate-300">
+            <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-400/20 flex items-center justify-between">
+              <span className="text-xs text-slate-300 font-light">
                 {isShared ? `Visible in shared scrapbook with ${partner.displayName}` : 'Kept in private album only'}
               </span>
               <button
                 type="button"
                 onClick={() => setIsShared(!isShared)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   isShared
                     ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 shadow-sm'
                     : 'bg-white/10 text-slate-300 border-white/20'
@@ -240,17 +241,17 @@ export const LittleArchiveSection: React.FC = () => {
 
             {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-pink-400/15">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white"
+                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 border border-white/20"
+                className="btn-glow-romantic text-xs"
               >
                 Pin to Scrapbook 📷
               </button>
@@ -261,27 +262,28 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* Grid of Archive Memories */}
       {loading ? (
-        <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
+        <div className="py-12 text-center text-purple-300/60 text-xs font-mono animate-pulse">
           Flipping scrapbook pages...
         </div>
       ) : memories.length === 0 ? (
-        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center text-pink-300 shadow-inner">
-            <Camera className="w-6 h-6" />
+        <div className="glass-midnight-card p-10 rounded-2xl text-center space-y-3.5 border border-pink-400/25">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center text-pink-300 shadow-inner">
+            <Camera className="w-5 h-5" />
           </div>
           <h4 className="font-serif text-xl text-white">Your Additional Album is Fresh</h4>
-          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+          <p className="text-xs sm:text-sm text-purple-200/80 max-w-md mx-auto font-light leading-relaxed">
             The core scrapbook on the main path remains preserved. Use this space to build and pin new polaroid snapshots over time.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-200 text-xs font-medium border border-pink-400/30 transition-all hover:scale-105"
+            className="btn-glow-romantic text-xs mx-auto"
           >
-            Pin First Memory
+            <Plus className="w-3.5 h-3.5" />
+            <span>Pin First Memory</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 items-stretch">
           {memories.map((m, index) => {
             const isMine = m.contributorId === currentUser.id;
             const rotClass = ROTATIONS[index % ROTATIONS.length];
@@ -293,7 +295,7 @@ export const LittleArchiveSection: React.FC = () => {
                 className={`polaroid-card group cursor-pointer transition-all duration-300 transform ${rotClass} hover:scale-103`}
               >
                 {/* Washi tape visual detail */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 h-5 bg-gradient-to-r from-pink-300/30 via-purple-300/40 to-pink-300/30 rounded-sm shadow-sm backdrop-blur-sm z-20 pointer-events-none transform -rotate-1" />
+                <div className="washi-tape" />
 
                 <div className="polaroid-image-wrapper relative">
                   <img
@@ -335,6 +337,7 @@ export const LittleArchiveSection: React.FC = () => {
                       }}
                       className="p-1 hover:text-rose-500 transition-colors opacity-70 hover:opacity-100"
                       title="Delete memory"
+                      aria-label={`Delete ${m.title}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -345,24 +348,24 @@ export const LittleArchiveSection: React.FC = () => {
           })}
 
           {/* Invitation Polaroid Card */}
-          {memories.length < 3 && (
+          {memories.length < 4 && (
             <div
               onClick={handleOpenAdd}
-              className="polaroid-card group cursor-pointer transition-all duration-300 transform hover:scale-103 border-2 border-dashed border-pink-400/40 flex flex-col items-center justify-center p-8 text-center space-y-4 min-h-[320px] bg-white/5"
+              className="polaroid-card group cursor-pointer transition-all duration-300 transform hover:scale-103 border-2 border-dashed border-pink-400/40 flex flex-col items-center justify-center p-6 text-center space-y-3 min-h-[300px] bg-white/5"
             >
-              <div className="w-16 h-16 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-pink-300 group-hover:scale-110 transition-transform">
-                <Camera className="w-8 h-8 text-pink-300" />
+              <div className="w-14 h-14 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-pink-300 group-hover:scale-105 transition-transform">
+                <Camera className="w-6 h-6 text-pink-300" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-serif text-xl font-bold text-slate-800">
+                <h4 className="font-serif text-lg font-bold text-slate-800">
                   Pin a Snapshot
                 </h4>
-                <p className="font-handwriting text-lg text-pink-700/80 max-w-[200px] leading-snug">
+                <p className="font-handwriting text-base text-pink-700/80 max-w-[180px] leading-snug">
                   Add a photo from your latest adventure together...
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-pink-500 text-white shadow-md shadow-pink-500/30 group-hover:scale-105 transition-all">
-                <Plus className="w-3.5 h-3.5" /> Add Photo 📸
+              <span className="btn-glow-romantic text-xs">
+                <Plus className="w-3.5 h-3.5" /> Add Photo
               </span>
             </div>
           )}

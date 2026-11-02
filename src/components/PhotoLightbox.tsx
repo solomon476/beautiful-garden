@@ -20,8 +20,24 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   currentIndex,
   totalCount,
 }) => {
-  const [likes, setLikes] = useState<Record<string, number>>({});
-  const [hasLikedCurrent, setHasLikedCurrent] = useState<boolean>(false);
+  const [likedPhotos, setLikedPhotos] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('garden_photo_liked');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem('garden_photo_like_counts');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
@@ -40,15 +56,27 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   if (!memory) return null;
 
-  const currentLikes = (likes[memory.id] || 0) + (hasLikedCurrent ? 1 : 0);
+  const isLiked = !!likedPhotos[memory.id];
+  const currentLikes = likeCounts[memory.id] ?? 0;
 
   const handleLike = () => {
+    if (!memory) return;
     soundEngine.playSparkle();
-    setHasLikedCurrent((prev) => !prev);
-    setLikes((prev) => ({
-      ...prev,
-      [memory.id]: (prev[memory.id] || 0) + (hasLikedCurrent ? -1 : 1),
-    }));
+    const newLiked = !isLiked;
+    const newCount = Math.max(0, currentLikes + (newLiked ? 1 : -1));
+
+    const updatedLikes = { ...likedPhotos, [memory.id]: newLiked };
+    const updatedCounts = { ...likeCounts, [memory.id]: newCount };
+
+    setLikedPhotos(updatedLikes);
+    setLikeCounts(updatedCounts);
+
+    try {
+      localStorage.setItem('garden_photo_liked', JSON.stringify(updatedLikes));
+      localStorage.setItem('garden_photo_like_counts', JSON.stringify(updatedCounts));
+    } catch {
+      // ignore storage errors
+    }
   };
 
   // Mobile swipe gestures
@@ -127,8 +155,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             aria-label="Love this memory"
           >
             <Heart
-              className={`w-4 h-4 transition-colors ${
-                hasLikedCurrent ? 'fill-pink-500 text-pink-500' : 'text-white'
+              className={`w-4 h-4 transition-all duration-300 ${
+                isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
               }`}
             />
             <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>

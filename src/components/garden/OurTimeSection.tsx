@@ -102,23 +102,23 @@ export const OurTimeSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-8 border-b border-teal-400/20">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/20 to-emerald-500/20 border border-teal-400/40 text-teal-200 text-xs font-mono uppercase tracking-widest shadow-sm">
-            <CalendarDays className="w-3.5 h-3.5 text-teal-400" />
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-teal-400/15">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/15 border border-teal-400/30 text-teal-200 text-[10px] font-mono uppercase tracking-widest">
+            <CalendarDays className="w-3 h-3 text-teal-300" />
             <span>Our Time</span>
           </div>
-          <h3 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-gradient-garden">
+          <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gradient-garden">
             Hangout Ideas & Activity Planning
           </h3>
-          <p className="font-handwriting text-2xl text-teal-200/90 leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-sm text-teal-200/80 font-light leading-relaxed max-w-xl">
             Suggest spontaneous hangouts, dinner runs, or weekend plans with zero pressure.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="btn-glow-romantic self-start sm:self-auto"
+          className="btn-glow-romantic self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4 text-white" />
           <span>Suggest an Activity</span>
@@ -127,15 +127,16 @@ export const OurTimeSection: React.FC = () => {
 
       {/* Add Form */}
       {isAdding && (
-        <div className="glass-midnight-card p-6 sm:p-8 rounded-3xl space-y-4 animate-fade-in relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase text-teal-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+        <div className="glass-midnight-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-teal-400/30 shadow-2xl">
+          <div className="flex items-center justify-between pb-2 border-b border-teal-400/15">
+            <span className="text-xs font-mono uppercase tracking-wider text-teal-200 flex items-center gap-1.5 font-medium">
+              <Sparkles className="w-3.5 h-3.5 text-teal-300" />
               Propose a New Experience
             </span>
             <button
               onClick={() => setIsAdding(false)}
-              className="p-1 rounded-full text-slate-400 hover:text-white"
+              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
@@ -143,7 +144,7 @@ export const OurTimeSection: React.FC = () => {
 
           <form onSubmit={handleSave} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
+              <label className="block text-[11px] font-mono text-teal-200/70 uppercase tracking-wider mb-1">
                 Activity or Place *
               </label>
               <input
@@ -152,13 +153,13 @@ export const OurTimeSection: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Try that new matcha spot or late-night dessert..."
-                className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
+                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-teal-400/25 text-white text-sm focus:outline-none focus:border-teal-400 transition-colors placeholder:text-teal-300/30 shadow-inner"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-teal-200/70 uppercase tracking-wider mb-1">
                   Proposed Date or Timing (Optional)
                 </label>
                 <input
@@ -166,12 +167,12 @@ export const OurTimeSection: React.FC = () => {
                   value={proposedDate}
                   onChange={(e) => setProposedDate(e.target.value)}
                   placeholder="e.g. This Saturday evening or next weekend"
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-teal-400/25 text-white text-sm focus:outline-none focus:border-teal-400 transition-colors placeholder:text-teal-300/30 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-teal-200/70 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-mono text-teal-200/70 uppercase tracking-wider mb-1">
                   Extra Details / Vibe
                 </label>
                 <input
@@ -179,24 +180,24 @@ export const OurTimeSection: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Looks super chill, great music and cozy booths"
-                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-950/70 border border-teal-400/20 text-white text-sm focus:outline-none focus:border-teal-400 shadow-inner"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-teal-400/25 text-white text-sm focus:outline-none focus:border-teal-400 transition-colors placeholder:text-teal-300/30 shadow-inner"
                 />
               </div>
             </div>
 
             {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-teal-400/15">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white"
+                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-teal-500/25 border border-white/20"
+                className="btn-glow-romantic text-xs"
               >
                 Propose Activity ✨
               </button>
@@ -207,27 +208,28 @@ export const OurTimeSection: React.FC = () => {
 
       {/* Plans List */}
       {loading ? (
-        <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
+        <div className="py-12 text-center text-purple-300/60 text-xs font-mono animate-pulse">
           Opening activity calendar...
         </div>
       ) : plans.length === 0 ? (
-        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-3.5">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-300 shadow-inner">
-            <CalendarDays className="w-6 h-6" />
+        <div className="glass-midnight-card p-10 rounded-2xl text-center space-y-3.5 border border-teal-400/25">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-300 shadow-inner">
+            <CalendarDays className="w-5 h-5" />
           </div>
           <h4 className="font-serif text-xl text-white">No Hangouts Suggested Yet</h4>
-          <p className="text-xs sm:text-sm text-slate-300/80 max-w-md mx-auto font-light leading-relaxed">
+          <p className="text-xs sm:text-sm text-purple-200/80 max-w-md mx-auto font-light leading-relaxed">
             Suggest a spontaneous hangout or activity. Both of you can vote or confirm interest whenever convenient.
           </p>
           <button
             onClick={handleOpenAdd}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500/20 to-emerald-500/20 hover:from-teal-500/30 hover:to-emerald-500/30 text-teal-200 text-xs font-medium border border-teal-400/30 transition-all hover:scale-105"
+            className="btn-glow-romantic text-xs mx-auto"
           >
-            Suggest an Activity
+            <Plus className="w-3.5 h-3.5" />
+            <span>Suggest an Activity</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-stretch">
           {plans.map((plan) => {
             const isMine = plan.suggestedBy === currentUser.id;
             const statusCfg = STATUS_MAP[plan.status] || STATUS_MAP.proposed;
@@ -235,45 +237,46 @@ export const OurTimeSection: React.FC = () => {
             return (
               <div
                 key={plan.id}
-                className="glass-midnight-card group p-7 sm:p-8 rounded-[2rem] hover:border-teal-400/50 transition-all flex flex-col justify-between space-y-4 shadow-xl relative min-h-[220px]"
+                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-teal-400/40 transition-all flex flex-col justify-between space-y-4 shadow-lg relative min-h-[190px]"
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3.5">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
                     <span
-                      className={`px-3.5 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase border shadow-sm ${statusCfg.badge}`}
+                      className={`px-3 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${statusCfg.badge}`}
                     >
                       {statusCfg.label}
                     </span>
 
                     {plan.proposedDate && (
-                      <span className="text-xs text-teal-300 font-mono flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-teal-400" />
+                      <span className="text-[11px] text-teal-300/80 font-mono flex items-center gap-1.5">
+                        <Clock className="w-3 h-3 text-teal-400" />
                         {plan.proposedDate}
                       </span>
                     )}
                   </div>
 
-                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white mb-2 group-hover:text-teal-200 transition-colors">
+                  <h4 className="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-teal-200 transition-colors line-clamp-1">
                     {plan.title}
                   </h4>
 
                   {plan.description && (
-                    <p className="text-sm text-slate-200/90 font-light leading-relaxed">
+                    <p className="text-xs sm:text-sm text-purple-100/80 font-light leading-relaxed">
                       {plan.description}
                     </p>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
-                  <span className="font-handwriting text-2xl text-teal-300 font-medium">
+                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between gap-3 text-xs">
+                  <span className="font-handwriting text-xl text-teal-200 font-medium truncate">
                     Suggested by: {isMine ? 'You 🌷' : (plan.suggestedByName || partner.displayName) + ' ✨'}
                   </span>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <select
                       value={plan.status}
                       onChange={(e) => handleStatusChange(plan.id, e.target.value as HangoutStatus)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-teal-400/30 text-xs text-teal-200 hover:text-white focus:outline-none"
+                      className="garden-select"
+                      aria-label={`Status for ${plan.title}`}
                     >
                       <option value="proposed">Proposed</option>
                       <option value="interested">Interested! 🙋‍♀️</option>
@@ -285,10 +288,11 @@ export const OurTimeSection: React.FC = () => {
                     {isMine && (
                       <button
                         onClick={() => handleDelete(plan)}
-                        className="p-2 rounded-full hover:bg-rose-500/20 text-rose-300 hover:text-rose-100 transition-colors"
+                        className="p-1.5 rounded-full hover:bg-rose-500/20 text-purple-300/70 hover:text-rose-300 transition-colors"
                         title="Delete suggestion"
+                        aria-label={`Delete ${plan.title}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -298,23 +302,23 @@ export const OurTimeSection: React.FC = () => {
           })}
 
           {/* Invitation Card */}
-          {plans.length < 3 && (
+          {plans.length < 4 && (
             <div
               onClick={handleOpenAdd}
-              className="group p-7 sm:p-8 rounded-[2rem] border-2 border-dashed border-teal-400/30 hover:border-teal-300/60 bg-gradient-to-br from-teal-500/5 via-indigo-500/5 to-transparent flex flex-col justify-center items-center text-center space-y-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:bg-teal-500/10 min-h-[220px] shadow-sm"
+              className="group p-5 sm:p-6 rounded-2xl border border-dashed border-teal-400/25 hover:border-teal-300/50 bg-gradient-to-br from-teal-500/[0.04] to-transparent hover:bg-teal-500/[0.08] flex flex-col justify-center items-center text-center space-y-3 cursor-pointer transition-all duration-300 min-h-[190px]"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-teal-500/20 to-emerald-500/20 border border-teal-400/40 flex items-center justify-center text-teal-300 group-hover:scale-110 transition-transform shadow-inner">
-                <CalendarDays className="w-6 h-6 text-teal-300" />
+              <div className="w-12 h-12 rounded-xl bg-teal-500/15 border border-teal-400/30 flex items-center justify-center text-teal-300 group-hover:scale-105 transition-transform">
+                <CalendarDays className="w-5 h-5 text-teal-300" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-serif text-xl font-bold text-white group-hover:text-teal-200 transition-colors">
+                <h4 className="font-serif text-lg font-bold text-white group-hover:text-teal-200 transition-colors">
                   Suggest Another Date Idea
                 </h4>
-                <p className="font-handwriting text-xl text-teal-200/80 max-w-xs mx-auto leading-snug">
+                <p className="text-xs text-teal-200/70 max-w-xs mx-auto leading-relaxed font-light">
                   Propose a fun dinner, movie night, walk, or spontaneous road trip...
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/10 text-teal-200 border border-teal-300/30 group-hover:bg-teal-500/30 transition-all">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/[0.06] text-teal-200 border border-teal-300/20 group-hover:border-teal-300/40 group-hover:bg-teal-500/20 transition-all">
                 <Plus className="w-3.5 h-3.5" /> Plan Together ✨
               </span>
             </div>
