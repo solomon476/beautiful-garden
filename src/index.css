@@ -277,10 +277,16 @@ body {
 .gap-1 { gap: 4px; }
 .gap-1\.5 { gap: 6px; }
 .gap-2 { gap: 8px; }
+.gap-2\.5 { gap: 10px; }
 .gap-3 { gap: 12px; }
+.gap-3\.5 { gap: 14px; }
 .gap-4 { gap: 16px; }
+.gap-5 { gap: 20px; }
 .gap-6 { gap: 24px; }
+.gap-7 { gap: 28px; }
 .gap-8 { gap: 32px; }
+.gap-10 { gap: 40px; }
+.gap-12 { gap: 48px; }
 
 .p-0\.5 { padding: 2px; }
 .p-2 { padding: 8px; }
@@ -348,18 +354,46 @@ body {
 .mb-10 { margin-bottom: 40px; }
 .mb-12 { margin-bottom: 48px; }
 
+.space-y-1 > * + * { margin-top: 4px; }
+.space-y-1\.5 > * + * { margin-top: 6px; }
 .space-y-2 > * + * { margin-top: 8px; }
+.space-y-2\.5 > * + * { margin-top: 10px; }
+.space-y-3 > * + * { margin-top: 12px; }
+.space-y-3\.5 > * + * { margin-top: 14px; }
 .space-y-4 > * + * { margin-top: 16px; }
+.space-y-5 > * + * { margin-top: 20px; }
+.space-y-6 > * + * { margin-top: 24px; }
+.space-y-7 > * + * { margin-top: 28px; }
+.space-y-8 > * + * { margin-top: 32px; }
+.space-y-10 > * + * { margin-top: 40px; }
+.space-y-12 > * + * { margin-top: 48px; }
 
 @media (min-width: 640px) {
   .sm\:p-5 { padding: 20px; }
+  .sm\:p-6 { padding: 24px; }
+  .sm\:p-7 { padding: 28px; }
   .sm\:p-8 { padding: 32px; }
   .sm\:p-10 { padding: 40px; }
   .sm\:px-4 { padding-left: 16px; padding-right: 16px; }
+  .sm\:px-6 { padding-left: 24px; padding-right: 24px; }
+  .sm\:px-8 { padding-left: 32px; padding-right: 32px; }
+  .sm\:py-4 { padding-top: 16px; padding-bottom: 16px; }
+  .sm\:py-6 { padding-top: 24px; padding-bottom: 24px; }
+  .sm\:py-8 { padding-top: 32px; padding-bottom: 32px; }
+  .sm\:gap-4 { gap: 16px; }
+  .sm\:gap-5 { gap: 20px; }
   .sm\:gap-6 { gap: 24px; }
+  .sm\:gap-8 { gap: 32px; }
+  .sm\:space-y-6 > * + * { margin-top: 24px; }
+  .sm\:space-y-7 > * + * { margin-top: 28px; }
+  .sm\:space-y-8 > * + * { margin-top: 32px; }
 }
 @media (min-width: 768px) {
+  .md\:p-8 { padding: 32px; }
+  .md\:p-10 { padding: 40px; }
   .md\:p-12 { padding: 48px; }
+  .md\:gap-6 { gap: 24px; }
+  .md\:gap-8 { gap: 32px; }
 }
 
 /* Borders & Radius */
@@ -1045,6 +1079,187 @@ button:hover { opacity: 0.95; }
 .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ==========================================================================
+   Universal Form Elements & Spacious Romantic Desk Inputs
+   ========================================================================== */
+input[type="text"],
+input[type="url"],
+input[type="date"],
+input[type="email"],
+input[type="password"],
+textarea,
+.garden-input,
+.garden-textarea {
+  width: 100%;
+  background: rgba(20, 13, 40, 0.82) !important;
+  color: #FFF7F0 !important;
+  border: 1.5px solid rgba(167, 139, 250, 0.3) !important;
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  font-family: var(--font-body);
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+  outline: none !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), 0 2px 8px -2px rgba(10, 5, 20, 0.4) !important;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+.garden-input:focus,
+.garden-textarea:focus {
+  background: rgba(28, 17, 54, 0.95) !important;
+  border-color: rgba(244, 114, 182, 0.75) !important;
+  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.22), 0 8px 24px -4px rgba(236, 72, 153, 0.35), inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(216, 180, 254, 0.42) !important;
+  font-weight: 300;
+}
+
+/* Form Field Groups with Luxurious Breathing Room */
+.form-field-group {
+  margin-bottom: 20px;
+}
+
+.form-field-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fbcfe8;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+/* ==========================================================================
+   Eye-Catching Decorated Romantic Checkbox & Toggle System
+   ========================================================================== */
+.garden-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(38, 24, 70, 0.65) 0%, rgba(20, 13, 40, 0.85) 100%);
+  border: 1.5px solid rgba(167, 139, 250, 0.28);
+  box-shadow: 0 4px 20px -2px rgba(10, 5, 25, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.garden-toggle-card:hover {
+  border-color: rgba(244, 114, 182, 0.55);
+  background: linear-gradient(135deg, rgba(50, 32, 92, 0.78) 0%, rgba(26, 16, 52, 0.92) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -2px rgba(236, 72, 153, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+
+.garden-toggle-card.is-active {
+  border-color: rgba(244, 114, 182, 0.7);
+  background: linear-gradient(135deg, rgba(62, 34, 108, 0.85) 0%, rgba(30, 18, 60, 0.96) 100%);
+  box-shadow: 0 8px 28px -4px rgba(236, 72, 153, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.22);
+}
+
+/* Luminous Decorated Pill Switch */
+.garden-toggle-pill {
+  position: relative;
+  width: 60px;
+  height: 32px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+  display: block;
+}
+
+.garden-toggle-pill.is-checked {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.garden-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.garden-toggle-pill.is-checked .garden-toggle-thumb {
+  transform: translateX(28px);
+}
+
+/* Standalone Decorated Checkbox */
+input[type="checkbox"].decorated-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  border-radius: 8px !important;
+  background: rgba(24, 15, 45, 0.9) !important;
+  border: 2px solid rgba(167, 139, 250, 0.45) !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+input[type="checkbox"].decorated-checkbox:checked {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 0 16px rgba(236, 72, 153, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+}
+
+input[type="checkbox"].decorated-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 8px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"].decorated-checkbox:hover {
+  border-color: rgba(244, 114, 182, 0.75) !important;
+  transform: scale(1.05);
+}
+
 
 
 

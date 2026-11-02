@@ -198,28 +198,37 @@ export const ExchangeShelfSection: React.FC = () => {
         })}
       </div>
 
-      {/* Add Item Form */}
+      {/* Add Item Form with Luxurious Breathing Room */}
       {isAdding && (
-        <div className="glass-midnight-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-amber-400/30 shadow-2xl">
-          <div className="flex items-center justify-between pb-2 border-b border-amber-400/15">
-            <span className="text-xs font-mono uppercase tracking-wider text-amber-200 flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              Add to the Exchange Shelf
-            </span>
+        <div className="glass-midnight-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-amber-400/35 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-amber-400/20">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
+                <Layers className="w-4 h-4 text-amber-300" />
+              </span>
+              <div>
+                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  Add to the Exchange Shelf
+                </h4>
+                <p className="text-[11px] text-amber-200/70 font-mono uppercase tracking-wider">
+                  Films, books, recipes, and adventures to share
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => setIsAdding(false)}
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                  Title *
+                <label className="form-field-label">
+                  <span>Recommendation Title *</span>
                 </label>
                 <input
                   type="text"
@@ -227,18 +236,17 @@ export const ExchangeShelfSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Past Lives (2023)"
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                  Category *
+                <label className="form-field-label">
+                  <span>Category *</span>
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ShelfCategory)}
-                  className="garden-select w-full py-2 px-3 text-xs"
+                  className="garden-select w-full"
                 >
                   <option value="films">Films & Series 🎬</option>
                   <option value="books">Books & Reads 📚</option>
@@ -251,46 +259,49 @@ export const ExchangeShelfSection: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                Description / Notes
+              <label className="form-field-label">
+                <span>Description or Personal Notes</span>
               </label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Why you recommend it, when we should try it, or what makes it special..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner resize-y font-light leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                Reference Link / Maps Link (Optional)
+              <label className="form-field-label">
+                <span>Reference Link or Location (Optional)</span>
               </label>
               <input
                 type="url"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
                 placeholder="https://..."
-                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-amber-400/25 text-white text-sm focus:outline-none focus:border-amber-400 transition-colors placeholder:text-amber-300/30 shadow-inner"
               />
             </div>
 
-            {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
+            {errorMsg && (
+              <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
+                {errorMsg}
+              </p>
+            )}
 
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-amber-400/15">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-400/20">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
+                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-glow-romantic text-xs"
+                className="btn-glow-romantic"
               >
-                Place on Shelf ✨
+                <Layers className="w-4 h-4" />
+                <span>Place on Shelf ✨</span>
               </button>
             </div>
           </form>

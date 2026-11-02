@@ -12,6 +12,7 @@ import {
 import { timeCapsuleService, authService } from '../../services/gardenService';
 import type { TimeCapsuleEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
 export const TimeCapsuleSection: React.FC = () => {
   const [capsules, setCapsules] = useState<TimeCapsuleEntry[]>([]);
@@ -127,40 +128,48 @@ export const TimeCapsuleSection: React.FC = () => {
 
       {/* Creation Modal */}
       {isCreating && (
-        <div className="glass-parchment-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-amber-400/30 shadow-2xl">
-          <div className="flex items-center justify-between pb-2 border-b border-amber-400/15">
-            <span className="text-xs font-mono uppercase text-amber-200 flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              Seal a Future Capsule
-            </span>
+        <div className="glass-parchment-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-amber-400/35 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-amber-400/20">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
+                <Hourglass className="w-4 h-4 text-amber-300" />
+              </span>
+              <div>
+                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  Seal a Future Capsule
+                </h4>
+                <p className="text-[11px] text-amber-200/70 font-mono uppercase tracking-wider">
+                  Milestone envelope locked until chosen date
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => setIsCreating(false)}
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                  Capsule Title *
+                <label className="form-field-label">
+                  <span>Capsule Title *</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. For Our Next Milestone..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 shadow-inner placeholder:text-slate-500"
+                  placeholder="e.g. Open on Our Next Anniversary..."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                  Unlock Date *
+                <label className="form-field-label">
+                  <span>Unlock Date *</span>
                 </label>
                 <input
                   type="date"
@@ -168,57 +177,54 @@ export const TimeCapsuleSection: React.FC = () => {
                   value={releaseDate}
                   min={new Date().toISOString().slice(0, 10)}
                   onChange={(e) => setReleaseDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 shadow-inner"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-amber-200/70 uppercase tracking-wider mb-1">
-                The Sealed Message *
+              <label className="form-field-label">
+                <span>The Sealed Message *</span>
               </label>
               <textarea
                 rows={5}
                 required
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="What do you want to say to your future selves? This letter will remain strictly sealed and locked until the release date arrives..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-amber-400/20 text-white text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 shadow-inner resize-y font-light leading-relaxed placeholder:text-slate-500"
+                placeholder="What do you want to say to your future selves? This letter will remain strictly sealed and encrypted until the release date arrives..."
               />
             </div>
 
-            <div className="p-3.5 rounded-xl bg-purple-950/40 border border-amber-400/20 flex items-center justify-between">
-              <span className="text-xs text-slate-300">
-                {isShared ? `Recipient: ${partner.displayName}` : 'Private to you in the future'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsShared(!isShared)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  isShared
-                    ? 'bg-amber-500/20 text-amber-200 border-amber-400/40 shadow-sm'
-                    : 'bg-white/10 text-slate-300 border-white/20'
-                }`}
-              >
-                {isShared ? `For ${partner.displayName} 💌` : 'Personal Future Note'}
-              </button>
-            </div>
+            {/* Decorated Privacy Switch */}
+            <DecoratedPrivacyToggle
+              isShared={isShared}
+              onToggle={setIsShared}
+              partnerName={partner.displayName}
+              sharedTitle={`Seal Milestone Capsule for ${partner.displayName}`}
+              sharedSubtitle={`Sealed with golden wax on the server. ${partner.displayName} will be notified and able to open it on the unlock date ✨`}
+              privateTitle="Personal Future Capsule (Self Only)"
+              privateSubtitle="A private time capsule for your eyes only on the unlock date. Sealed from partner 🔒"
+            />
 
-            {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
+            {errorMsg && (
+              <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
+                {errorMsg}
+              </p>
+            )}
 
-            <div className="flex justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-400/20">
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white"
+                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-amber-500/25 border border-white/20"
+                className="btn-glow-romantic"
               >
-                Seal with Golden Wax 🌟
+                <Hourglass className="w-4 h-4" />
+                <span>Seal with Golden Wax 🌟</span>
               </button>
             </div>
           </form>

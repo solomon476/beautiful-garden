@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Camera,
-  Sparkles,
   Plus,
   Trash2,
   Lock,
@@ -13,6 +12,7 @@ import {
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
 const ROTATIONS = [
   'rotate-[-1.5deg] hover:rotate-0',
@@ -137,26 +137,35 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* Add Form */}
       {isAdding && (
-        <div className="glass-midnight-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-pink-400/30 shadow-2xl">
-          <div className="flex items-center justify-between pb-2 border-b border-pink-400/15">
-            <span className="text-xs font-mono uppercase tracking-wider text-pink-200 flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-pink-300" />
-              Pin a Snapshot to the Scrapbook
-            </span>
+        <div className="glass-midnight-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-pink-400/35 shadow-2xl">
+          <div className="flex items-center justify-between pb-3 border-b border-pink-400/20">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300">
+                <Camera className="w-4 h-4 text-pink-300" />
+              </span>
+              <div>
+                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  Pin a Snapshot to the Scrapbook
+                </h4>
+                <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
+                  Shared Keepsake Polaroid Entry
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => setIsAdding(false)}
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-3.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                  Memory Title *
+                <label className="form-field-label">
+                  <span>Memory Title *</span>
                 </label>
                 <input
                   type="text"
@@ -164,27 +173,25 @@ export const LittleArchiveSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Afternoon Boba Run"
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                  Date / Moment
+                <label className="form-field-label">
+                  <span>Date or Moment</span>
                 </label>
                 <input
                   type="text"
                   value={dateTaken}
                   onChange={(e) => setDateTaken(e.target.value)}
                   placeholder="e.g. Late Sunday, 2026"
-                  className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                Photo URL or Image Link *
+              <label className="form-field-label">
+                <span>Photo URL or Image Link *</span>
               </label>
               <input
                 type="url"
@@ -192,68 +199,64 @@ export const LittleArchiveSection: React.FC = () => {
                 value={photoUrl}
                 onChange={(e) => setPhotoUrl(e.target.value)}
                 placeholder="https://... or /assets/..."
-                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                Handwritten Caption
+              <label className="form-field-label">
+                <span>Handwritten Caption</span>
               </label>
               <input
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="A playful quote or inside joke..."
-                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
+                placeholder="A playful quote, memory title, or inside joke..."
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                Story / Memory Details
+              <label className="form-field-label">
+                <span>Story or Special Details</span>
               </label>
               <textarea
-                rows={2}
+                rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What made this moment memorable..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#140c26]/80 border border-purple-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner resize-y font-light leading-relaxed"
+                placeholder="What made this moment memorable... (take as much room as you need)"
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-400/20 flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-light">
-                {isShared ? `Visible in shared scrapbook with ${partner.displayName}` : 'Kept in private album only'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsShared(!isShared)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  isShared
-                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 shadow-sm'
-                    : 'bg-white/10 text-slate-300 border-white/20'
-                }`}
-              >
-                {isShared ? 'Shared Memory ✨' : 'Make Private'}
-              </button>
-            </div>
+            {/* Eye-Catching Decorated Privacy Toggle */}
+            <DecoratedPrivacyToggle
+              isShared={isShared}
+              onToggle={setIsShared}
+              partnerName={partner.displayName}
+              sharedTitle={`Visible in Shared Scrapbook with ${partner.displayName}`}
+              sharedSubtitle={`Both you and ${partner.displayName} will see this photo blossom in your shared album ✨`}
+              privateTitle="Private Album Keepsake (Only You)"
+              privateSubtitle="Kept hidden in your private gallery. Sealed from partner's view 🔒"
+            />
 
-            {errorMsg && <p className="text-xs text-rose-300">{errorMsg}</p>}
+            {errorMsg && (
+              <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
+                {errorMsg}
+              </p>
+            )}
 
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-pink-400/15">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pink-400/20">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
+                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-glow-romantic text-xs"
+                className="btn-glow-romantic"
               >
-                Pin to Scrapbook 📷
+                <Camera className="w-4 h-4" />
+                <span>Pin to Scrapbook ✨</span>
               </button>
             </div>
           </form>

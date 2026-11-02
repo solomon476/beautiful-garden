@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   HelpCircle,
-  Lock,
-  Globe2,
   ChevronRight,
   MessageCircle,
 } from 'lucide-react';
@@ -13,6 +11,7 @@ import {
 } from '../../services/gardenService';
 import type { QuestionResponseEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
 export const LittleQuestionsSection: React.FC = () => {
   const [responses, setResponses] = useState<QuestionResponseEntry[]>([]);
@@ -116,47 +115,37 @@ export const LittleQuestionsSection: React.FC = () => {
           </h4>
         </div>
 
-        {/* Answer submission */}
-        <form onSubmit={handleSaveAnswer} className="space-y-4 pt-4 border-t border-purple-400/15">
+        {/* Answer submission with spacious breathing room */}
+        <form onSubmit={handleSaveAnswer} className="space-y-6 pt-6 border-t border-purple-400/20">
           <div>
-            <label className="block text-xs font-mono text-sky-200/70 uppercase tracking-wider mb-1.5">
-              Your Answer
+            <label className="form-field-label">
+              <span>Your Personal Answer</span>
             </label>
             <textarea
-              rows={3}
+              rows={4}
               value={myAnswer}
               onChange={(e) => setMyAnswer(e.target.value)}
-              placeholder="Jot down whatever comes to mind..."
-              className="w-full px-4 py-3 rounded-xl bg-slate-950/60 border border-sky-400/20 text-white text-sm focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/40 shadow-inner resize-y font-light leading-relaxed placeholder:text-slate-500"
+              placeholder="Jot down whatever comes to your mind... there are no wrong answers here."
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
-              <input
-                type="checkbox"
-                checked={isShared}
-                onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded border-sky-400/30 bg-purple-950/60 text-sky-500 focus:ring-0"
-              />
-              <span>
-                {isShared ? (
-                  <span className="text-emerald-300 flex items-center gap-1.5 font-medium">
-                    <Globe2 className="w-3.5 h-3.5" /> Shared with {partner.displayName}
-                  </span>
-                ) : (
-                  <span className="text-amber-300 flex items-center gap-1.5 font-medium">
-                    <Lock className="w-3.5 h-3.5" /> Private to you (Unshared)
-                  </span>
-                )}
-              </span>
-            </label>
+          {/* Decorated Privacy Switch */}
+          <DecoratedPrivacyToggle
+            isShared={isShared}
+            onToggle={setIsShared}
+            partnerName={partner.displayName}
+            sharedTitle={`Share Answer with ${partner.displayName}`}
+            sharedSubtitle={`Once you both share answers, you'll get to read each other's heartfelt responses ✨`}
+            privateTitle="Keep Answer Private to You"
+            privateSubtitle="Recorded secretly in your personal reflections. Unshared until you choose 🔐"
+          />
 
+          <div className="flex items-center justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-sky-500/25 transition-all self-end sm:self-auto border border-white/20"
+              className="btn-glow-romantic"
             >
-              Save Answer ✨
+              <span>Save Answer ✨</span>
             </button>
           </div>
         </form>

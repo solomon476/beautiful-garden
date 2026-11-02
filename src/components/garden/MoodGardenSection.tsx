@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Heart,
-  Lock,
-  Globe2,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -12,6 +10,7 @@ import {
 } from '../../services/gardenService';
 import type { MoodEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
 export const MoodGardenSection: React.FC = () => {
   const [moods, setMoods] = useState<MoodEntry[]>([]);
@@ -107,44 +106,34 @@ export const MoodGardenSection: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-fuchsia-200/70 uppercase tracking-wider mb-1">
-              Optional Note (Only if you feel like sharing)
+            <label className="form-field-label">
+              <span>Optional Thought or Note</span>
             </label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="e.g. Taking it slow today with a cozy cup of tea..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-fuchsia-400/20 text-white text-sm focus:outline-none focus:border-fuchsia-400 focus:ring-1 focus:ring-fuchsia-400/40 shadow-inner placeholder:text-slate-500"
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-300">
-              <input
-                type="checkbox"
-                checked={isShared}
-                onChange={(e) => setIsShared(e.target.checked)}
-                className="rounded border-fuchsia-400/30 bg-purple-950/60 text-fuchsia-500 focus:ring-0"
-              />
-              <span>
-                {isShared ? (
-                  <span className="text-emerald-300 flex items-center gap-1.5 font-medium">
-                    <Globe2 className="w-3.5 h-3.5" /> Visible to {partner.displayName}
-                  </span>
-                ) : (
-                  <span className="text-amber-300 flex items-center gap-1.5 font-medium">
-                    <Lock className="w-3.5 h-3.5" /> Private to you
-                  </span>
-                )}
-              </span>
-            </label>
+          {/* Decorated Privacy Switch */}
+          <DecoratedPrivacyToggle
+            isShared={isShared}
+            onToggle={setIsShared}
+            partnerName={partner.displayName}
+            sharedTitle={`Share Energy with ${partner.displayName}`}
+            sharedSubtitle={`Lets ${partner.displayName} know your mood so they can celebrate with you or offer comfort ✨`}
+            privateTitle="Keep Mood Log Private"
+            privateSubtitle="Recorded secretly for your personal mood reflection. Hidden from partner 🔒"
+          />
 
+          <div className="flex items-center justify-end pt-2">
             <button
               type="submit"
-              className="px-5 py-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-pink-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-lg shadow-fuchsia-500/25 border border-white/20 self-end sm:self-auto transition-all"
+              className="btn-glow-romantic"
             >
-              Update Mood ✨
+              <span>Update Mood ✨</span>
             </button>
           </div>
         </form>

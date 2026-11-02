@@ -16,6 +16,7 @@ import {
 import { notesService, authService } from '../../services/gardenService';
 import type { NoteEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
 export const LettersSection: React.FC = () => {
   const [notes, setNotes] = useState<NoteEntry[]>([]);
@@ -153,114 +154,95 @@ export const LettersSection: React.FC = () => {
 
       {/* Composing / Editing Card */}
       {isComposing && (
-        <div className="glass-parchment-card p-6 sm:p-7 rounded-2xl space-y-4 animate-fade-in relative overflow-hidden border border-pink-400/30 shadow-2xl">
+        <div className="glass-parchment-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-pink-400/35 shadow-2xl">
           {/* Subtle stamp accent */}
-          <div className="absolute top-4 right-4 w-10 h-12 rounded border border-dashed border-pink-400/40 flex flex-col items-center justify-center text-[8px] text-pink-300 font-mono opacity-80 pointer-events-none">
-            <Heart className="w-3 h-3 text-rose-400 mb-0.5" />
+          <div className="absolute top-5 right-5 w-11 h-14 rounded-xl border border-dashed border-pink-400/40 flex flex-col items-center justify-center text-[8px] text-pink-300 font-mono opacity-80 pointer-events-none bg-pink-500/10">
+            <Heart className="w-3.5 h-3.5 text-rose-400 mb-1 animate-pulse" />
             <span>SEAL</span>
           </div>
 
-          <div className="flex items-center justify-between pr-14 pb-2 border-b border-pink-400/15">
-            <span className="text-xs font-mono uppercase tracking-wider text-pink-200 flex items-center gap-1.5 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-pink-300" />
-              {editingId ? 'Editing Keepsake Letter' : 'Compose in Your Journal'}
-            </span>
+          <div className="flex items-center justify-between pr-14 pb-3 border-b border-pink-400/20">
+            <div className="flex items-center gap-2">
+              <span className="p-2 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300">
+                <PenLine className="w-4 h-4 text-pink-300" />
+              </span>
+              <div>
+                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  {editingId ? 'Editing Keepsake Letter' : 'Compose in Your Journal'}
+                </h4>
+                <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
+                  Private desk with deliberate sharing
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => setIsComposing(false)}
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-5 sm:space-y-6">
             <div>
-              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                Title (Optional)
+              <label className="form-field-label">
+                <span>Letter Title (Optional)</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. A thought from this afternoon..."
-                className="w-full px-3.5 py-2 rounded-xl bg-[#140c26]/80 border border-pink-400/25 text-white text-sm focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner"
+                placeholder="e.g. A quiet thought from this evening..."
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono text-pink-200/70 uppercase tracking-wider mb-1">
-                Letter Body *
+              <label className="form-field-label">
+                <span>Letter Thoughts & Words *</span>
               </label>
               <textarea
                 rows={6}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Write freely... This letter starts completely private to you."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#140c26]/80 border border-pink-400/25 text-white text-sm leading-relaxed focus:outline-none focus:border-pink-400 transition-colors placeholder:text-pink-300/30 shadow-inner resize-y font-light"
+                placeholder="Write freely... This letter starts completely private to you until you choose to bloom it."
               />
             </div>
 
-            {/* Privacy Toggle: Deliberate Action */}
-            <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-2.5">
-                <div
-                  className={`p-1.5 rounded-lg mt-0.5 ${
-                    isShared
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
-                  }`}
-                >
-                  {isShared ? <Globe2 className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-white">
-                    {isShared ? 'Visibility: Shared with ' + partner.displayName : 'Visibility: Private to You (Default)'}
-                  </p>
-                  <p className="text-[11px] text-slate-300/80 font-light">
-                    {isShared
-                      ? `Readable by ${partner.displayName} in their Letters feed.`
-                      : 'Strictly locked to your profile. No one else can view this.'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleToggleSharePrompt}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  isShared
-                    ? 'bg-white/10 border-white/20 text-slate-200 hover:text-white'
-                    : 'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border-emerald-400/40 text-emerald-200 hover:scale-105 shadow-sm'
-                }`}
-              >
-                {isShared ? 'Change to Private' : `Share with ${partner.displayName} 💌`}
-              </button>
-            </div>
+            {/* Decorated Privacy Switch */}
+            <DecoratedPrivacyToggle
+              isShared={isShared}
+              onToggle={handleToggleSharePrompt}
+              partnerName={partner.displayName}
+              sharedTitle={`Share Letter with ${partner.displayName}`}
+              sharedSubtitle={`Visible in ${partner.displayName}'s letter feed with a loving sealed washi tape ✨`}
+              privateTitle="Keep Letter Private to You (Draft)"
+              privateSubtitle="Strictly locked to your profile. Invisible to anyone else until you decide to share 🔐"
+            />
 
             {errorMsg && (
-              <div className="flex items-center gap-2 text-rose-300 text-xs p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <div className="flex items-center gap-2 text-rose-300 text-xs p-3 rounded-xl bg-rose-500/15 border border-rose-500/30">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* Action buttons */}
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-pink-400/15">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-pink-400/20">
               <button
                 type="button"
                 onClick={() => setIsComposing(false)}
-                className="px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition-colors"
+                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                className="btn-glow-romantic text-xs"
+                className="btn-glow-romantic"
               >
-                <Check className="w-3.5 h-3.5" />
-                <span>{editingId ? 'Update Letter' : 'Save to Garden'}</span>
+                <Check className="w-4 h-4" />
+                <span>{editingId ? 'Update Letter' : 'Save to Garden ✨'}</span>
               </button>
             </div>
           </div>
