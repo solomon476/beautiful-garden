@@ -100,29 +100,80 @@ export const PetalNotesSpace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-rose-400/15">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-200 text-[10px] font-mono uppercase tracking-widest">
-            <Sparkles className="w-3 h-3 text-rose-300" />
-            <span>Interactive Petal Notes</span>
-          </div>
-          <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gradient-garden">
-            Little Whispers, Compliments & Flower Messages
-          </h3>
-          <p className="text-xs sm:text-sm text-rose-200/80 font-light leading-relaxed max-w-xl">
-            Spontaneous notes that unfurl like fresh petals when opened. Private by default.
-          </p>
-        </div>
+      {/* 1. Panoramic Themed Hero Banner — Matching Mockup Format */}
+      <section
+        className="relative rounded-3xl overflow-hidden border border-rose-400/30 shadow-2xl p-6 sm:p-10 lg:p-12"
+        style={{
+          background: 'linear-gradient(135deg, rgba(38, 14, 30, 0.94) 0%, rgba(20, 8, 18, 0.98) 100%)',
+        }}
+      >
+        {/* Ambient Hero Background Art */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
+          style={{ backgroundImage: `url('/assets/garden/card_petals.jpg')` }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(251, 113, 133, 0.25) 0%, transparent 60%)',
+          }}
+        />
 
-        <button
-          onClick={handleOpenCompose}
-          className="btn-glow-romantic shrink-0"
+        <div
+          className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6"
+          style={{ width: '100%' }}
         >
-          <Plus className="w-4 h-4 text-white" />
-          <span>Leave a Petal Note</span>
-        </button>
-      </div>
+          {/* Left Decorative Illuminated Artwork */}
+          <div className="flex items-center gap-5 sm:gap-6">
+            <div
+              className="relative rounded-2xl overflow-hidden border border-rose-300/40 shadow-xl shrink-0 group"
+              style={{ width: '96px', height: '96px', minWidth: '96px', minHeight: '96px' }}
+            >
+              <img
+                src="/assets/garden/card_petals.jpg"
+                alt="Petal Notes"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-rose-950/70 to-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-rose-300 drop-shadow-md animate-pulse" />
+              </div>
+            </div>
+
+            {/* Title & Romantic Subtitles */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[10px] font-mono uppercase tracking-widest">
+                <span>〰️ The Petal Garden</span>
+                <span className="text-rose-300">✦</span>
+              </div>
+
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+                <span>Petal Notes</span>
+                <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♡</span>
+              </h2>
+
+              <p className="font-serif italic text-sm sm:text-base text-rose-200/90 max-w-xl leading-relaxed">
+                Little whispers, compliments, and sweet feelings that unfurl like petals.
+              </p>
+
+              <div className="text-[11px] font-mono tracking-widest uppercase text-rose-300/70 pt-1">
+                Whisper • Unfurl • Cherish • Bloom
+              </div>
+            </div>
+          </div>
+
+          {/* Right Action Button Inside Hero Banner */}
+          <div className="shrink-0 flex justify-end">
+            <button
+              onClick={handleOpenCompose}
+              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 shadow-xl"
+            >
+              <Plus className="w-4 h-4 text-white" />
+              <span>Leave a Petal Note</span>
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* Composing Note */}
       {isComposing && (

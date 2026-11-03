@@ -44,9 +44,11 @@ export const DEFAULT_INITIAL_SONGS: SongEntry[] = [
     title: 'Flying',
     artist: 'Tom Odell',
     musicUrl: 'https://open.spotify.com/track/6UelLqGlWMcVH1E5c4H7gY',
-    message: 'The song that plays whenever you step into our garden 🌷',
+    message: 'The song that reminds me of our long talks...',
     status: 'listened',
     createdAt: '2026-11-01T12:00:00.000Z',
+    coverUrl: '/assets/garden/cover_flying.jpg',
+    reaction: 'Love it!',
   },
   {
     id: 'seed-song-2',
@@ -55,9 +57,11 @@ export const DEFAULT_INITIAL_SONGS: SongEntry[] = [
     title: 'Golden Hour',
     artist: 'JVKE',
     musicUrl: 'https://open.spotify.com/track/5odlY52u43F5BjByFp9vMw',
-    message: 'For sunset drives, peaceful mornings, and starry nights ✨',
-    status: 'recommend_back',
+    message: 'Perfect for sunsets and you...',
+    status: 'want_to_listen',
     createdAt: '2026-11-02T10:30:00.000Z',
+    coverUrl: '/assets/garden/cover_golden_hour.jpg',
+    reaction: 'My Vibe',
   },
 ];
 
@@ -526,11 +530,22 @@ export const soundGardenService = {
           message: d.message || '',
           status: d.status as SongStatus,
           createdAt: d.created_at,
+          coverUrl: d.cover_url || (d.title?.toLowerCase().includes('flying') ? '/assets/garden/cover_flying.jpg' : d.title?.toLowerCase().includes('golden hour') ? '/assets/garden/cover_golden_hour.jpg' : undefined),
+          reaction: d.reaction || (d.title?.toLowerCase().includes('flying') ? 'Love it!' : 'My Vibe'),
         }));
       }
     }
 
-    return loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
+    const local = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
+    return local.map((s) => {
+      if (s.title.toLowerCase().includes('flying') && !s.coverUrl) {
+        return { ...s, coverUrl: '/assets/garden/cover_flying.jpg', reaction: s.reaction || 'Love it!' };
+      }
+      if (s.title.toLowerCase().includes('golden hour') && !s.coverUrl) {
+        return { ...s, coverUrl: '/assets/garden/cover_golden_hour.jpg', reaction: s.reaction || 'My Vibe' };
+      }
+      return s;
+    });
   },
 
   async addSong(song: {

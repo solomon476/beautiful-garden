@@ -30,6 +30,8 @@ export interface SongEntry {
   message?: string;
   status: SongStatus;
   createdAt: string;
+  coverUrl?: string;
+  reaction?: string;
 }
 
 export type ShelfCategory = 'music' | 'films' | 'books' | 'food' | 'places' | 'activities';
