@@ -362,11 +362,12 @@ export const OurTimeSection: React.FC = () => {
       )}
 
       {/* 3. Bottom Action & Filter Section — Matching Mockup Format */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 pt-2">
+      <section className="flex flex-col lg:flex-row gap-5 sm:gap-6 pt-2 w-full">
         {/* Left Card: Propose Activity Banner (~7 Cols) */}
         <div
-          className="lg:col-span-7 rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 justify-between border border-teal-400/30 shadow-xl"
+          className="rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 justify-between border border-teal-400/30 shadow-xl"
           style={{
+            flex: '1.35 1 0%',
             background: 'linear-gradient(135deg, rgba(16, 36, 44, 0.7) 0%, rgba(10, 20, 32, 0.85) 100%)',
             backdropFilter: 'blur(16px)',
           }}
@@ -403,8 +404,9 @@ export const OurTimeSection: React.FC = () => {
 
         {/* Right Card: Quick Filters (~5 Cols) */}
         <div
-          className="lg:col-span-5 rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between space-y-4 border border-teal-400/30 shadow-xl"
+          className="rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between space-y-4 border border-teal-400/30 shadow-xl"
           style={{
+            flex: '1 1 0%',
             background: 'linear-gradient(135deg, rgba(14, 30, 40, 0.7) 0%, rgba(8, 18, 28, 0.85) 100%)',
             backdropFilter: 'blur(16px)',
           }}

@@ -391,11 +391,12 @@ export const SoundGardenSection: React.FC = () => {
       )}
 
       {/* 3. Bottom Action & Filter Section — Matching Mockup */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 pt-2">
+      <section className="flex flex-col lg:flex-row gap-5 sm:gap-6 pt-2 w-full">
         {/* Left Card: Add Your Own Recommendation Banner (~7 Cols) */}
         <div
-          className="lg:col-span-7 rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 justify-between border border-purple-400/30 shadow-xl"
+          className="rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 justify-between border border-purple-400/30 shadow-xl"
           style={{
+            flex: '1.35 1 0%',
             background: 'linear-gradient(135deg, rgba(32, 16, 56, 0.7) 0%, rgba(18, 9, 36, 0.85) 100%)',
             backdropFilter: 'blur(16px)',
           }}
@@ -432,8 +433,9 @@ export const SoundGardenSection: React.FC = () => {
 
         {/* Right Card: Quick Filters (~5 Cols) */}
         <div
-          className="lg:col-span-5 rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between space-y-4 border border-purple-400/30 shadow-xl"
+          className="rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between space-y-4 border border-purple-400/30 shadow-xl"
           style={{
+            flex: '1 1 0%',
             background: 'linear-gradient(135deg, rgba(28, 14, 50, 0.7) 0%, rgba(16, 8, 32, 0.85) 100%)',
             backdropFilter: 'blur(16px)',
           }}
