@@ -1,7 +1,10 @@
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
 import { notificationService } from './notificationService';
+import { authService, AUTHORIZED_PROFILES } from './authService';
+export { authService };
+export const DEFAULT_PROFILES = AUTHORIZED_PROFILES;
+export type { UserProfile } from '../types/garden';
 import type {
-  UserProfile,
   NoteEntry,
   SongEntry,
   ShelfEntry,
@@ -21,21 +24,8 @@ import type {
   WorldSmallAction,
 } from '../types/garden';
 
-// Default Profiles for Noella & Solomon
-export const DEFAULT_PROFILES: Record<string, UserProfile> = {
-  noella: {
-    id: 'user-noella-uuid',
-    username: 'noella',
-    displayName: 'Noella ✨',
-    avatarUrl: '/assets/memories/photo-sun-portrait.jpg',
-  },
-  solomon: {
-    id: 'user-solomon-uuid',
-    username: 'solomon',
-    displayName: 'Solomon 🌿',
-    avatarUrl: '/assets/memories/photo-solomon-avatar.jpg',
-  },
-};
+// Default Profiles for Noella & Solomon (re-exported from authService)
+// DEFAULT_PROFILES is aliased to AUTHORIZED_PROFILES above
 
 export const DEFAULT_INITIAL_SONGS: SongEntry[] = [
   {
@@ -347,11 +337,14 @@ const STORAGE_KEYS = {
   WORLD_ACTIONS: 'perfect_time_world_actions',
 };
 
-// Safe LocalStorage helpers with smart seed fallback
+// Safe storage helpers with memory fallback for universal SSR / testing environments
+const memoryFallbackStore = new Map<string, string>();
+
 function loadLocal<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
   try {
-    const raw = localStorage.getItem(key);
+    const raw = typeof window !== 'undefined' && window.localStorage
+      ? localStorage.getItem(key)
+      : memoryFallbackStore.get(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(fallback) && fallback.length > 0) {
@@ -364,49 +357,19 @@ function loadLocal<T>(key: string, fallback: T): T {
 }
 
 function saveLocal<T>(key: string, data: T): void {
-  if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    const serialized = JSON.stringify(data);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(key, serialized);
+    }
+    memoryFallbackStore.set(key, serialized);
   } catch (err) {
     console.error('Failed to save to local storage', err);
   }
 }
 
-// User state management
-let activeUser: UserProfile = (() => {
-  const saved = loadLocal<UserProfile | null>(STORAGE_KEYS.CURRENT_USER, null);
-  return saved || DEFAULT_PROFILES.noella;
-})();
-
-const userListeners = new Set<(user: UserProfile) => void>();
-
-export const authService = {
-  getCurrentUser(): UserProfile {
-    return activeUser;
-  },
-
-  setCurrentUser(user: UserProfile): void {
-    activeUser = user;
-    saveLocal(STORAGE_KEYS.CURRENT_USER, user);
-    userListeners.forEach((fn) => fn(user));
-  },
-
-  switchUser(username: 'noella' | 'solomon'): void {
-    const target = DEFAULT_PROFILES[username];
-    if (target) {
-      this.setCurrentUser(target);
-    }
-  },
-
-  subscribeUser(listener: (user: UserProfile) => void): () => void {
-    userListeners.add(listener);
-    return () => userListeners.delete(listener);
-  },
-
-  getPartner(): UserProfile {
-    return activeUser.username === 'noella' ? DEFAULT_PROFILES.solomon : DEFAULT_PROFILES.noella;
-  },
-};
+// User state management is now securely handled by AuthService (imported above)
+// with separate sessions, salted password hashing, and zero instant identity switching.
 
 // ==============================================================================
 // Feature A: Letters in the Garden (Notes)
@@ -440,7 +403,11 @@ export const notesService = {
 
     // Local simulated RLS
     const all = loadLocal<NoteEntry[]>(STORAGE_KEYS.NOTES, []);
+    const isAuthed = authService.isAuthenticated();
     return all.filter((note) => {
+      if (!isAuthed) {
+        return note.isShared;
+      }
       // Author sees their own (private or shared)
       if (note.authorId === user.id) return true;
       // Recipient sees only if shared
@@ -780,8 +747,9 @@ export const memoryArchiveService = {
         }));
       }
     }
+    const isAuthed = authService.isAuthenticated();
     const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    return all.filter((m) => m.contributorId === user.id || m.isShared);
+    return all.filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
   },
 
   async addMemory(memory: {
@@ -883,8 +851,12 @@ export const petalNotesService = {
         }));
       }
     }
+    const isAuthed = authService.isAuthenticated();
     const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
-    return all.filter((p) => p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id)));
+    return all.filter((p) => {
+      if (!isAuthed) return p.isShared;
+      return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
+    });
   },
 
   async addPetal(petal: { body: string; color: string; emoji: string; isShared: boolean }): Promise<PetalNoteEntry> {
@@ -1163,6 +1135,7 @@ export const timeCapsuleService = {
     // 1. Author sees all their capsules (including previewing the message).
     // 2. Intended recipient sees capsule ONLY IF isShared is true.
     // 3. If releaseAt > now and viewer is NOT the author, the body is completely locked/redacted!
+    if (!authService.isAuthenticated()) return [];
     const all = loadLocal<TimeCapsuleEntry[]>(STORAGE_KEYS.CAPSULES, DEFAULT_INITIAL_CAPSULES);
     return all
       .filter((c) => {
@@ -1286,8 +1259,9 @@ export const moodGardenService = {
         });
       }
     }
+    const isAuthed = authService.isAuthenticated();
     const all = loadLocal<MoodEntry[]>(STORAGE_KEYS.MOODS, []);
-    return all.filter((m) => m.userId === user.id || m.isShared);
+    return all.filter((m) => (isAuthed ? m.userId === user.id || m.isShared : m.isShared));
   },
 
   async setMood(moodKey: string, note?: string, isShared: boolean = false): Promise<MoodEntry> {

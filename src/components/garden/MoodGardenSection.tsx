@@ -245,7 +245,7 @@ export const MoodGardenSection: React.FC = () => {
                   soundEngine.playSparkle();
                   setSelectedMoodKey(card.key);
                 }}
-                className={`group relative rounded-2xl overflow-hidden flex flex-col justify-between text-left transition-all duration-300 focus:outline-none cursor-pointer h-44 sm:h-48 ${
+                className={`group relative rounded-2xl overflow-hidden flex flex-col justify-between text-left transition-all duration-300 focus:outline-none cursor-pointer min-h-[175px] sm:min-h-[195px] h-auto ${
                   isSelected
                     ? 'ring-2 ring-pink-400 shadow-[0_0_28px_rgba(236,72,153,0.85)] scale-[1.02] border border-pink-300'
                     : 'border border-purple-400/25 hover:border-purple-300/60 hover:scale-[1.01] hover:shadow-lg'
@@ -255,7 +255,7 @@ export const MoodGardenSection: React.FC = () => {
                 }}
               >
                 {/* Top Artwork Area: Clean, High-Definition, Text-Free Art */}
-                <div className="relative w-full flex-1 overflow-hidden bg-purple-950/70 flex items-center justify-center">
+                <div className="relative w-full aspect-square sm:aspect-auto sm:flex-1 overflow-hidden bg-purple-950/70 flex items-center justify-center min-h-[95px]">
                   <img
                     src={card.artUrl}
                     alt={card.label}
@@ -275,22 +275,22 @@ export const MoodGardenSection: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Bottom Shelf with Title and Subtitle */}
+                {/* Bottom Shelf with Title and Subtitle — Naturally Breathable Text */}
                 <div
-                  className={`p-2.5 sm:p-3 flex flex-col justify-center shrink-0 border-t transition-colors ${
+                  className={`p-2.5 sm:p-3 flex flex-col justify-center shrink-0 border-t min-h-[56px] transition-colors ${
                     isSelected
                       ? 'bg-gradient-to-b from-purple-900/90 to-[#1e0a35] border-pink-400/40'
                       : 'bg-[#150727]/95 border-purple-400/15'
                   }`}
                 >
                   <span
-                    className={`text-xs sm:text-sm font-serif font-bold tracking-tight truncate ${
+                    className={`text-xs sm:text-sm font-serif font-bold tracking-tight leading-snug line-clamp-2 ${
                       isSelected ? 'text-white font-semibold' : 'text-slate-100 group-hover:text-pink-100'
                     }`}
                   >
                     {card.label}
                   </span>
-                  <span className="text-[10px] sm:text-[11px] text-purple-200/80 font-sans font-light truncate mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-purple-200/80 font-sans font-light leading-snug line-clamp-2 mt-0.5">
                     {card.subtitle}
                   </span>
                 </div>

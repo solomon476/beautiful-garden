@@ -10,6 +10,8 @@ import {
   Sparkles,
   Upload,
   Mic,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
@@ -166,6 +168,33 @@ export const LittleArchiveSection: React.FC = () => {
     if (activeFilter === 'private') return !m.isShared;
     return true;
   });
+
+  const currentLightboxIdx = lightboxMemory
+    ? filteredMemories.findIndex((m) => m.id === lightboxMemory.id)
+    : -1;
+
+  useEffect(() => {
+    if (!lightboxMemory) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxMemory(null);
+      } else if (e.key === 'ArrowLeft') {
+        const idx = filteredMemories.findIndex((m) => m.id === lightboxMemory.id);
+        if (idx > 0) {
+          soundEngine.playSparkle();
+          setLightboxMemory(filteredMemories[idx - 1]);
+        }
+      } else if (e.key === 'ArrowRight') {
+        const idx = filteredMemories.findIndex((m) => m.id === lightboxMemory.id);
+        if (idx >= 0 && idx < filteredMemories.length - 1) {
+          soundEngine.playSparkle();
+          setLightboxMemory(filteredMemories[idx + 1]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxMemory, filteredMemories]);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in pb-10">
@@ -445,6 +474,45 @@ export const LittleArchiveSection: React.FC = () => {
                 subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
                 isVoiceNote={true}
               />
+            )}
+
+            {/* Gallery Navigation Controls */}
+            {filteredMemories.length > 1 && (
+              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+                <button
+                  type="button"
+                  disabled={currentLightboxIdx <= 0}
+                  onClick={() => {
+                    if (currentLightboxIdx > 0) {
+                      soundEngine.playSparkle();
+                      setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
+                    }
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
+
+                <span className="text-[11px] font-mono text-purple-200/70">
+                  {currentLightboxIdx + 1} of {filteredMemories.length}
+                </span>
+
+                <button
+                  type="button"
+                  disabled={currentLightboxIdx >= filteredMemories.length - 1}
+                  onClick={() => {
+                    if (currentLightboxIdx < filteredMemories.length - 1) {
+                      soundEngine.playSparkle();
+                      setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
+                    }
+                  }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">

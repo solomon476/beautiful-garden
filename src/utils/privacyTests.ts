@@ -2,7 +2,6 @@ import {
   authService,
   notesService,
   timeCapsuleService,
-  DEFAULT_PROFILES,
 } from '../services/gardenService';
 
 export interface PrivacyTestResult {
@@ -11,16 +10,23 @@ export interface PrivacyTestResult {
   details: string;
 }
 
+/**
+ * Runs genuine authentication and database-level access control tests:
+ * 1. Independent Session & Private Notes Isolation (Solomon vs Ella)
+ * 2. Deliberate Sharing Verification (Author retains ownership)
+ * 3. Unauthorized Modification Prevention (Recipient cannot delete or modify author's note)
+ * 4. Time Capsule Future-Release Protection (Server/date enforced release)
+ * 5. Unauthenticated Access Protection (Guest cannot read private entries)
+ */
 export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]> {
   const results: PrivacyTestResult[] = [];
-  const originalUser = authService.getCurrentUser();
+  const originalUser = authService.getAuthenticatedUser();
 
   try {
     // -------------------------------------------------------------
-    // Test 1: Private Notes Isolation
+    // Test 1: Private Notes Isolation (Solomon signs in)
     // -------------------------------------------------------------
-    // Set active user as Solomon
-    authService.setCurrentUser(DEFAULT_PROFILES.solomon);
+    await authService.signIn('solomon', 'solomon2026');
     const testPrivateTitle = `Solomon Private Note ${Date.now()}`;
     const testPrivateBody = 'This is a strictly private thought by Solomon.';
     const createdNote = await notesService.saveNote({
@@ -29,48 +35,49 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
       isShared: false,
     });
 
-    // Switch to Noella
-    authService.setCurrentUser(DEFAULT_PROFILES.noella);
-    const noellaNotes = await notesService.getNotes();
-    const canNoellaSeePrivateNote = noellaNotes.some((n) => n.id === createdNote.id);
+    // Ella signs into her account on her device
+    await authService.signIn('noella', 'ella2026');
+    const ellaNotes = await notesService.getNotes();
+    const canEllaSeePrivateNote = ellaNotes.some((n) => n.id === createdNote.id);
 
     results.push({
-      name: 'Private Note Isolation (RLS)',
-      passed: !canNoellaSeePrivateNote,
-      details: !canNoellaSeePrivateNote
-        ? 'PASSED: Private note written by Solomon is completely inaccessible to Noella.'
-        : 'FAILED: Noella was able to query Solomon’s private note.',
+      name: 'Independent Session & Private Note Isolation (RLS)',
+      passed: !canEllaSeePrivateNote,
+      details: !canEllaSeePrivateNote
+        ? 'PASSED: Private note written by Solomon is completely inaccessible and denied to Ella.'
+        : 'FAILED: Ella was able to query Solomon’s private note.',
     });
 
     // -------------------------------------------------------------
     // Test 2: Deliberate Sharing Verification
     // -------------------------------------------------------------
-    // Solomon deliberately shares a note
-    authService.setCurrentUser(DEFAULT_PROFILES.solomon);
+    // Solomon signs back in and deliberately shares a note
+    await authService.signIn('solomon', 'solomon2026');
     const testSharedTitle = `Solomon Shared Note ${Date.now()}`;
     const createdSharedNote = await notesService.saveNote({
       title: testSharedTitle,
-      body: 'This is a shared letter to Noella.',
+      body: 'This is a shared letter to Ella.',
       isShared: true,
     });
 
-    // Switch to Noella
-    authService.setCurrentUser(DEFAULT_PROFILES.noella);
-    const noellaNotesAfterShare = await notesService.getNotes();
-    const canNoellaSeeSharedNote = noellaNotesAfterShare.some((n) => n.id === createdSharedNote.id);
+    // Ella signs into her account
+    await authService.signIn('noella', 'ella2026');
+    const ellaNotesAfterShare = await notesService.getNotes();
+    const sharedNoteInEllaView = ellaNotesAfterShare.find((n) => n.id === createdSharedNote.id);
+    const isAuthorPreserved = Boolean(sharedNoteInEllaView?.authorName?.includes('Solomon'));
 
     results.push({
-      name: 'Deliberate Note Sharing',
-      passed: canNoellaSeeSharedNote,
-      details: canNoellaSeeSharedNote
-        ? 'PASSED: Deliberately shared note is visible to the recipient.'
-        : 'FAILED: Recipient cannot see the shared note.',
+      name: 'Deliberate Note Sharing & Author Preservation',
+      passed: Boolean(sharedNoteInEllaView && isAuthorPreserved),
+      details: sharedNoteInEllaView && isAuthorPreserved
+        ? 'PASSED: Deliberately shared note is visible to Ella, and original author remains Solomon.'
+        : 'FAILED: Shared note was not visible or author ownership was corrupted.',
     });
 
     // -------------------------------------------------------------
     // Test 3: Unauthorized Modification Protection
     // -------------------------------------------------------------
-    // Noella attempts to delete Solomon's note
+    // Ella attempts to delete Solomon's note
     let modificationBlocked = false;
     try {
       await notesService.deleteNote(createdSharedNote.id);
@@ -90,7 +97,7 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
     // Test 4: Time Capsule Future Release Protection
     // -------------------------------------------------------------
     // Solomon creates a future time capsule scheduled 7 days from now
-    authService.setCurrentUser(DEFAULT_PROFILES.solomon);
+    await authService.signIn('solomon', 'solomon2026');
     const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const secretContent = 'SUPER_SECRET_FUTURE_MESSAGE_2026';
     const capsule = await timeCapsuleService.createCapsule({
@@ -100,12 +107,11 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
       isShared: true,
     });
 
-    // Switch to Noella to check if the secret content is visible
-    authService.setCurrentUser(DEFAULT_PROFILES.noella);
-    const noellaCapsules = await timeCapsuleService.getCapsules();
-    const noellaView = noellaCapsules.find((c) => c.id === capsule.id);
-
-    const isBodyProtected = !noellaView || noellaView.body !== secretContent;
+    // Ella checks her view
+    await authService.signIn('noella', 'ella2026');
+    const ellaCapsules = await timeCapsuleService.getCapsules();
+    const ellaView = ellaCapsules.find((c) => c.id === capsule.id);
+    const isBodyProtected = !ellaView || ellaView.body !== secretContent;
 
     results.push({
       name: 'Time Capsule Server-Enforced Release Date',
@@ -115,14 +121,35 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
         : 'FAILED: Future time capsule content was exposed before release date.',
     });
 
+    // -------------------------------------------------------------
+    // Test 5: Unauthenticated Access Protection
+    // -------------------------------------------------------------
+    await authService.signOut();
+    const unauthenticatedNotes = await notesService.getNotes();
+    const canGuestSeePrivate = unauthenticatedNotes.some((n) => n.id === createdNote.id);
+
+    results.push({
+      name: 'Unauthenticated Access Protection',
+      passed: !canGuestSeePrivate,
+      details: !canGuestSeePrivate
+        ? 'PASSED: Unauthenticated visitors cannot read private entries.'
+        : 'FAILED: Unauthenticated visitor accessed private records.',
+    });
+
     // Cleanup test artifacts
-    authService.setCurrentUser(DEFAULT_PROFILES.solomon);
+    await authService.signIn('solomon', 'solomon2026');
     await notesService.deleteNote(createdNote.id);
     await notesService.deleteNote(createdSharedNote.id);
     await timeCapsuleService.deleteCapsule(capsule.id);
   } finally {
-    // Restore original user
-    authService.setCurrentUser(originalUser);
+    // Restore original user session
+    if (originalUser) {
+      const canonicalKey = originalUser.username === 'solomon' ? 'solomon' : 'noella';
+      const pwd = canonicalKey === 'solomon' ? 'solomon2026' : 'ella2026';
+      await authService.signIn(canonicalKey, pwd);
+    } else {
+      await authService.signOut();
+    }
   }
 
   return results;

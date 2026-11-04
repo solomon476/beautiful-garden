@@ -99,26 +99,26 @@ export const DecoratedPrivacyToggle: React.FC<DecoratedPrivacyToggleProps> = ({
 
       {/* 2. Interactive Control Bar: Romantic Checkbox + Smooth Luminous Switch */}
       <div
-        className="flex items-center justify-between gap-4 pt-3 border-t border-purple-400/20 w-full"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-3 border-t border-purple-400/20 w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Real Decorated Checkbox with Roomy Breathing Space */}
         <label
-          className="flex items-center gap-3 cursor-pointer py-1 select-none group/check"
+          className="flex items-start sm:items-center gap-3 cursor-pointer py-1 select-none group/check flex-1 min-w-0"
           title={isShared ? 'Uncheck to make private' : `Check to share with ${partnerName}`}
         >
           <input
             type="checkbox"
-            className="decorated-checkbox"
+            className="decorated-checkbox mt-0.5 sm:mt-0 shrink-0"
             checked={isShared}
             onChange={handleCheckboxChange}
             aria-label={isShared ? `Share with ${partnerName}` : 'Keep private'}
           />
-          <div className="flex flex-col">
-            <span className="text-xs sm:text-sm font-serif font-medium text-pink-100 group-hover/check:text-white transition-colors">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs sm:text-sm font-serif font-medium text-pink-100 group-hover/check:text-white transition-colors break-words">
               {isShared ? `Shared in Sanctuary with ${partnerName}` : 'Keep as Private Secret Draft'}
             </span>
-            <span className="text-[10px] font-mono text-purple-300/70">
+            <span className="text-[10px] sm:text-[11px] font-mono text-purple-300/70 break-words mt-0.5">
               {isShared ? 'Visible to both of you ✨' : 'Only visible when logged into your account 🔐'}
             </span>
           </div>
@@ -127,7 +127,7 @@ export const DecoratedPrivacyToggle: React.FC<DecoratedPrivacyToggleProps> = ({
         {/* Luminous Decorated Pill Switch */}
         <div
           onClick={handleClick}
-          className={`garden-toggle-pill cursor-pointer shrink-0 ${isShared ? 'is-checked' : ''}`}
+          className={`garden-toggle-pill cursor-pointer shrink-0 self-end sm:self-auto ${isShared ? 'is-checked' : ''}`}
           title={isShared ? 'Click to make private' : `Click to share with ${partnerName}`}
           role="switch"
           aria-checked={isShared}

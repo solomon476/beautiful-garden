@@ -1,5 +1,5 @@
 import type { GardenNotification } from '../types/garden';
-import { DEFAULT_PROFILES } from './gardenService';
+import { AUTHORIZED_PROFILES as DEFAULT_PROFILES } from './authService';
 
 const STORAGE_KEY = 'perfect_time_notifications';
 
