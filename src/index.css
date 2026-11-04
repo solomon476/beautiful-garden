@@ -837,24 +837,26 @@ button:hover { opacity: 0.95; }
   width: 100%;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: #120b22;
+  background: #0d0718;
   border-radius: 6px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2px;
 }
 
 .polaroid-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  transition: transform 0.6s ease;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .polaroid-card:hover .polaroid-image {
-  transform: scale(1.05);
+  transform: none;
 }
 
 .polaroid-caption {

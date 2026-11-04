@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, Calendar, ZoomIn } from 'lucide-react';
+import { Camera, Calendar } from 'lucide-react';
 import { giftContent } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
@@ -69,29 +69,18 @@ export const ScrapbookSection: React.FC = () => {
               }}
               aria-label={`View memory: ${memory.title}`}
             >
-              {/* Photo Frame */}
+              {/* Photo Frame: Normal, Natural Proportions */}
               <div className="polaroid-image-wrapper relative">
                 <img
                   src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
                   alt={memory.altText || memory.title}
                   className="polaroid-image"
-                  style={{
-                    objectPosition: memory.objectPosition || 'center',
-                    filter: memory.filter || undefined,
-                  }}
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
                   }}
                 />
-                
-                {/* Subtle zoom badge on desktop hover only */}
-                <div className="absolute inset-0 bg-pink-950/20 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-center pointer-events-none">
-                  <span className="p-2 rounded-full bg-white/80 text-slate-800 shadow-md backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
-                    <ZoomIn className="w-4 h-4 text-pink-600" />
-                  </span>
-                </div>
 
                 {/* Tag Badge */}
                 <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-[10px] text-pink-200 border border-white/20">

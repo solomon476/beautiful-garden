@@ -158,8 +158,7 @@ export const giftContent: GiftConfig = {
       accentColor: "#38bdf8",
       photoUrl: "/assets/memories/photo-twilight-date.jpg",
       altText: "Evening twilight selfie together outside the restaurant",
-      objectPosition: "center 70%",
-      filter: "brightness(1.15) contrast(1.05)",
+      objectPosition: "center center",
     },
     {
       id: "mem-5",
@@ -170,7 +169,7 @@ export const giftContent: GiftConfig = {
       accentColor: "#fb7185",
       photoUrl: "/assets/memories/photo-sun-portrait.jpg",
       altText: "Warm sunny portrait looking directly into the camera",
-      objectPosition: "center 20%",
+      objectPosition: "center center",
     },
     {
       id: "mem-6",
@@ -181,8 +180,7 @@ export const giftContent: GiftConfig = {
       accentColor: "#a855f7",
       photoUrl: "/assets/memories/photo-balcony-peace.jpg",
       altText: "Playful balcony portrait posing with double peace signs",
-      objectPosition: "center 20%",
-      filter: "brightness(1.22) contrast(1.06)",
+      objectPosition: "center center",
     },
   ],
   flowerNotes: [

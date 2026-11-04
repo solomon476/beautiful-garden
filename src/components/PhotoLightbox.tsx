@@ -126,15 +126,12 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Polaroid Picture: Natural Proportions, Never Stretches */}
-        <div className="w-full bg-slate-950 rounded-xl overflow-hidden shadow-inner relative group flex items-center justify-center max-h-[46vh] sm:max-h-[52vh] min-h-[190px]">
+        {/* Polaroid Picture: Natural Proportions, Never Stretches, Zero Zoom */}
+        <div className="w-full bg-slate-950 rounded-xl overflow-hidden shadow-inner relative group flex items-center justify-center max-h-[50vh] sm:max-h-[58vh] min-h-[220px]">
           <img
             src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
             alt={memory.altText || memory.title}
-            className="w-auto h-auto max-w-full max-h-[46vh] sm:max-h-[52vh] object-contain mx-auto rounded-lg transition-transform duration-300"
-            style={{
-              filter: memory.filter || undefined,
-            }}
+            className="w-auto h-auto max-w-full max-h-[50vh] sm:max-h-[58vh] object-contain mx-auto rounded-lg select-none"
             loading="eager"
             decoding="async"
             onError={(e) => {
