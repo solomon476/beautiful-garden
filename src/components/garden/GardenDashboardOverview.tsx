@@ -12,6 +12,7 @@ import {
   Globe,
   Smile,
   Plus,
+  ChevronRight,
 } from 'lucide-react';
 import { soundEngine } from '../../utils/audio';
 import { moodGardenService } from '../../services/gardenService';
@@ -158,62 +159,341 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-12 w-full max-w-7xl mx-auto">
-      {/* Dual User Switcher: Active Partner Picture */}
-      <div className="flex justify-center sm:justify-end">
-        <UserSwitcher currentUser={currentUser} />
-      </div>
-
+    <div className="space-y-5 sm:space-y-8 animate-fade-in pb-12 w-full max-w-7xl mx-auto">
       {/* ============================================================== */}
-      {/* 1. HERO GARDEN SHOWCASE                                        */}
+      {/* MOBILE EXPERIENCE (Faithfully Designed from Reference Guide)   */}
       {/* ============================================================== */}
-      <div className="relative rounded-3xl sm:rounded-[2.5rem] overflow-hidden border border-purple-400/25 shadow-2xl bg-[#0e0720]">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-          style={{
-            backgroundImage: `url('/assets/garden/hero_bench.jpg')`,
-            filter: 'brightness(0.92) contrast(1.05)',
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(14, 7, 32, 0.45) 0%, rgba(14, 7, 32, 0.78) 60%, rgba(14, 7, 32, 0.95) 100%), radial-gradient(circle at 80% 30%, rgba(236, 72, 153, 0.25) 0%, transparent 60%)',
-          }}
-        />
+      <div className="block sm:hidden space-y-4 font-sans select-none pb-6">
+        {/* 1. Mobile Hero Rose Card (Faithful to Smartphone Reference) */}
+        <div className="mobile-hero-rose" />
 
-        {/* Hero Content */}
-        <div className="relative z-10 px-5 sm:px-10 lg:px-12 py-8 sm:py-12 md:py-16 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
-          <div className="max-w-2xl space-y-3 sm:space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono tracking-wider uppercase backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-pink-300 fill-pink-300" />
-              <span>A Private Garden for Us ♡</span>
+        {/* 2. Mobile Section Heading */}
+        <div className="space-y-0.5 pt-1 px-1">
+          <h2 className="font-serif text-2xl font-bold text-white flex items-center gap-1.5 drop-shadow-sm">
+            <span>🌸</span>
+            <span>Our Garden</span>
+          </h2>
+          <p className="font-serif italic text-xs text-purple-200/90 leading-snug">
+            Explore, share and cherish our special place together.
+          </p>
+        </div>
+
+        {/* 3. Responsive Two-Column Feature Card Grid */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Card 1: Petal Notes */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('petals');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-2xl shrink-0">🌸</span>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Petal Notes
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Our thoughts & dreams
+                </span>
+              </div>
             </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
-            <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-lg">
-              Our Garden <span className="font-sans text-pink-300 font-light">♡</span>
-            </h1>
+          {/* Card 2: Letters in the Garden */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('letters');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0 text-purple-700">
+                <PenLine className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Letters in Garden
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Messages from the heart
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
-            <p className="font-handwriting text-lg sm:text-2xl md:text-3xl text-pink-200/90 leading-relaxed drop-shadow">
-              A little corner for our thoughts, dreams and everything that matters... 💜
-            </p>
-          </div>
+          {/* Card 3: Mood Garden */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('moods');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-2xl shrink-0">😊</span>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Mood Garden
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Our moods, our moments
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
-          {/* Keepsake Quote Box */}
-          <div className="relative md:max-w-xs shrink-0 self-start md:self-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 hover:border-pink-300/40 backdrop-blur-xl shadow-2xl transition-all group">
-            <span className="text-2xl sm:text-3xl text-pink-300 font-serif leading-none block select-none">“</span>
-            <p className="font-serif italic text-xs sm:text-base text-slate-100 leading-relaxed">
-              Some things are better shared... especially the beautiful ones.
-            </p>
-            <div className="mt-2.5 pt-2.5 border-t border-white/10 text-right">
-              <span className="text-[11px] font-mono text-pink-300 font-medium">
-                — Perfect Time ♡
+          {/* Card 4: Our Little Archive */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('archive');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0 text-purple-700">
+                <Camera className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Our Archive
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Our favourite photographs
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          {/* Card 5: Sound Garden */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('sound');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-700">
+                <Music2 className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Sound Garden
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Our music together
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          {/* Card 6: Little Questions */}
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('questions');
+            }}
+            className="mobile-garden-card group"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-fuchsia-100 flex items-center justify-center shrink-0 text-fuchsia-700">
+                <HelpCircle className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="mobile-garden-card-title block truncate">
+                  Little Questions
+                </span>
+                <span className="mobile-garden-card-desc block">
+                  Fun thoughts to share
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+
+        {/* 4. Single-Column Full-Width Card: Our Time */}
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            onSelectTab('time');
+          }}
+          className="mobile-garden-card group"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-14 h-10 rounded-xl overflow-hidden shrink-0 border border-purple-200/80 shadow-sm bg-purple-950">
+              <img
+                src="/assets/garden/card_time.jpg"
+                alt="Our Time"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-amber-400 text-xs">⭐</span>
+                <span className="mobile-garden-card-title text-sm block leading-tight truncate">
+                  Our Time
+                </span>
+              </div>
+              <span className="mobile-garden-card-desc text-xs block leading-tight mt-0.5 truncate">
+                Special moments and memories
               </span>
             </div>
           </div>
+          <ChevronRight className="w-4 h-4 text-purple-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* 5. Additional Keepsake Cards: Shelf, Capsule, World */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('shelf');
+            }}
+            className="p-3 rounded-2xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white text-center flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="text-xl">📚</span>
+            <span className="font-serif font-bold text-[11px] leading-tight block">Shelf</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('capsule');
+            }}
+            className="p-3 rounded-2xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white text-center flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="text-xl">🔒</span>
+            <span className="font-serif font-bold text-[11px] leading-tight block">Capsule</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('world');
+            }}
+            className="p-3 rounded-2xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 text-white text-center flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+          >
+            <span className="text-xl">🌍</span>
+            <span className="font-serif font-bold text-[11px] leading-tight block">World</span>
+          </button>
+        </div>
+
+        {/* 6. Mobile Quick Add Studio Shortcut Pills */}
+        <div className="pt-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+            <button
+              type="button"
+              onClick={() => onOpenAddStudio && onOpenAddStudio('photo')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-200 text-[11px] font-semibold shrink-0"
+            >
+              <Camera className="w-3 h-3 text-pink-300" />
+              <span>+ Photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenAddStudio && onOpenAddStudio('date')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-500/20 border border-teal-400/40 text-teal-200 text-[11px] font-semibold shrink-0"
+            >
+              <CalendarDays className="w-3 h-3 text-teal-300" />
+              <span>+ Date</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenAddStudio && onOpenAddStudio('song')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-200 text-[11px] font-semibold shrink-0"
+            >
+              <Music2 className="w-3 h-3 text-purple-300" />
+              <span>+ Music</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenAddStudio && onOpenAddStudio('letter')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-200 text-[11px] font-semibold shrink-0"
+            >
+              <PenLine className="w-3 h-3 text-rose-300" />
+              <span>+ Letter</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* ============================================================== */}
+      {/* DESKTOP / TABLET EXPERIENCE (Balanced Grid & Hero Bench)       */}
+      {/* ============================================================== */}
+      <div className="hidden sm:block space-y-6 sm:space-y-8">
+        {/* Dual User Switcher: Active Partner Picture */}
+        <div className="flex justify-end">
+          <UserSwitcher currentUser={currentUser} />
+        </div>
+
+        {/* ============================================================== */}
+        {/* 1. HERO GARDEN SHOWCASE                                        */}
+        {/* ============================================================== */}
+        <div className="relative rounded-3xl sm:rounded-[2.5rem] overflow-hidden border border-purple-400/25 shadow-2xl bg-[#0e0720]">
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+            style={{
+              backgroundImage: `url('/assets/garden/hero_bench.jpg')`,
+              filter: 'brightness(0.92) contrast(1.05)',
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(14, 7, 32, 0.45) 0%, rgba(14, 7, 32, 0.78) 60%, rgba(14, 7, 32, 0.95) 100%), radial-gradient(circle at 80% 30%, rgba(236, 72, 153, 0.25) 0%, transparent 60%)',
+            }}
+          />
+
+          {/* Hero Content */}
+          <div className="relative z-10 px-5 sm:px-10 lg:px-12 py-8 sm:py-12 md:py-16 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
+            <div className="max-w-2xl space-y-3 sm:space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono tracking-wider uppercase backdrop-blur-md">
+                <Sparkles className="w-3.5 h-3.5 text-pink-300 fill-pink-300" />
+                <span>A Private Garden for Us ♡</span>
+              </div>
+
+              <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-lg">
+                Our Garden <span className="font-sans text-pink-300 font-light">♡</span>
+              </h1>
+
+              <p className="font-handwriting text-lg sm:text-2xl md:text-3xl text-pink-200/90 leading-relaxed drop-shadow">
+                A little corner for our thoughts, dreams and everything that matters... 💜
+              </p>
+            </div>
+
+            {/* Keepsake Quote Box */}
+            <div className="relative md:max-w-xs shrink-0 self-start md:self-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 hover:border-pink-300/40 backdrop-blur-xl shadow-2xl transition-all group">
+              <span className="text-2xl sm:text-3xl text-pink-300 font-serif leading-none block select-none">“</span>
+              <p className="font-serif italic text-xs sm:text-base text-slate-100 leading-relaxed">
+                Some things are better shared... especially the beautiful ones.
+              </p>
+              <div className="mt-2.5 pt-2.5 border-t border-white/10 text-right">
+                <span className="text-[11px] font-mono text-pink-300 font-medium">
+                  — Perfect Time ♡
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* ============================================================== */}
       {/* 2. SANCTUARY QUICK CREATION HUB                                */}
@@ -514,6 +794,7 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* ============================================================== */}

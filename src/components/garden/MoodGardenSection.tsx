@@ -285,12 +285,12 @@ export const MoodGardenSection: React.FC = () => {
                 >
                   <span
                     className={`text-xs sm:text-sm font-serif font-bold tracking-tight leading-snug line-clamp-2 ${
-                      isSelected ? 'text-white font-semibold' : 'text-slate-100 group-hover:text-pink-100'
+                      isSelected ? 'text-pink-300 font-semibold' : 'text-white group-hover:text-pink-200'
                     }`}
                   >
                     {card.label}
                   </span>
-                  <span className="text-[10px] sm:text-[11px] text-purple-200/80 font-sans font-light leading-snug line-clamp-2 mt-0.5">
+                  <span className="text-[11px] sm:text-xs text-pink-200 font-sans font-normal leading-snug line-clamp-2 mt-0.5">
                     {card.subtitle}
                   </span>
                 </div>

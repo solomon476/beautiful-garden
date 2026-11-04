@@ -35,10 +35,12 @@ import { soundEngine } from '../../utils/audio';
 import { UserSwitcher } from './UserSwitcher';
 import { GardenNotificationBell } from './GardenNotificationBell';
 import { QuickAddStudioModal, type QuickAddType } from './QuickAddStudioModal';
+import { MobileBottomNav } from './MobileBottomNav';
 
 interface OurGardenModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: TabKey;
 }
 
 type TabKey =
@@ -70,14 +72,20 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'security', label: 'Privacy Test', icon: ShieldCheck, color: 'from-emerald-400 to-teal-400' },
 ];
 
-export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<TabKey>('garden');
+export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose, initialTab = 'garden' }) => {
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
   const [auditResults, setAuditResults] = useState<PrivacyTestResult[] | null>(null);
   const [testingAudit, setTestingAudit] = useState<boolean>(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [quickAddType, setQuickAddType] = useState<QuickAddType>('photo');
   const mainScrollRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (initialTab && isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   useEffect(() => {
     mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' });
@@ -209,17 +217,20 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         >
           {/* Logo & Brand Title */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
+            <div className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-serif text-sm sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
-                <span>Perfect Time</span>
+              <h2 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
+                <span className="font-serif sm:font-serif">Perfect Time</span>
                 <span className="text-pink-400 font-sans text-xs sm:text-sm">♡</span>
                 <span className="hidden sm:inline text-xs sm:text-sm text-pink-200/90 font-medium truncate">
                   — A Private Garden for Us
                 </span>
               </h2>
+              <p className="sm:hidden text-[11px] text-pink-200/90 font-handwriting leading-none pt-0.5">
+                Together... always
+              </p>
             </div>
           </div>
 
@@ -257,9 +268,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
           </div>
         </header>
 
-        {/* Feature Tab Navigation Bar — Smooth Touch Scroll */}
+        {/* Feature Tab Navigation Bar — Desktop / Tablet Bar */}
         <nav
-          className="relative z-10 px-3 sm:px-8 py-2 sm:py-2.5 border-b border-purple-400/10 bg-[#090514]/80 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none shrink-0"
+          className="relative z-10 px-3 sm:px-8 py-2 sm:py-2.5 border-b border-purple-400/10 bg-[#090514]/80 hidden sm:flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none shrink-0"
           style={{ WebkitOverflowScrolling: 'touch' }}
           aria-label="Garden feature sections"
         >
@@ -286,7 +297,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         {/* Tab Content Canvas */}
         <main
           ref={mainScrollRef}
-          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
+          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full pb-28 sm:pb-8 ${
             activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
           }`}
           style={{ minHeight: 0 }}
@@ -445,6 +456,25 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
             </div>
           )}
         </main>
+
+        {/* Mobile Fixed Bottom Navigation Bar */}
+        <MobileBottomNav
+          currentView={activeTab}
+          isGardenOpen={true}
+          onNavigate={(target) => {
+            if (target === 'home') {
+              handleClose();
+            } else if (target === 'garden') {
+              handleSelectTab('garden');
+            } else if (target === 'music') {
+              handleSelectTab('sound');
+            } else if (target === 'archive') {
+              handleSelectTab('archive');
+            } else {
+              handleSelectTab(target as TabKey);
+            }
+          }}
+        />
       </div>
 
       {/* Global Quick Add Studio Modal */}

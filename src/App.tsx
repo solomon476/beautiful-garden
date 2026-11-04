@@ -8,12 +8,27 @@ import { FlowerNotesSection } from './components/FlowerNotesSection';
 import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
 import { FinalLetterSection } from './components/FinalLetterSection';
 import { OurGardenModal } from './components/garden/OurGardenModal';
+import { MobileBottomNav } from './components/garden/MobileBottomNav';
 import { giftContent } from './data/giftContent';
 import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('welcome');
   const [isOurGardenOpen, setIsOurGardenOpen] = useState<boolean>(false);
+  const [gardenInitialTab, setGardenInitialTab] = useState<any>('garden');
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        setGardenInitialTab(tabParam);
+        setIsOurGardenOpen(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
@@ -67,10 +82,11 @@ export const App: React.FC = () => {
       <OurGardenModal
         isOpen={isOurGardenOpen}
         onClose={() => setIsOurGardenOpen(false)}
+        initialTab={gardenInitialTab}
       />
 
       {/* Main Experience Stream */}
-      <main className="relative z-10 flex-grow pb-16">
+      <main className="relative z-10 flex-grow pb-24 sm:pb-16">
         {/* Step 1: The Welcome Portal */}
         <WelcomeScreen onEnter={() => scrollToSection('timing')} />
 
@@ -91,7 +107,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* Garden Footer */}
-      <footer className="relative z-10 py-8 px-4 text-center border-t border-white/10 bg-slate-950/60 backdrop-blur-md">
+      <footer className="relative z-10 py-8 px-4 pb-24 sm:pb-8 text-center border-t border-white/10 bg-slate-950/60 backdrop-blur-md">
         <p className="text-xs text-slate-400 flex items-center justify-center gap-1.5 font-light">
           <span>Crafted for</span>
           <span className="text-pink-300 font-medium">{giftContent.recipientName}</span>
@@ -103,6 +119,30 @@ export const App: React.FC = () => {
           Perfect Time ✨ • A Private Corner
         </p>
       </footer>
+
+      {/* Mobile Fixed Bottom Navigation Bar (Main Site) */}
+      {!isOurGardenOpen && (
+        <MobileBottomNav
+          currentView={activeSection}
+          isGardenOpen={false}
+          onNavigate={(target) => {
+            if (target === 'home') {
+              scrollToSection('welcome');
+            } else if (target === 'garden') {
+              setGardenInitialTab('garden');
+              setIsOurGardenOpen(true);
+            } else if (target === 'music') {
+              setGardenInitialTab('sound');
+              setIsOurGardenOpen(true);
+            } else if (target === 'archive') {
+              scrollToSection('memories');
+            } else {
+              setGardenInitialTab(target);
+              setIsOurGardenOpen(true);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

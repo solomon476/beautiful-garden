@@ -93,8 +93,9 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
 
           {/* Account Label */}
           <div className="flex items-center gap-1.5 text-left">
-            <span className="text-xs sm:text-xs font-serif font-bold text-white tracking-wide truncate max-w-[130px] sm:max-w-none">
-              {gardenLabel}
+            <span className="text-xs sm:text-xs font-serif font-bold text-white tracking-wide truncate">
+              <span className="sm:hidden">{isSolomon ? 'Solomon' : 'Noella'}</span>
+              <span className="hidden sm:inline">{gardenLabel}</span>
             </span>
             <ChevronDown
               className={`w-3 h-3 text-pink-300/80 transition-transform duration-200 ${
@@ -103,6 +104,19 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
             />
           </div>
         </button>
+
+        {/* Optional Quick Logout Link beside Menu (as in Mobile Reference) */}
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="hidden xs:inline-flex items-center gap-1 text-[11px] font-sans text-purple-200/90 hover:text-white transition-colors px-2 py-1 rounded-full hover:bg-white/10 active:scale-95 cursor-pointer ml-1"
+            title="Log out of sanctuary"
+          >
+            <LogOut className="w-3.5 h-3.5 text-pink-300" />
+            <span>Log out</span>
+          </button>
+        )}
 
         {/* Dropdown Menu */}
         {isOpen && (
