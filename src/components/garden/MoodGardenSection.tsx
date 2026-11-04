@@ -29,42 +29,42 @@ const ENHANCED_MOODS: MoodOptionConfig[] = [
     label: 'Peaceful',
     subtitle: 'Calm and content',
     emoji: '🌿',
-    artUrl: '/assets/garden/moods/peaceful_card_art.png',
+    artUrl: '/assets/garden/moods/peaceful_hd.png',
   },
   {
     key: 'excited',
     label: 'Excited',
     subtitle: 'Full of energy',
     emoji: '✨',
-    artUrl: '/assets/garden/moods/excited_card_art.png',
+    artUrl: '/assets/garden/moods/excited_hd.png',
   },
   {
     key: 'happy',
     label: 'Happy',
     subtitle: 'Grateful and joyful',
     emoji: '🌷',
-    artUrl: '/assets/garden/moods/happy_card_art.png',
+    artUrl: '/assets/garden/moods/happy_hd.png',
   },
   {
     key: 'tired',
     label: 'Tired',
     subtitle: 'A bit drained',
     emoji: '🌙',
-    artUrl: '/assets/garden/moods/tired_card_art.png',
+    artUrl: '/assets/garden/moods/tired_hd.png',
   },
   {
     key: 'listening',
     label: 'Looking for Music',
     subtitle: 'In the mood for tunes',
     emoji: '🎧',
-    artUrl: '/assets/garden/moods/music_card_art.png',
+    artUrl: '/assets/garden/moods/music_hd.png',
   },
   {
     key: 'thoughtful',
     label: 'Thoughtful',
     subtitle: 'Deep in thought',
     emoji: '☁️',
-    artUrl: '/assets/garden/moods/thoughtful_card_art.png',
+    artUrl: '/assets/garden/moods/thoughtful_hd.png',
   },
 ];
 
@@ -164,9 +164,9 @@ export const MoodGardenSection: React.FC = () => {
       {/* 1. HERO BANNER: Magical Twilight Garden with Rustic Bench         */}
       {/* ================================================================= */}
       <div
-        className="relative rounded-3xl overflow-hidden border border-purple-400/25 shadow-2xl p-5 sm:p-7 md:p-8 text-white min-h-[190px] sm:min-h-[220px] flex flex-col md:flex-row items-center justify-between gap-5 select-none"
+        className="relative rounded-3xl overflow-hidden border border-purple-400/30 shadow-2xl p-5 sm:p-7 md:p-8 text-white min-h-[190px] sm:min-h-[220px] flex flex-col md:flex-row items-center justify-between gap-5 select-none"
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(13, 6, 28, 0.38) 0%, rgba(26, 10, 48, 0.58) 50%, rgba(13, 6, 28, 0.48) 100%), url(/assets/garden/hero_bench.jpg)`,
+          backgroundImage: `linear-gradient(to right, rgba(13, 6, 28, 0.28) 0%, rgba(26, 10, 48, 0.5) 50%, rgba(13, 6, 28, 0.38) 100%), url(/assets/garden/mood_garden_bg_hd.jpg)`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 40%',
         }}
@@ -198,7 +198,7 @@ export const MoodGardenSection: React.FC = () => {
         </div>
 
         {/* Right Floating Quote Card */}
-        <div className="shrink-0 rounded-2xl bg-[#14072b]/70 backdrop-blur-md border border-purple-300/30 px-5 py-3.5 max-w-xs text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-10">
+        <div className="shrink-0 rounded-2xl bg-[#14072b]/75 backdrop-blur-md border border-purple-300/35 px-5 py-3.5 max-w-xs text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-10">
           <p className="font-serif italic text-xs sm:text-sm text-pink-100 leading-snug">
             “Your feelings matter... here, always.”
           </p>
@@ -211,9 +211,9 @@ export const MoodGardenSection: React.FC = () => {
       {/* ================================================================= */}
       {/* 2. CHOOSE YOUR MOOD: 6 Illustrated Mood Cards + Check-In Note     */}
       {/* ================================================================= */}
-      <div className="rounded-3xl border border-purple-400/25 bg-gradient-to-b from-[#240e3b]/85 via-[#19092c]/90 to-[#10061e]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_12px_45px_rgba(0,0,0,0.5)] space-y-5">
+      <div className="rounded-3xl border border-purple-400/35 bg-gradient-to-b from-[#250e3e]/90 via-[#1a0a2f]/92 to-[#110520]/96 backdrop-blur-2xl p-5 sm:p-7 shadow-[0_12px_45px_rgba(0,0,0,0.6),0_0_35px_rgba(168,85,247,0.18)] space-y-5">
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-400/15 pb-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-400/20 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-pink-300 text-lg shadow-inner">
               🪷
@@ -233,7 +233,7 @@ export const MoodGardenSection: React.FC = () => {
           </div>
         </div>
 
-        {/* 6 Mood Cards in 1 Row on Desktop / Tablets */}
+        {/* 6 Mood Cards: Upright Cards with Crystal-Clear Artwork */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-3.5">
           {ENHANCED_MOODS.map((card) => {
             const isSelected = selectedMoodKey === card.key;
@@ -245,23 +245,23 @@ export const MoodGardenSection: React.FC = () => {
                   soundEngine.playSparkle();
                   setSelectedMoodKey(card.key);
                 }}
-                className={`group relative rounded-2xl overflow-hidden flex flex-col justify-between text-left transition-all duration-300 focus:outline-none cursor-pointer h-40 sm:h-44 ${
+                className={`group relative rounded-2xl overflow-hidden flex flex-col justify-between text-left transition-all duration-300 focus:outline-none cursor-pointer h-44 sm:h-48 ${
                   isSelected
-                    ? 'ring-2 ring-pink-400 shadow-[0_0_26px_rgba(236,72,153,0.75)] scale-[1.02] border border-pink-300'
-                    : 'border border-purple-400/20 hover:border-purple-300/50 hover:scale-[1.01] hover:shadow-lg'
+                    ? 'ring-2 ring-pink-400 shadow-[0_0_28px_rgba(236,72,153,0.85)] scale-[1.02] border border-pink-300'
+                    : 'border border-purple-400/25 hover:border-purple-300/60 hover:scale-[1.01] hover:shadow-lg'
                 }`}
                 style={{
                   background: 'linear-gradient(180deg, #1f0d36 0%, #120622 100%)',
                 }}
               >
-                {/* Top Artwork Area */}
+                {/* Top Artwork Area: Clean, High-Definition, Text-Free Art */}
                 <div className="relative w-full flex-1 overflow-hidden bg-purple-950/70 flex items-center justify-center">
                   <img
                     src={card.artUrl}
                     alt={card.label}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#150727] via-transparent to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#150727] via-transparent to-black/15" />
 
                   {/* Radio / Checkmark in Top Right */}
                   <div className="absolute top-2 right-2 z-10">
@@ -270,7 +270,7 @@ export const MoodGardenSection: React.FC = () => {
                         <Check className="w-3 h-3 text-white" strokeWidth={3} />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full border border-white/50 bg-black/35 backdrop-blur-sm transition-colors group-hover:border-white/80" />
+                      <div className="w-5 h-5 rounded-full border-2 border-white/60 bg-black/40 backdrop-blur-sm transition-colors group-hover:border-white/90" />
                     )}
                   </div>
                 </div>
@@ -280,7 +280,7 @@ export const MoodGardenSection: React.FC = () => {
                   className={`p-2.5 sm:p-3 flex flex-col justify-center shrink-0 border-t transition-colors ${
                     isSelected
                       ? 'bg-gradient-to-b from-purple-900/90 to-[#1e0a35] border-pink-400/40'
-                      : 'bg-[#150727]/95 border-purple-400/10'
+                      : 'bg-[#150727]/95 border-purple-400/15'
                   }`}
                 >
                   <span
@@ -290,7 +290,7 @@ export const MoodGardenSection: React.FC = () => {
                   >
                     {card.label}
                   </span>
-                  <span className="text-[10px] sm:text-[11px] text-purple-200/75 font-sans font-light truncate mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-purple-200/80 font-sans font-light truncate mt-0.5">
                     {card.subtitle}
                   </span>
                 </div>

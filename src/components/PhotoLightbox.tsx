@@ -129,7 +129,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         {/* Polaroid Picture: Natural Proportions, Never Stretches */}
         <div className="w-full bg-slate-950 rounded-xl overflow-hidden shadow-inner relative group flex items-center justify-center max-h-[46vh] sm:max-h-[52vh] min-h-[190px]">
           <img
-            src={memory.photoUrl || '/assets/memories/photo-solomon-portrait.jpg'}
+            src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
             alt={memory.altText || memory.title}
             className="w-auto h-auto max-w-full max-h-[46vh] sm:max-h-[52vh] object-contain mx-auto rounded-lg transition-transform duration-300"
             style={{

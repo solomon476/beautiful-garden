@@ -72,7 +72,7 @@ export const ScrapbookSection: React.FC = () => {
               {/* Photo Frame */}
               <div className="polaroid-image-wrapper relative">
                 <img
-                  src={memory.photoUrl || '/assets/memories/photo-solomon-portrait.jpg'}
+                  src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
                   alt={memory.altText || memory.title}
                   className="polaroid-image"
                   style={{
@@ -86,8 +86,8 @@ export const ScrapbookSection: React.FC = () => {
                   }}
                 />
                 
-                {/* Subtle zoom badge on hover */}
-                <div className="absolute inset-0 bg-pink-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {/* Subtle zoom badge on desktop hover only */}
+                <div className="absolute inset-0 bg-pink-950/20 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-center pointer-events-none">
                   <span className="p-2 rounded-full bg-white/80 text-slate-800 shadow-md backdrop-blur-sm transform scale-75 group-hover:scale-100 transition-transform">
                     <ZoomIn className="w-4 h-4 text-pink-600" />
                   </span>

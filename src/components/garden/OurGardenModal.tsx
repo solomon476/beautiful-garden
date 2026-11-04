@@ -192,9 +192,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         className="relative w-full h-full flex flex-col min-h-0 overflow-hidden bg-garden-canvas"
         style={{
           minHeight: 0,
-          backgroundColor: '#070311',
+          backgroundColor: '#0c031a',
           background:
-            'radial-gradient(circle at 80% 5%, rgba(244, 114, 182, 0.18) 0%, transparent 45%), radial-gradient(circle at 15% 95%, rgba(192, 132, 252, 0.16) 0%, transparent 50%), linear-gradient(175deg, #130a24 0%, #070311 100%)',
+            'radial-gradient(circle at 50% 10%, rgba(217, 70, 239, 0.22) 0%, transparent 50%), radial-gradient(circle at 12% 85%, rgba(168, 85, 247, 0.18) 0%, transparent 50%), radial-gradient(circle at 88% 85%, rgba(244, 114, 182, 0.16) 0%, transparent 45%), linear-gradient(180deg, #18082e 0%, #0c031a 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
