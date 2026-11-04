@@ -450,6 +450,41 @@ export async function syncLocalDraftsToCloud(): Promise<void> {
         });
       }
     }
+
+    // 5. Sync any local recommendations (Books, Films, etc.)
+    const localShelf = loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, []);
+    for (const item of localShelf) {
+      if (item.contributorId === user.id && !item.id.startsWith('seed-')) {
+        await supabase.from('recommendations').upsert({
+          id: item.id,
+          contributor_id: item.contributorId,
+          title: item.title,
+          category: item.category,
+          description: item.description,
+          link: item.link,
+          status: item.status,
+          is_shared: true,
+          created_at: item.createdAt,
+        });
+      }
+    }
+
+    // 6. Sync any local songs
+    const localSongs = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, []);
+    for (const song of localSongs) {
+      if (song.addedBy === user.id && !song.id.startsWith('seed-')) {
+        await supabase.from('songs').upsert({
+          id: song.id,
+          added_by: song.addedBy,
+          title: song.title,
+          artist: song.artist,
+          music_url: song.musicUrl,
+          message: song.message,
+          status: song.status,
+          created_at: song.createdAt,
+        });
+      }
+    }
   } catch (err) {
     console.warn('Syncing local drafts to cloud error:', err);
     hasSyncedDrafts = false;
@@ -650,6 +685,7 @@ export const soundGardenService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('songs').insert({
+        id: entry.id,
         added_by: user.id,
         title: entry.title,
         artist: entry.artist,
@@ -705,14 +741,15 @@ export const soundGardenService = {
 // ==============================================================================
 export const shelfService = {
   async getItems(): Promise<ShelfEntry[]> {
+    const local = loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, DEFAULT_INITIAL_SHELF);
     if (isLiveSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('recommendations')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        return data.map((d: any) => ({
+      if (!error && data && data.length > 0) {
+        const cloudEntries: ShelfEntry[] = data.map((d: any) => ({
           id: d.id,
           contributorId: d.contributor_id,
           contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
@@ -723,9 +760,12 @@ export const shelfService = {
           status: d.status,
           createdAt: d.created_at,
         }));
+        const cloudIds = new Set(cloudEntries.map((c) => c.id));
+        const localOnly = local.filter((l) => !cloudIds.has(l.id));
+        return [...cloudEntries, ...localOnly];
       }
     }
-    return loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, DEFAULT_INITIAL_SHELF);
+    return local;
   },
 
   async addItem(item: {
@@ -760,12 +800,14 @@ export const shelfService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('recommendations').insert({
+        id: entry.id,
         contributor_id: user.id,
         title: entry.title,
         category: entry.category,
         description: entry.description,
         link: entry.link,
         status: entry.status,
+        is_shared: true,
       });
     }
 
@@ -952,6 +994,13 @@ export const memoryArchiveService = {
 export const petalNotesService = {
   async getPetals(): Promise<PetalNoteEntry[]> {
     const user = authService.getCurrentUser();
+    const isAuthed = authService.isAuthenticated();
+    const local = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
+    const localVisible = local.filter((p) => {
+      if (!isAuthed) return p.isShared;
+      return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
+    });
+
     if (isLiveSupabaseConfigured && supabase) {
       await syncLocalDraftsToCloud();
       const { data, error } = await supabase
@@ -959,26 +1008,30 @@ export const petalNotesService = {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          authorId: d.author_id,
-          authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          recipientId: d.recipient_id,
-          body: d.body,
-          color: d.color,
-          emoji: d.emoji,
-          isShared: d.is_shared,
-          createdAt: d.created_at,
-        }));
+      if (!error && data && data.length > 0) {
+        const cloudEntries: PetalNoteEntry[] = data
+          .map((d: any) => ({
+            id: d.id,
+            authorId: d.author_id,
+            authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            recipientId: d.recipient_id,
+            body: d.body,
+            color: d.color,
+            emoji: d.emoji,
+            isShared: d.is_shared,
+            createdAt: d.created_at,
+          }))
+          .filter((p) => {
+            if (!isAuthed) return p.isShared;
+            return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
+          });
+
+        const cloudIds = new Set(cloudEntries.map((c) => c.id));
+        const localOnly = localVisible.filter((l) => !cloudIds.has(l.id));
+        return [...cloudEntries, ...localOnly];
       }
     }
-    const isAuthed = authService.isAuthenticated();
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
-    return all.filter((p) => {
-      if (!isAuthed) return p.isShared;
-      return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
-    });
+    return localVisible;
   },
 
   async addPetal(petal: { body: string; color: string; emoji: string; isShared: boolean }): Promise<PetalNoteEntry> {
@@ -998,6 +1051,7 @@ export const petalNotesService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('petal_notes').insert({
+        id: entry.id,
         author_id: user.id,
         recipient_id: partner.id,
         body: entry.body,
@@ -1046,14 +1100,15 @@ export const petalNotesService = {
 // ==============================================================================
 export const hangoutService = {
   async getHangouts(): Promise<HangoutEntry[]> {
+    const local = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
     if (isLiveSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('hangout_suggestions')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        return data.map((d: any) => ({
+      if (!error && data && data.length > 0) {
+        const cloudEntries: HangoutEntry[] = data.map((d: any) => ({
           id: d.id,
           suggestedBy: d.suggested_by,
           suggestedByName: d.suggested_by === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
@@ -1063,9 +1118,12 @@ export const hangoutService = {
           status: d.status as HangoutStatus,
           createdAt: d.created_at,
         }));
+        const cloudIds = new Set(cloudEntries.map((c) => c.id));
+        const localOnly = local.filter((l) => !cloudIds.has(l.id));
+        return [...cloudEntries, ...localOnly];
       }
     }
-    return loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
+    return local;
   },
 
   async addHangout(plan: {
@@ -1094,6 +1152,7 @@ export const hangoutService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('hangout_suggestions').insert({
+        id: entry.id,
         suggested_by: user.id,
         title: entry.title,
         description: entry.description,
@@ -1185,7 +1244,7 @@ export const questionsService = {
           questionId: d.question_id,
           userId: d.user_id,
           userName: d.user_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          answer: d.answer,
+          answer: d.response || d.answer || '',
           isShared: d.is_shared,
           createdAt: d.created_at,
         }));
@@ -1209,9 +1268,10 @@ export const questionsService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('question_responses').upsert({
+        id: entry.id,
         question_id: questionId,
         user_id: user.id,
-        answer: entry.answer,
+        response: entry.answer,
         is_shared: entry.isShared,
       });
     }
@@ -1245,8 +1305,8 @@ export const timeCapsuleService = {
           authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
           recipientId: d.recipient_id,
           title: d.title,
-          body: d.body,
-          releaseAt: d.release_at,
+          body: d.message || d.body || '',
+          releaseAt: d.unlock_date || d.release_at || d.created_at,
           isShared: d.is_shared,
           createdAt: d.created_at,
         }));
@@ -1300,11 +1360,12 @@ export const timeCapsuleService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('time_capsules').insert({
+        id: entry.id,
         author_id: user.id,
         recipient_id: partner.id,
         title: entry.title,
-        body: entry.body,
-        release_at: entry.releaseAt,
+        message: entry.body,
+        unlock_date: entry.releaseAt,
         is_shared: entry.isShared,
       });
     }
@@ -1366,20 +1427,22 @@ export const moodGardenService = {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        return data.map((d: any) => {
-          const opt = MOOD_OPTIONS.find((m) => m.key === d.mood_key);
-          return {
-            id: d.id,
-            userId: d.user_id,
-            userName: d.user_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-            moodKey: d.mood_key,
-            moodLabel: d.mood_label,
-            emoji: opt ? opt.emoji : '✨',
-            note: d.note,
-            isShared: d.is_shared,
-            createdAt: d.created_at,
-          };
-        });
+        return data
+          .filter((d: any) => (isAuthed ? d.user_id === user.id || d.is_shared : d.is_shared))
+          .map((d: any) => {
+            const opt = MOOD_OPTIONS.find((m) => m.key === d.mood_key);
+            return {
+              id: d.id,
+              userId: d.user_id,
+              userName: d.user_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+              moodKey: d.mood_key,
+              moodLabel: d.mood_label,
+              emoji: opt ? opt.emoji : '✨',
+              note: d.note,
+              isShared: d.is_shared,
+              createdAt: d.created_at,
+            };
+          });
       }
     }
     const isAuthed = authService.isAuthenticated();
@@ -1405,6 +1468,7 @@ export const moodGardenService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('mood_entries').insert({
+        id: entry.id,
         user_id: user.id,
         mood_key: entry.moodKey,
         mood_label: entry.moodLabel,
