@@ -844,10 +844,15 @@ export const memoryArchiveService = {
           createdAt: d.created_at,
         }));
 
+        // Filter cloud entries by privacy (private memories only visible to contributor)
+        const visibleCloudEntries = cloudEntries.filter((d) =>
+          isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
+        );
+
         // Merge: add any local-only entries (failed cloud upload) to the top
-        const cloudIds = new Set(cloudEntries.map((e) => e.id));
+        const cloudIds = new Set(visibleCloudEntries.map((e) => e.id));
         const localOnlyEntries = localVisible.filter((m) => !cloudIds.has(m.id));
-        return [...localOnlyEntries, ...cloudEntries];
+        return [...localOnlyEntries, ...visibleCloudEntries];
       }
     }
 
@@ -918,6 +923,10 @@ export const memoryArchiveService = {
         recipientId: partner.id,
         isPrivate: false,
       });
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
     }
 
     return entry;

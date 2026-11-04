@@ -27,6 +27,7 @@ import {
 import type { ShelfCategory, SongStatus } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
+import { compressImage } from '../../utils/imageCompressor';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 
@@ -127,8 +128,8 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
     if (!file) return;
     try {
       soundEngine.playSparkle();
-      const stored = await mediaStorage.saveFile(file);
-      setPhotoDataUrl(stored.dataUrl);
+      const compressed = await compressImage(file, 1280, 1280, 0.82);
+      setPhotoDataUrl(compressed);
       if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
     } catch {
       setErrorMsg('Failed to process image file.');

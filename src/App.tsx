@@ -94,7 +94,12 @@ export const App: React.FC = () => {
         <TimingSection />
 
         {/* Step 3: The Memories Scrapbook */}
-        <ScrapbookSection />
+        <ScrapbookSection
+          onOpenArchive={() => {
+            setGardenInitialTab('archive');
+            setIsOurGardenOpen(true);
+          }}
+        />
 
         {/* Step 4: Interactive Flower Notes */}
         <FlowerNotesSection />

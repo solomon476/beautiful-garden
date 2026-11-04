@@ -17,6 +17,7 @@ import { memoryArchiveService, authService } from '../../services/gardenService'
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
+import { compressImage } from '../../utils/imageCompressor';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
@@ -66,7 +67,12 @@ export const LittleArchiveSection: React.FC = () => {
       setCurrentUser(u);
       loadMemories();
     });
-    return unsubscribe;
+    const handleUpdate = () => loadMemories();
+    window.addEventListener('garden-memories-updated', handleUpdate);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('garden-memories-updated', handleUpdate);
+    };
   }, []);
 
   const handleOpenAdd = () => {
@@ -90,47 +96,16 @@ export const LittleArchiveSection: React.FC = () => {
 
     try {
       soundEngine.playSparkle();
-
-      // Compress image to max 1200px wide / 80% JPEG quality so it fits in localStorage & Supabase
-      const compressedDataUrl = await compressImage(file, 1200, 0.8);
+      const compressedDataUrl = await compressImage(file, 1280, 1280, 0.82);
       setPhotoUrl(compressedDataUrl);
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
     } catch (err) {
       console.error(err);
-      // Fallback: use raw file if compression fails
-      try {
-        const stored = await mediaStorage.saveFile(file);
-        setPhotoUrl(stored.dataUrl);
-        if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ''));
-      } catch {
-        setErrorMsg('Failed to process image file.');
-      }
+      setErrorMsg('Failed to process image file.');
     }
   };
-
-  /** Compress a photo File to a JPEG data URL using canvas */
-  function compressImage(file: File, maxWidth: number, quality: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('Canvas not available')); return; }
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-        URL.revokeObjectURL(img.src);
-      };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  }
 
   const handleVoiceNoteRecorded = (dataUrl: string, _durationSec: number, name: string) => {
     soundEngine.playSparkle();
@@ -377,8 +352,18 @@ export const LittleArchiveSection: React.FC = () => {
                     alt={mem.title}
                     className="w-full h-full object-cover transition-transform duration-500"
                     loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#160b28] via-transparent to-black/30" />
+
+                  {/* Pinned Marker Badge */}
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-black/60 backdrop-blur-md border border-white/20 text-pink-200">
+                      <span>📌 Pinned</span>
+                    </span>
+                  </div>
 
                   {/* Privacy Badge */}
                   <div className="absolute top-3 right-3">
