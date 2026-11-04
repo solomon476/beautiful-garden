@@ -368,6 +368,94 @@ function saveLocal<T>(key: string, data: T): void {
   }
 }
 
+// ==============================================================================
+// Automatic Local-to-Cloud Sync Migration
+// Ensures any posts, letters, moods or photos saved while offline/in-localStorage
+// are seamlessly uploaded to Supabase as soon as cloud credentials are active.
+// ==============================================================================
+let hasSyncedDrafts = false;
+
+export async function syncLocalDraftsToCloud(): Promise<void> {
+  if (hasSyncedDrafts || !isLiveSupabaseConfigured || !supabase) return;
+  const user = authService.getCurrentUser();
+  if (!user || !user.id) return;
+
+  try {
+    hasSyncedDrafts = true;
+
+    // 1. Sync any local notes (Letters)
+    const localNotes = loadLocal<NoteEntry[]>(STORAGE_KEYS.NOTES, []);
+    for (const note of localNotes) {
+      if (note.authorId === user.id && !note.id.startsWith('seed-')) {
+        await supabase.from('notes').upsert({
+          id: note.id,
+          author_id: note.authorId,
+          recipient_id: note.recipientId,
+          title: note.title,
+          body: note.body,
+          is_shared: note.isShared,
+          created_at: note.createdAt,
+          updated_at: note.updatedAt,
+        });
+      }
+    }
+
+    // 2. Sync any local petal notes
+    const localPetals = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, []);
+    for (const petal of localPetals) {
+      if (petal.authorId === user.id && !petal.id.startsWith('seed-')) {
+        await supabase.from('petal_notes').upsert({
+          id: petal.id,
+          author_id: petal.authorId,
+          recipient_id: petal.recipientId,
+          body: petal.body,
+          color: petal.color,
+          emoji: petal.emoji,
+          is_shared: petal.isShared,
+          created_at: petal.createdAt,
+        });
+      }
+    }
+
+    // 3. Sync any local mood check-ins
+    const localMoods = loadLocal<MoodEntry[]>(STORAGE_KEYS.MOODS, []);
+    for (const m of localMoods) {
+      if (m.userId === user.id && !m.id.startsWith('seed-')) {
+        await supabase.from('mood_entries').upsert({
+          id: m.id,
+          user_id: m.userId,
+          mood_key: m.moodKey,
+          mood_label: m.moodLabel,
+          note: m.note,
+          is_shared: m.isShared,
+          created_at: m.createdAt,
+        });
+      }
+    }
+
+    // 4. Sync any local archive memories (Photos)
+    const localMemories = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    for (const mem of localMemories) {
+      if (mem.contributorId === user.id && !mem.id.startsWith('seed-')) {
+        await supabase.from('garden_memories').upsert({
+          id: mem.id,
+          contributor_id: mem.contributorId,
+          title: mem.title,
+          caption: mem.caption,
+          description: mem.description,
+          photo_url: mem.photoUrl,
+          date_taken: mem.dateTaken,
+          is_shared: mem.isShared,
+          created_at: mem.createdAt,
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Syncing local drafts to cloud error:', err);
+    hasSyncedDrafts = false;
+  }
+}
+
 // User state management is now securely handled by AuthService (imported above)
 // with separate sessions, salted password hashing, and zero instant identity switching.
 
@@ -379,6 +467,7 @@ export const notesService = {
     const user = authService.getCurrentUser();
 
     if (isLiveSupabaseConfigured && supabase) {
+      await syncLocalDraftsToCloud();
       const { data, error } = await supabase
         .from('notes')
         .select('*')
@@ -727,6 +816,7 @@ export const memoryArchiveService = {
   async getMemories(): Promise<MemoryEntry[]> {
     const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
+      await syncLocalDraftsToCloud();
       const { data, error } = await supabase
         .from('garden_memories')
         .select('*')
@@ -832,6 +922,7 @@ export const petalNotesService = {
   async getPetals(): Promise<PetalNoteEntry[]> {
     const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
+      await syncLocalDraftsToCloud();
       const { data, error } = await supabase
         .from('petal_notes')
         .select('*')
@@ -1237,6 +1328,7 @@ export const moodGardenService = {
   async getMoods(): Promise<MoodEntry[]> {
     const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
+      await syncLocalDraftsToCloud();
       const { data, error } = await supabase
         .from('mood_entries')
         .select('*')
