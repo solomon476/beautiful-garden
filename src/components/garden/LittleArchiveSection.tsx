@@ -16,7 +16,6 @@ import {
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { mediaStorage } from '../../utils/mediaStorage';
 import { compressImage } from '../../utils/imageCompressor';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';

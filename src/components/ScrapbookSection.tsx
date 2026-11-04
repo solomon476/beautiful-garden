@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Calendar, Plus } from 'lucide-react';
-import { giftContent, MemoryItem } from '../data/giftContent';
+import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
 import { memoryArchiveService } from '../services/gardenService';
