@@ -27,7 +27,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   if (!isOpen) return null;
 
   const solomonProfile = AUTHORIZED_PROFILES.solomon;
-  const ellaProfile = AUTHORIZED_PROFILES.noella;
+  const noellaProfile = AUTHORIZED_PROFILES.noella;
 
   const handleSelectAccount = (userKey: 'solomon' | 'noella') => {
     soundEngine.playSparkle();
@@ -124,7 +124,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
             </button>
 
-            {/* Ella Card */}
+            {/* Noella Card */}
             <button
               type="button"
               onClick={() => handleSelectAccount('noella')}
@@ -136,17 +136,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             >
               <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-pink-300/60 shadow-md">
                 <img
-                  src={ellaProfile.avatarUrl}
-                  alt="Ella"
+                  src={noellaProfile.avatarUrl}
+                  alt="Noella"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="min-w-0">
                 <span className="font-serif font-bold text-sm block text-white truncate">
-                  {ellaProfile.displayName}
+                  {noellaProfile.displayName}
                 </span>
                 <span className="text-[10px] font-mono text-purple-300/80 block">
-                  @ella
+                  @noella
                 </span>
               </div>
             </button>
@@ -160,7 +160,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               htmlFor="sanctuary-passcode"
               className="text-xs font-mono uppercase tracking-wider text-pink-200/90 font-semibold block px-1"
             >
-              Passcode for {selectedUser === 'solomon' ? 'Solomon' : 'Ella'}
+              Passcode for {selectedUser === 'solomon' ? 'Solomon' : 'Noella'}
             </label>
 
             <div className="relative flex items-center">
@@ -231,7 +231,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 fill-white" />
-                  <span>Enter {selectedUser === 'solomon' ? 'Solomon’s' : 'Ella’s'} Garden</span>
+                  <span>Enter {selectedUser === 'solomon' ? 'Solomon’s' : 'Noella’s'} Garden</span>
                 </>
               )}
             </button>
@@ -241,7 +241,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <div className="text-center pt-2 border-t border-purple-400/15">
           <p className="text-[11px] font-mono text-purple-300/60 flex items-center justify-center gap-1.5">
             <Heart className="w-3 h-3 text-pink-400/60" />
-            <span>Private Sanctuary for Solomon & Ella</span>
+            <span>Private Sanctuary for Solomon & Noella</span>
           </p>
         </div>
       </div>

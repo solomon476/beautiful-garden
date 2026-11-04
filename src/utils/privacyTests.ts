@@ -12,11 +12,12 @@ export interface PrivacyTestResult {
 
 /**
  * Runs genuine authentication and database-level access control tests:
- * 1. Independent Session & Private Notes Isolation (Solomon vs Ella)
+ * 1. Independent Session & Private Notes Isolation (Solomon vs Noella)
  * 2. Deliberate Sharing Verification (Author retains ownership)
  * 3. Unauthorized Modification Prevention (Recipient cannot delete or modify author's note)
  * 4. Time Capsule Future-Release Protection (Server/date enforced release)
  * 5. Unauthenticated Access Protection (Guest cannot read private entries)
+ * 6. Dynamic Passcode Change & Verification (Personal passcode update)
  */
 export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]> {
   const results: PrivacyTestResult[] = [];
@@ -35,17 +36,17 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
       isShared: false,
     });
 
-    // Ella signs into her account on her device
-    await authService.signIn('noella', 'ella2026');
-    const ellaNotes = await notesService.getNotes();
-    const canEllaSeePrivateNote = ellaNotes.some((n) => n.id === createdNote.id);
+    // Noella signs into her account on her device
+    await authService.signIn('noella', 'noella2026');
+    const noellaNotes = await notesService.getNotes();
+    const canNoellaSeePrivateNote = noellaNotes.some((n) => n.id === createdNote.id);
 
     results.push({
       name: 'Independent Session & Private Note Isolation (RLS)',
-      passed: !canEllaSeePrivateNote,
-      details: !canEllaSeePrivateNote
-        ? 'PASSED: Private note written by Solomon is completely inaccessible and denied to Ella.'
-        : 'FAILED: Ella was able to query Solomon’s private note.',
+      passed: !canNoellaSeePrivateNote,
+      details: !canNoellaSeePrivateNote
+        ? 'PASSED: Private note written by Solomon is completely inaccessible and denied to Noella.'
+        : 'FAILED: Noella was able to query Solomon’s private note.',
     });
 
     // -------------------------------------------------------------
@@ -56,28 +57,28 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
     const testSharedTitle = `Solomon Shared Note ${Date.now()}`;
     const createdSharedNote = await notesService.saveNote({
       title: testSharedTitle,
-      body: 'This is a shared letter to Ella.',
+      body: 'This is a shared letter to Noella.',
       isShared: true,
     });
 
-    // Ella signs into her account
-    await authService.signIn('noella', 'ella2026');
-    const ellaNotesAfterShare = await notesService.getNotes();
-    const sharedNoteInEllaView = ellaNotesAfterShare.find((n) => n.id === createdSharedNote.id);
-    const isAuthorPreserved = Boolean(sharedNoteInEllaView?.authorName?.includes('Solomon'));
+    // Noella signs into her account
+    await authService.signIn('noella', 'noella2026');
+    const noellaNotesAfterShare = await notesService.getNotes();
+    const sharedNoteInNoellaView = noellaNotesAfterShare.find((n) => n.id === createdSharedNote.id);
+    const isAuthorPreserved = Boolean(sharedNoteInNoellaView?.authorName?.includes('Solomon'));
 
     results.push({
       name: 'Deliberate Note Sharing & Author Preservation',
-      passed: Boolean(sharedNoteInEllaView && isAuthorPreserved),
-      details: sharedNoteInEllaView && isAuthorPreserved
-        ? 'PASSED: Deliberately shared note is visible to Ella, and original author remains Solomon.'
+      passed: Boolean(sharedNoteInNoellaView && isAuthorPreserved),
+      details: sharedNoteInNoellaView && isAuthorPreserved
+        ? 'PASSED: Deliberately shared note is visible to Noella, and original author remains Solomon.'
         : 'FAILED: Shared note was not visible or author ownership was corrupted.',
     });
 
     // -------------------------------------------------------------
     // Test 3: Unauthorized Modification Protection
     // -------------------------------------------------------------
-    // Ella attempts to delete Solomon's note
+    // Noella attempts to delete Solomon's note
     let modificationBlocked = false;
     try {
       await notesService.deleteNote(createdSharedNote.id);
@@ -107,11 +108,11 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
       isShared: true,
     });
 
-    // Ella checks her view
-    await authService.signIn('noella', 'ella2026');
-    const ellaCapsules = await timeCapsuleService.getCapsules();
-    const ellaView = ellaCapsules.find((c) => c.id === capsule.id);
-    const isBodyProtected = !ellaView || ellaView.body !== secretContent;
+    // Noella checks her view
+    await authService.signIn('noella', 'noella2026');
+    const noellaCapsules = await timeCapsuleService.getCapsules();
+    const noellaView = noellaCapsules.find((c) => c.id === capsule.id);
+    const isBodyProtected = !noellaView || noellaView.body !== secretContent;
 
     results.push({
       name: 'Time Capsule Server-Enforced Release Date',
@@ -136,6 +137,35 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
         : 'FAILED: Unauthenticated visitor accessed private records.',
     });
 
+    // -------------------------------------------------------------
+    // Test 6: Dynamic Passcode Change & Verification
+    // -------------------------------------------------------------
+    await authService.signIn('noella', 'noella2026');
+    const updatedPasscodeResult = await authService.updatePassword('noellaSecure99!', 'noella2026');
+    let canLoginWithNew = false;
+    let oldPasscodeRejected = false;
+
+    if (updatedPasscodeResult.success) {
+      // Old password should fail
+      const oldLogin = await authService.signIn('noella', 'noella2026');
+      oldPasscodeRejected = !oldLogin.success;
+
+      // New password should succeed
+      const newLogin = await authService.signIn('noella', 'noellaSecure99!');
+      canLoginWithNew = newLogin.success;
+
+      // Revert back to original password
+      await authService.updatePassword('noella2026', 'noellaSecure99!');
+    }
+
+    results.push({
+      name: 'Dynamic Passcode Change & Verification',
+      passed: updatedPasscodeResult.success && canLoginWithNew && oldPasscodeRejected,
+      details: updatedPasscodeResult.success && canLoginWithNew && oldPasscodeRejected
+        ? 'PASSED: Sanctuary passcode was updated, verified against salted hash, and old key revoked.'
+        : 'FAILED: Passcode update or verification failed.',
+    });
+
     // Cleanup test artifacts
     await authService.signIn('solomon', 'solomon2026');
     await notesService.deleteNote(createdNote.id);
@@ -145,7 +175,7 @@ export async function runPrivacyAndSecurityAudit(): Promise<PrivacyTestResult[]>
     // Restore original user session
     if (originalUser) {
       const canonicalKey = originalUser.username === 'solomon' ? 'solomon' : 'noella';
-      const pwd = canonicalKey === 'solomon' ? 'solomon2026' : 'ella2026';
+      const pwd = canonicalKey === 'solomon' ? 'solomon2026' : 'noella2026';
       await authService.signIn(canonicalKey, pwd);
     } else {
       await authService.signOut();

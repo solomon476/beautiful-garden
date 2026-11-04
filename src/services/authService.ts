@@ -17,7 +17,7 @@ export const AUTHORIZED_PROFILES: Record<string, UserProfile> = {
   noella: {
     id: 'user-noella-uuid',
     username: 'noella',
-    displayName: 'Ella ✨',
+    displayName: 'Noella ✨',
     avatarUrl: '/assets/memories/photo-sun-portrait.jpg',
   },
 };
@@ -33,17 +33,52 @@ const AUTH_CONFIG = {
     hash: '00df6f733e7eeeb2da78197d4b4eebd48616f31c0626402fa1fb49ebf16538d5',
   },
   noella: {
-    salt: 'pt_salt_ella_2026_garden',
-    // Hashes of 'ella2026' and 'noella2026'
+    salt: 'pt_salt_noella_2026_garden',
+    // Hashes of 'noella2026' and 'ella2026'
     hashes: [
-      'd184953a6e43cdb8b57f44dce9ba2e1001c3e8ad2d866659adb2499e40332a05',
-      '7a3e80d57dbef61654e4fa6b2dc17f9bd40b6381de800233497b3f582e7edf41',
+      '77ad5fd165884bb227be40d0a597668c180f4e4c1f4f4e9ea891fab6c7639d41',
+      '59897c9830b19aa6349a1085d03cc294a6ea085d8a55eff9f7c386f1b42d254b',
     ],
   },
 };
 
 const STORAGE_KEY_SESSION = 'PT_AUTH_SESSION_V2';
 const STORAGE_KEY_CUSTOM_HASH = 'PT_AUTH_CUSTOM_HASH_';
+
+const authMemoryStore: Record<string, string> = {};
+
+function getAuthItem(key: string): string | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      // ignore
+    }
+  }
+  return authMemoryStore[key] ?? null;
+}
+
+function setAuthItem(key: string, value: string): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+  }
+  authMemoryStore[key] = value;
+}
+
+function removeAuthItem(key: string): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  }
+  delete authMemoryStore[key];
+}
 
 // Helper to compute SHA-256 hash in browser
 async function sha256Hex(text: string): Promise<string> {
@@ -77,7 +112,7 @@ class AuthService {
           
           if (email.includes('solomon') || metaUsername === 'solomon') {
             this.activeUser = AUTHORIZED_PROFILES.solomon;
-          } else if (email.includes('ella') || email.includes('noella') || metaUsername === 'noella' || metaUsername === 'ella') {
+          } else if (email.includes('noella') || email.includes('ella') || metaUsername === 'noella' || metaUsername === 'ella') {
             this.activeUser = AUTHORIZED_PROFILES.noella;
           }
         }
@@ -165,11 +200,11 @@ class AuthService {
   ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
     const normalized = usernameInput.trim().toLowerCase();
     
-    // Strict whitelist: Only Solomon or Ella
+    // Strict whitelist: Only Solomon or Noella
     if (normalized !== 'solomon' && normalized !== 'noella' && normalized !== 'ella') {
       return {
         success: false,
-        error: 'Only Solomon and Ella have access to this sanctuary.',
+        error: 'Only Solomon and Noella have access to this sanctuary.',
       };
     }
 
@@ -179,7 +214,7 @@ class AuthService {
     // 1. If Supabase is connected, attempt remote signInWithPassword
     if (isLiveSupabaseConfigured && supabase) {
       try {
-        const email = canonicalKey === 'solomon' ? 'solomon@perfecttime.internal' : 'ella@perfecttime.internal';
+        const email = canonicalKey === 'solomon' ? 'solomon@perfecttime.internal' : 'noella@perfecttime.internal';
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password: passwordInput,
@@ -199,24 +234,24 @@ class AuthService {
     }
 
     // 2. Cryptographic Salt & Hash Verification
-    const customHash = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey) : null;
+    const customHash = getAuthItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey);
     let isValid = false;
 
     if (canonicalKey === 'solomon') {
       const cfg = AUTH_CONFIG.solomon;
       const computedHash = await sha256Hex(cfg.salt + passwordInput.trim());
-      if (customHash && computedHash === customHash) {
-        isValid = true;
-      } else if (computedHash === cfg.hash) {
-        isValid = true;
+      if (customHash) {
+        isValid = computedHash === customHash;
+      } else {
+        isValid = computedHash === cfg.hash;
       }
     } else {
       const cfg = AUTH_CONFIG.noella;
       const computedHash = await sha256Hex(cfg.salt + passwordInput.trim());
-      if (customHash && computedHash === customHash) {
-        isValid = true;
-      } else if (cfg.hashes.includes(computedHash)) {
-        isValid = true;
+      if (customHash) {
+        isValid = computedHash === customHash;
+      } else {
+        isValid = cfg.hashes.includes(computedHash);
       }
     }
 
@@ -242,10 +277,11 @@ class AuthService {
       expiresAt: Date.now() + duration,
     };
 
+    const serialized = JSON.stringify(session);
+    setAuthItem(STORAGE_KEY_SESSION, serialized);
+
     if (typeof window !== 'undefined') {
-      const serialized = JSON.stringify(session);
       if (rememberMe) {
-        localStorage.setItem(STORAGE_KEY_SESSION, serialized);
         sessionStorage.removeItem(STORAGE_KEY_SESSION);
       } else {
         sessionStorage.setItem(STORAGE_KEY_SESSION, serialized);
@@ -272,31 +308,58 @@ class AuthService {
   }
 
   private clearLocalSession(): void {
+    removeAuthItem(STORAGE_KEY_SESSION);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY_SESSION);
-      sessionStorage.removeItem(STORAGE_KEY_SESSION);
+      try {
+        sessionStorage.removeItem(STORAGE_KEY_SESSION);
+      } catch {
+        // ignore
+      }
     }
   }
 
-  public async updatePassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
+  public async updatePassword(
+    newPassword: string,
+    currentPassword?: string
+  ): Promise<{ success: boolean; error?: string }> {
     if (!this.activeUser) {
-      return { success: false, error: 'Must be logged in to update password.' };
+      return { success: false, error: 'Must be logged in to update passcode.' };
     }
-    if (!newPassword || newPassword.length < 6) {
-      return { success: false, error: 'Passcode must be at least 6 characters long.' };
+    const canonicalKey = this.activeUser.username === 'solomon' ? 'solomon' : 'noella';
+    const cfg = canonicalKey === 'solomon' ? AUTH_CONFIG.solomon : AUTH_CONFIG.noella;
+
+    // Optional current password check
+    if (currentPassword) {
+      const currentSalt = cfg.salt;
+      const currentHash = await sha256Hex(currentSalt + currentPassword.trim());
+      const savedHash = getAuthItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey);
+
+      let isValidCurrent = false;
+      if (savedHash && currentHash === savedHash) {
+        isValidCurrent = true;
+      } else if (canonicalKey === 'solomon' && currentHash === AUTH_CONFIG.solomon.hash) {
+        isValidCurrent = true;
+      } else if (canonicalKey === 'noella' && AUTH_CONFIG.noella.hashes.includes(currentHash)) {
+        isValidCurrent = true;
+      }
+
+      if (!isValidCurrent) {
+        return { success: false, error: 'Current passcode is incorrect.' };
+      }
     }
 
-    const canonicalKey = this.activeUser.username === 'solomon' ? 'solomon' : 'noella';
-    const salt = canonicalKey === 'solomon' ? AUTH_CONFIG.solomon.salt : AUTH_CONFIG.noella.salt;
+    if (!newPassword || newPassword.trim().length < 4) {
+      return { success: false, error: 'New passcode must be at least 4 characters long.' };
+    }
+
+    const salt = cfg.salt;
     const newHash = await sha256Hex(salt + newPassword.trim());
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey, newHash);
-    }
+    setAuthItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey, newHash);
 
     if (isLiveSupabaseConfigured && supabase) {
       try {
-        await supabase.auth.updateUser({ password: newPassword });
+        await supabase.auth.updateUser({ password: newPassword.trim() });
       } catch (err) {
         console.warn('Could not update remote Supabase password:', err);
       }

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, Lock, KeyRound, ChevronDown } from 'lucide-react';
+import { LogOut, Lock, KeyRound, ChevronDown, Key } from 'lucide-react';
 import { authService } from '../../services/authService';
 import type { UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { AuthModal } from './AuthModal';
+import { ChangePasscodeModal } from './ChangePasscodeModal';
 
 interface UserAccountMenuProps {
   currentUser: UserProfile;
@@ -13,6 +14,7 @@ interface UserAccountMenuProps {
 export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, compact: _compact = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isChangePasscodeOpen, setIsChangePasscodeOpen] = useState(false);
   const [authModalTarget, setAuthModalTarget] = useState<'solomon' | 'noella' | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authService.isAuthenticated());
   const menuRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,12 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
     setIsOpen(false);
   };
 
+  const handleOpenChangePasscode = () => {
+    soundEngine.playSparkle();
+    setIsChangePasscodeOpen(true);
+    setIsOpen(false);
+  };
+
   const handleSignOut = async () => {
     soundEngine.playChime(440, 0.6, 0.08);
     await authService.signOut();
@@ -56,8 +64,8 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
 
   // Label derived directly from the authenticated identity
   const isSolomon = currentUser.username === 'solomon';
-  const gardenLabel = isSolomon ? 'Solomon — My Garden' : 'Ella — My Garden';
-  const partnerLabel = isSolomon ? 'Ella' : 'Solomon';
+  const gardenLabel = isSolomon ? 'Solomon — My Garden' : 'Noella — My Garden';
+  const partnerLabel = isSolomon ? 'Noella' : 'Solomon';
 
   return (
     <>
@@ -140,11 +148,20 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
 
                   <button
                     type="button"
+                    onClick={handleOpenChangePasscode}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs text-purple-100 hover:bg-pink-500/20 hover:text-pink-100 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  >
+                    <Key className="w-4 h-4 text-pink-300" />
+                    <span>Change My Passcode</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleOpenLogin(isSolomon ? 'noella' : 'solomon')}
                     className="w-full px-3 py-2 rounded-xl text-left text-xs text-purple-100 hover:bg-white/[0.08] hover:text-white flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
                     <KeyRound className="w-4 h-4 text-purple-300" />
-                    <span>Log in as {partnerLabel} (Requires Passcode)</span>
+                    <span>Switch to {partnerLabel} (Requires Passcode)</span>
                   </button>
 
                   <button
@@ -168,6 +185,13 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => setIsAuthModalOpen(false)}
         initialUser={authModalTarget}
+      />
+
+      {/* Change Passcode Modal */}
+      <ChangePasscodeModal
+        isOpen={isChangePasscodeOpen}
+        onClose={() => setIsChangePasscodeOpen(false)}
+        currentUser={currentUser}
       />
     </>
   );
