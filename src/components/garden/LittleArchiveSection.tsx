@@ -90,16 +90,47 @@ export const LittleArchiveSection: React.FC = () => {
 
     try {
       soundEngine.playSparkle();
-      const stored = await mediaStorage.saveFile(file);
-      setPhotoUrl(stored.dataUrl);
+
+      // Compress image to max 1200px wide / 80% JPEG quality so it fits in localStorage & Supabase
+      const compressedDataUrl = await compressImage(file, 1200, 0.8);
+      setPhotoUrl(compressedDataUrl);
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg('Failed to process image file.');
+      // Fallback: use raw file if compression fails
+      try {
+        const stored = await mediaStorage.saveFile(file);
+        setPhotoUrl(stored.dataUrl);
+        if (!title) setTitle(file.name.replace(/\.[^/.]+$/, ''));
+      } catch {
+        setErrorMsg('Failed to process image file.');
+      }
     }
   };
+
+  /** Compress a photo File to a JPEG data URL using canvas */
+  function compressImage(file: File, maxWidth: number, quality: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas not available')); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
 
   const handleVoiceNoteRecorded = (dataUrl: string, _durationSec: number, name: string) => {
     soundEngine.playSparkle();
@@ -120,7 +151,7 @@ export const LittleArchiveSection: React.FC = () => {
     }
 
     try {
-      await memoryArchiveService.addMemory({
+      const newEntry = await memoryArchiveService.addMemory({
         title,
         caption,
         description,
@@ -133,7 +164,10 @@ export const LittleArchiveSection: React.FC = () => {
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
-      await loadMemories();
+      // Immediately prepend to visible list so user sees it right away
+      setMemories((prev) => [newEntry, ...prev]);
+      // Then silently refresh from cloud in background
+      loadMemories();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not save memory.');
     }

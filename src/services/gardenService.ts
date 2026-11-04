@@ -815,6 +815,14 @@ export const shelfService = {
 export const memoryArchiveService = {
   async getMemories(): Promise<MemoryEntry[]> {
     const user = authService.getCurrentUser();
+
+    // Always load local cache first — this guarantees newly uploaded photos show immediately
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
+    const isAuthed = authService.isAuthenticated();
+    const localVisible = localAll.filter((m) =>
+      isAuthed ? m.contributorId === user.id || m.isShared : m.isShared
+    );
+
     if (isLiveSupabaseConfigured && supabase) {
       await syncLocalDraftsToCloud();
       const { data, error } = await supabase
@@ -822,8 +830,8 @@ export const memoryArchiveService = {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        return data.map((d: any) => ({
+      if (!error && data && data.length > 0) {
+        const cloudEntries: MemoryEntry[] = data.map((d: any) => ({
           id: d.id,
           contributorId: d.contributor_id,
           contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
@@ -835,11 +843,16 @@ export const memoryArchiveService = {
           isShared: d.is_shared,
           createdAt: d.created_at,
         }));
+
+        // Merge: add any local-only entries (failed cloud upload) to the top
+        const cloudIds = new Set(cloudEntries.map((e) => e.id));
+        const localOnlyEntries = localVisible.filter((m) => !cloudIds.has(m.id));
+        return [...localOnlyEntries, ...cloudEntries];
       }
     }
-    const isAuthed = authService.isAuthenticated();
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    return all.filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
+
+    // Fallback: local only
+    return localVisible;
   },
 
   async addMemory(memory: {
@@ -870,7 +883,8 @@ export const memoryArchiveService = {
     };
 
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('garden_memories').insert({
+      const { error: insertError } = await supabase.from('garden_memories').insert({
+        id: entry.id,
         contributor_id: user.id,
         title: entry.title,
         caption: entry.caption,
@@ -879,11 +893,19 @@ export const memoryArchiveService = {
         date_taken: entry.dateTaken,
         is_shared: entry.isShared,
       });
+      if (insertError) {
+        console.warn('[Archive] Supabase insert failed, saving to localStorage only:', insertError.message);
+      }
     }
 
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    all.unshift(entry);
-    saveLocal(STORAGE_KEYS.MEMORIES, all);
+    // Always save to localStorage as a reliable local cache
+    try {
+      const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+      all.unshift(entry);
+      saveLocal(STORAGE_KEYS.MEMORIES, all);
+    } catch (storageErr) {
+      console.warn('[Archive] localStorage save failed (possibly full):', storageErr);
+    }
 
     if (entry.isShared) {
       notificationService.sendNotification({
