@@ -12,7 +12,7 @@ const getEnv = (key: string): string | undefined => {
 };
 
 const supabaseUrl = getEnv('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY');
+const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY') || getEnv('VITE_SUPABASE_PUBLISHABLE_KEY');
 
 export const isLiveSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
