@@ -453,11 +453,11 @@ export const LittleArchiveSection: React.FC = () => {
               </button>
             </div>
 
-            <div className="rounded-2xl overflow-hidden max-h-[60vh] bg-black flex items-center justify-center">
+            <div className="rounded-2xl overflow-hidden max-h-[60vh] bg-black flex items-center justify-center p-1">
               <img
                 src={lightboxMemory.photoUrl}
                 alt={lightboxMemory.title}
-                className="max-h-[60vh] w-auto object-contain mx-auto"
+                className="max-h-[60vh] max-w-full w-auto object-contain mx-auto select-none rounded-lg"
               />
             </div>
 

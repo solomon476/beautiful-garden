@@ -126,12 +126,12 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Polaroid Picture: Natural Proportions, Never Stretches, Zero Zoom */}
-        <div className="w-full bg-slate-950 rounded-xl overflow-hidden shadow-inner relative group flex items-center justify-center max-h-[50vh] sm:max-h-[58vh] min-h-[220px]">
+        {/* Polaroid Picture: Natural Proportions, Same Shape As Card, Zero Crop & Zero Zoom */}
+        <div className="polaroid-lightbox-image-wrapper relative group">
           <img
             src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
             alt={memory.altText || memory.title}
-            className="w-auto h-auto max-w-full max-h-[50vh] sm:max-h-[58vh] object-contain mx-auto rounded-lg select-none"
+            className="polaroid-lightbox-image"
             loading="eager"
             decoding="async"
             onError={(e) => {
@@ -147,7 +147,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           {/* Interactive Heart Button on Photo */}
           <button
             onClick={handleLike}
-            className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-10"
+            className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-10 cursor-pointer"
             aria-label="Love this memory"
           >
             <Heart

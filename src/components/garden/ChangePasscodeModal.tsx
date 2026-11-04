@@ -246,3 +246,4 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
     </div>
   );
 };
+
