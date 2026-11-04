@@ -121,16 +121,10 @@ export const TimeCapsuleSection: React.FC = () => {
           }}
         />
 
-        <div
-          className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6"
-          style={{ width: '100%' }}
-        >
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
           {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-5 sm:gap-6">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-amber-300/40 shadow-xl shrink-0 group"
-              style={{ width: '96px', height: '96px', minWidth: '96px', minHeight: '96px' }}
-            >
+          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-amber-300/40 shadow-xl shrink-0 group">
               <img
                 src="/assets/garden/card_capsule.jpg"
                 alt="Time Capsule"
@@ -138,40 +132,40 @@ export const TimeCapsuleSection: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-amber-950/70 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Hourglass className="w-8 h-8 text-amber-300 drop-shadow-md animate-pulse" />
+                <Hourglass className="w-6 h-6 sm:w-8 sm:h-8 text-amber-300 drop-shadow-md animate-pulse" />
               </div>
             </div>
 
             {/* Title & Romantic Subtitles */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-[10px] font-mono uppercase tracking-widest">
+            <div className="space-y-1 sm:space-y-1.5 min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-[10px] font-mono uppercase tracking-widest">
                 <span>〰️ The Time Capsule</span>
                 <span className="text-amber-300">✦</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Time Capsule</span>
-                <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♡</span>
+                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
               </h2>
 
-              <p className="font-serif italic text-sm sm:text-base text-amber-200/90 max-w-xl leading-relaxed">
+              <p className="font-serif italic text-xs sm:text-base text-amber-200/90 max-w-xl leading-relaxed">
                 Future letters and sealed envelopes locked away until a special day in our future.
               </p>
 
-              <div className="text-[11px] font-mono tracking-widest uppercase text-amber-300/70 pt-1">
+              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-amber-300/70 pt-0.5">
                 Seal • Preserve • Await • Open Together
               </div>
             </div>
           </div>
 
           {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 flex justify-end">
+          <div className="shrink-0 w-full sm:w-auto flex justify-end">
             <button
               onClick={handleOpenCreate}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 shadow-xl"
+              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4 text-white" />
-              <span>Seal a New Capsule</span>
+              <span>Seal a Capsule 🔒</span>
             </button>
           </div>
         </div>

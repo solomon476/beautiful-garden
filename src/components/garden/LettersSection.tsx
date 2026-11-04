@@ -134,9 +134,9 @@ export const LettersSection: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
-      {/* 1. Panoramic Themed Hero Banner — Matching Mockup Format */}
+      {/* 1. Panoramic Themed Hero Banner — Balanced & Spacious Layout */}
       <section
-        className="relative rounded-3xl overflow-hidden border border-pink-400/30 shadow-2xl p-6 sm:p-10 lg:p-12"
+        className="relative rounded-3xl overflow-hidden border border-pink-400/30 shadow-2xl p-6 sm:p-9 lg:p-10"
         style={{
           background: 'linear-gradient(135deg, rgba(38, 14, 40, 0.94) 0%, rgba(18, 7, 24, 0.98) 100%)',
         }}
@@ -154,14 +154,12 @@ export const LettersSection: React.FC = () => {
         />
 
         <div
-          className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6"
-          style={{ width: '100%' }}
+          className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8 w-full"
         >
-          {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-5 sm:gap-6">
+          {/* Left Decorative Illuminated Artwork & Titles */}
+          <div className="flex items-center gap-4 sm:gap-6 w-full lg:w-auto">
             <div
-              className="relative rounded-2xl overflow-hidden border border-pink-300/40 shadow-xl shrink-0 group"
-              style={{ width: '96px', height: '96px', minWidth: '96px', minHeight: '96px' }}
+              className="relative rounded-2xl overflow-hidden border border-pink-300/40 shadow-xl shrink-0 group w-20 h-20 sm:w-24 sm:h-24"
             >
               <img
                 src="/assets/garden/card_letters.jpg"
@@ -170,37 +168,61 @@ export const LettersSection: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-pink-950/70 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <PenLine className="w-8 h-8 text-pink-300 drop-shadow-md animate-pulse" />
+                <PenLine className="w-7 h-7 sm:w-8 sm:h-8 text-pink-300 drop-shadow-md animate-pulse" />
               </div>
             </div>
 
             {/* Title & Romantic Subtitles */}
-            <div className="space-y-1.5 sm:space-y-2">
+            <div className="space-y-1 sm:space-y-1.5 min-w-0">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/30 text-pink-200 text-[10px] font-mono uppercase tracking-widest">
                 <span>〰️ Letters in the Garden</span>
                 <span className="text-pink-300">✦</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Letters</span>
-                <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♡</span>
+                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
               </h2>
 
-              <p className="font-serif italic text-sm sm:text-base text-pink-200/90 max-w-xl leading-relaxed">
+              <p className="font-serif italic text-xs sm:text-base text-pink-200/90 max-w-md sm:max-w-xl leading-relaxed">
                 Quiet thoughts, long letters, and feelings you wish to keep in bloom.
               </p>
 
-              <div className="text-[11px] font-mono tracking-widest uppercase text-pink-300/70 pt-1">
-                Write • Read • Cherish • Connect
+              {/* Direct Left Column Add Trigger Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleStartCompose}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20"
+                >
+                  <PenLine className="w-4 h-4 text-white" />
+                  <span>Write New Letter ✉️</span>
+                </button>
               </div>
             </div>
           </div>
 
+          {/* Center / Balance: Romantic Stats Chips (Fills empty space gracefully) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-center lg:justify-start">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] border border-pink-400/25 text-xs font-mono text-pink-200 shadow-sm backdrop-blur-md whitespace-nowrap">
+              <span className="text-pink-400">💌</span>
+              <span>{notes.length} Total Letters</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-xs font-mono text-emerald-200 shadow-sm backdrop-blur-md whitespace-nowrap">
+              <span className="text-emerald-400">✨</span>
+              <span>{notes.filter((n) => n.isShared).length} Shared in Bloom</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/15 border border-purple-400/30 text-xs font-mono text-purple-200 shadow-sm backdrop-blur-md whitespace-nowrap">
+              <span className="text-purple-400">🔒</span>
+              <span>{notes.filter((n) => !n.isShared).length} Private Keepsakes</span>
+            </div>
+          </div>
+
           {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 flex justify-end">
+          <div className="shrink-0 w-full sm:w-auto flex justify-center lg:justify-end">
             <button
               onClick={handleStartCompose}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 shadow-xl"
+              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 sm:px-7 shadow-xl w-full sm:w-auto justify-center"
             >
               <PenLine className="w-4 h-4 text-white" />
               <span>Write New Letter</span>
@@ -238,21 +260,20 @@ export const LettersSection: React.FC = () => {
             return (
               <div
                 key={note.id}
-                className="group relative rounded-3xl p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between space-y-4 hover:scale-[1.01] hover:border-pink-400/40"
+                className="group relative rounded-3xl p-5 sm:p-7 transition-all duration-300 flex flex-col justify-between space-y-4 hover:scale-[1.01] hover:border-pink-400/50"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(36, 14, 44, 0.65) 0%, rgba(18, 7, 24, 0.8) 100%)',
-                  border: '1px solid rgba(244, 114, 182, 0.25)',
+                  background: 'linear-gradient(135deg, rgba(36, 14, 44, 0.72) 0%, rgba(18, 7, 24, 0.88) 100%)',
+                  border: '1px solid rgba(244, 114, 182, 0.28)',
                   boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(16px)',
                 }}
               >
                 {/* Upper Section: Artwork on Left + Info on Right */}
-                <div className="flex items-start gap-4 sm:gap-5">
+                <div className="flex items-start gap-3.5 sm:gap-5">
                   {/* Left Square Artwork with Wax Seal Icon */}
                   <div
                     onClick={() => setSelectedNote(note)}
-                    className="relative rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-lg group/cover cursor-pointer"
-                    style={{ width: '112px', height: '112px', minWidth: '112px', minHeight: '112px', maxWidth: '112px', maxHeight: '112px' }}
+                    className="relative rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-lg group/cover cursor-pointer w-20 h-20 sm:w-28 sm:h-28"
                     title="Click to read full letter"
                   >
                     <img
@@ -262,17 +283,17 @@ export const LettersSection: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-black/25 group-hover/cover:bg-black/10 transition-colors" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-pink-500/80 text-white flex items-center justify-center shadow-lg group-hover/cover:scale-110 transition-all">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-pink-500/80 text-white flex items-center justify-center shadow-lg group-hover/cover:scale-110 transition-all">
                         <PenLine className="w-4 h-4 text-white" />
                       </div>
                     </div>
                   </div>
 
                   {/* Right Column: Title, Privacy Badge, Date & Excerpt */}
-                  <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex-1 min-w-0 space-y-2">
                     {/* Title + Status Badge */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-pink-200 transition-colors truncate">
+                      <h3 className="font-serif text-lg sm:text-2xl font-bold text-white group-hover:text-pink-200 transition-colors truncate">
                         {note.title || 'Untitled Letter'}
                       </h3>
 
@@ -300,15 +321,15 @@ export const LettersSection: React.FC = () => {
                       </span>
                     </div>
 
-                    {/* Body Excerpt */}
-                    <p className="text-xs text-pink-100/90 font-serif italic line-clamp-2 leading-relaxed pt-1">
+                    {/* Body Excerpt — 3-4 lines with relaxed breathing room */}
+                    <p className="text-xs sm:text-sm text-pink-100/90 font-serif italic line-clamp-3 sm:line-clamp-4 leading-relaxed pt-1">
                       “{note.body}” <span className="font-sans not-italic text-pink-300">♡</span>
                     </p>
                   </div>
                 </div>
 
                 {/* Footer Row: Author + Reaction + Read Button */}
-                <div className="pt-3 border-t border-pink-400/20 flex items-center justify-between gap-3 text-xs">
+                <div className="pt-3.5 sm:pt-4 border-t border-pink-400/20 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 text-xs">
                   {/* Contributor Avatar & Name */}
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="w-5 h-5 rounded-full bg-pink-500/20 border border-pink-400/30 flex items-center justify-center text-[11px] text-pink-300 shrink-0">
@@ -331,9 +352,9 @@ export const LettersSection: React.FC = () => {
 
                     <button
                       onClick={() => setSelectedNote(note)}
-                      className="btn-glow-romantic text-[11px] py-1 px-3.5 shadow-sm"
+                      className="btn-glow-romantic text-[11px] py-1.5 px-4 shadow-sm"
                     >
-                      <span>Read Letter</span>
+                      <span>Read Full Letter</span>
                       <span>→</span>
                     </button>
                   </div>
@@ -454,127 +475,140 @@ export const LettersSection: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. Reading Modal */}
+      {/* 4. Reading Modal — Spacious Keepsake Parchment Presentation */}
       {selectedNote && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in"
           onClick={() => setSelectedNote(null)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-7 sm:p-9 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6"
+            className="glass-midnight-card max-w-2xl sm:max-w-3xl lg:max-w-4xl w-full p-6 sm:p-10 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-pink-400/20">
-              <div className="flex items-center gap-2 text-xs font-mono text-pink-300/80 uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-mono text-pink-300/90 uppercase tracking-wider">
                 <PenLine className="w-4 h-4 text-pink-300" />
-                <span>Letter Parchment</span>
+                <span>Letter Parchment Keepsake</span>
               </div>
               <button
                 onClick={() => setSelectedNote(null)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className="w-9 h-9 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-slate-300 hover:text-white flex items-center justify-center transition-all"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-2xl font-bold text-white">
+            {/* Title, Badge & Date */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
                   {selectedNote.title || 'Untitled Letter'}
                 </h3>
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shadow-sm ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider border shadow-sm ${
                     selectedNote.isShared
                       ? 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200'
                       : 'bg-purple-500/25 border-purple-400/50 text-purple-200'
                   }`}
                 >
-                  {selectedNote.isShared ? <Globe2 className="w-3 h-3 text-emerald-300" /> : <Lock className="w-3 h-3 text-purple-300" />}
-                  <span>{selectedNote.isShared ? 'Shared' : 'Private'}</span>
+                  {selectedNote.isShared ? <Globe2 className="w-3.5 h-3.5 text-emerald-300" /> : <Lock className="w-3.5 h-3.5 text-purple-300" />}
+                  <span>{selectedNote.isShared ? 'Shared in Garden' : 'Private Secret Draft'}</span>
                 </span>
               </div>
 
-              <div className="text-xs font-mono text-pink-300/70">
-                Penned on{' '}
-                {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-pink-300/80">
+                <Clock className="w-3.5 h-3.5 text-pink-300/70" />
+                <span>
+                  Penned on{' '}
+                  {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
               </div>
 
-              {/* Letter Parchment Scroll Box */}
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-pink-300/20 max-h-[340px] overflow-y-auto space-y-3">
-                <p className="font-serif text-sm sm:text-base text-pink-100/95 leading-relaxed whitespace-pre-wrap">
+              {/* Letter Parchment Scroll Box with generous breathing room */}
+              <div
+                className="p-6 sm:p-10 rounded-3xl border border-pink-300/25 max-h-[62vh] overflow-y-auto space-y-4 shadow-inner"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(32, 16, 42, 0.8) 0%, rgba(18, 9, 26, 0.95) 100%)',
+                }}
+              >
+                <p className="font-serif text-base sm:text-lg lg:text-xl text-pink-100/95 leading-relaxed sm:leading-loose whitespace-pre-wrap tracking-wide">
                   {selectedNote.body}
                 </p>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-pink-400/20 flex items-center justify-between gap-3">
+            {/* Footer Actions */}
+            <div className="pt-4 border-t border-pink-400/20 flex flex-wrap items-center justify-between gap-3">
               {selectedNote.authorId === currentUser.id ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     onClick={() => handleEditNote(selectedNote)}
-                    className="px-3.5 py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-400/30 text-pink-200 text-xs font-medium transition-all flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <Edit3 className="w-4 h-4" />
                     <span>Edit Letter</span>
                   </button>
 
                   <button
                     onClick={() => handleDelete(selectedNote)}
-                    className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-medium transition-all flex items-center gap-1.5"
+                    className="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-300 text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-4 h-4" />
                     <span>Delete</span>
                   </button>
                 </div>
               ) : (
-                <span className="text-xs font-mono text-pink-300/60">
+                <span className="text-xs sm:text-sm font-mono text-pink-300/70">
                   Written with love by {selectedNote.authorName || partner.displayName}
                 </span>
               )}
 
               <button
                 onClick={() => setSelectedNote(null)}
-                className="btn-glow-romantic text-xs py-2 px-5"
+                className="btn-glow-romantic text-xs sm:text-sm py-2.5 px-6"
               >
-                <span>Fold Letter</span>
+                <span>Fold Letter ✉️</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 5. Compose / Edit Modal */}
+      {/* 5. Compose / Edit Modal — Spacious, Breathable Writing Sanctuary */}
       {isComposing && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
           onClick={() => setIsComposing(false)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-7 sm:p-9 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6"
+            className="glass-midnight-card max-w-2xl sm:max-w-3xl w-full p-6 sm:p-10 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-pink-400/20">
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300">
-                  <PenLine className="w-4 h-4 text-pink-300" />
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-pink-400/20">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-2xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shadow-sm">
+                  <PenLine className="w-5 h-5 text-pink-300" />
                 </span>
                 <div>
-                  <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
                     {editingId ? 'Edit Letter' : 'Pen a Letter in the Garden'}
                   </h4>
-                  <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
+                  <p className="text-xs text-pink-200/75 font-mono uppercase tracking-wider">
                     {isShared ? `Shared with ${partner.displayName}` : 'Kept strictly private to you'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsComposing(false)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className="w-9 h-9 rounded-full bg-white/[0.08] hover:bg-white/[0.16] border border-white/15 text-slate-300 hover:text-white flex items-center justify-center transition-all"
                 aria-label="Cancel"
               >
                 <X className="w-4 h-4" />
@@ -586,10 +620,10 @@ export const LettersSection: React.FC = () => {
                 e.preventDefault();
                 handleSave();
               }}
-              className="space-y-5"
+              className="space-y-6"
             >
               <div>
-                <label className="form-field-label">
+                <label className="form-field-label block mb-2 text-xs sm:text-sm font-mono uppercase tracking-wider text-pink-200">
                   <span>Letter Title (Optional)</span>
                 </label>
                 <input
@@ -597,24 +631,25 @@ export const LettersSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. A small note for when you wake up..."
+                  className="w-full rounded-2xl bg-white/[0.04] border border-pink-300/25 p-4 sm:p-4.5 text-white placeholder-slate-400 focus:outline-none focus:border-pink-400 font-serif text-base sm:text-lg"
                 />
               </div>
 
               <div>
-                <label className="form-field-label">
+                <label className="form-field-label block mb-2 text-xs sm:text-sm font-mono uppercase tracking-wider text-pink-200">
                   <span>Letter Contents *</span>
                 </label>
                 <textarea
                   required
-                  rows={6}
+                  rows={8}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="Write whatever is in your heart..."
-                  className="w-full rounded-2xl bg-white/[0.04] border border-pink-300/20 p-4 text-white placeholder-slate-400 focus:outline-none focus:border-pink-400 font-serif text-sm leading-relaxed"
+                  placeholder="Write whatever is in your heart... thoughts, memories, little notes, or feelings you cherish."
+                  className="w-full rounded-2xl bg-white/[0.04] border border-pink-300/25 p-5 sm:p-6 text-white placeholder-slate-400 focus:outline-none focus:border-pink-400 font-serif text-base sm:text-lg leading-relaxed"
                 />
               </div>
 
-              {/* Privacy Toggle */}
+              {/* Privacy Toggle & Checkbox with generous breathing room */}
               <div className="pt-2">
                 <DecoratedPrivacyToggle
                   isShared={isShared}
@@ -624,20 +659,23 @@ export const LettersSection: React.FC = () => {
               </div>
 
               {errorMsg && (
-                <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
+                <p className="text-xs sm:text-sm text-rose-300 p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
                   {errorMsg}
                 </p>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-pink-400/20">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 pt-5 border-t border-pink-400/20">
                 <button
                   type="button"
                   onClick={() => setIsComposing(false)}
-                  className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 rounded-full text-xs sm:text-sm text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-glow-romantic">
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto btn-glow-romantic py-3 px-8 text-xs sm:text-sm font-semibold justify-center shadow-lg shadow-pink-500/20"
+                >
                   <Sparkles className="w-4 h-4" />
                   <span>Seal & Save Letter 💌</span>
                 </button>

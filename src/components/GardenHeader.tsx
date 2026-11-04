@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Heart, Disc3, Sparkles } from 'lucide-react';
 import { soundEngine } from '../utils/audio';
+import { notificationService } from '../services/notificationService';
+import { authService } from '../services/gardenService';
 
 interface GardenHeaderProps {
   onScrollTo: (sectionId: string) => void;
@@ -11,6 +13,21 @@ interface GardenHeaderProps {
 export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSection, onOpenOurGarden }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(soundEngine.getIsPlaying());
   const [track, setTrack] = useState<'piano' | 'vocal'>(soundEngine.getCurrentTrack());
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    const refreshCount = () => {
+      const u = authService.getCurrentUser();
+      setUnreadCount(notificationService.getUnreadCount(u.id));
+    };
+    refreshCount();
+    const unsubNotif = notificationService.subscribe(refreshCount);
+    const unsubUser = authService.subscribeUser(refreshCount);
+    return () => {
+      unsubNotif();
+      unsubUser();
+    };
+  }, []);
 
   useEffect(() => {
     return soundEngine.subscribe((playing) => {
@@ -78,23 +95,29 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
           {/* Dedicated Our Garden Access */}
           <button
             onClick={onOpenOurGarden}
-            className="flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 hover:scale-105 active:scale-95 transition-all shadow-sm shadow-pink-500/10 ml-1"
+            className="relative flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 hover:scale-105 active:scale-95 transition-all shadow-sm shadow-pink-500/10 ml-1"
           >
             <Sparkles className="w-3 h-3 text-pink-300" />
             <span>Our Garden 🌿</span>
+            {unreadCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse shadow-sm shadow-pink-500" />
+            )}
           </button>
         </nav>
 
         {/* Background Music Toggle & Track Switcher + Mobile Garden Access */}
         <div className="flex items-center gap-1.5">
-          {/* Mobile Garden Button */}
+          {/* Mobile-Only Garden Access Button */}
           <button
             onClick={onOpenOurGarden}
-            className="sm:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 active:scale-95 transition-all"
+            className="mobile-garden-btn sm:hidden relative flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 active:scale-95 transition-all"
             aria-label="Open Our Garden"
           >
             <Sparkles className="w-3 h-3 text-pink-300" />
             <span className="text-[11px]">Garden 🌿</span>
+            {unreadCount > 0 && (
+              <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse shadow-sm shadow-pink-500" />
+            )}
           </button>
 
           <button

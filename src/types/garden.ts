@@ -26,7 +26,11 @@ export interface SongEntry {
   addedByName?: string;
   title: string;
   artist: string;
-  musicUrl: string;
+  musicUrl?: string; // Optional external streaming link
+  audioUrl?: string; // Uploaded audio file or voice note data URL
+  audioFileName?: string;
+  isVoiceNote?: boolean;
+  voiceNoteDuration?: number;
   message?: string;
   status: SongStatus;
   createdAt: string;
@@ -45,6 +49,11 @@ export interface ShelfEntry {
   category: ShelfCategory;
   description?: string;
   link?: string;
+  pdfUrl?: string; // Uploaded book PDF
+  pdfFileName?: string;
+  pdfFileSize?: number;
+  photoUrl?: string; // Uploaded picture of book, dish, place
+  voiceNoteUrl?: string;
   status: ShelfStatus;
   createdAt: string;
 }
@@ -57,6 +66,8 @@ export interface MemoryEntry {
   caption?: string;
   description?: string;
   photoUrl: string;
+  voiceNoteUrl?: string;
+  audioFileName?: string;
   dateTaken?: string;
   isShared: boolean;
   createdAt: string;
@@ -83,8 +94,25 @@ export interface HangoutEntry {
   title: string;
   description?: string;
   proposedDate?: string;
+  location?: string;
+  reminderEnabled?: boolean;
+  reminderTime?: string;
   status: HangoutStatus;
   createdAt: string;
+}
+
+export interface GardenNotification {
+  id: string;
+  type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood';
+  title: string;
+  message: string;
+  targetTab: string;
+  senderId: string;
+  senderName: string;
+  recipientId: string;
+  isRead: boolean;
+  createdAt: string;
+  isPrivate?: boolean;
 }
 
 export interface QuestionPrompt {

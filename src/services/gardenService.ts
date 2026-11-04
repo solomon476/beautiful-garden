@@ -1,4 +1,5 @@
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
+import { notificationService } from './notificationService';
 import type {
   UserProfile,
   NoteEntry,
@@ -32,7 +33,7 @@ export const DEFAULT_PROFILES: Record<string, UserProfile> = {
     id: 'user-solomon-uuid',
     username: 'solomon',
     displayName: 'Solomon 🌿',
-    avatarUrl: '/assets/memories/photo-desk-selfie.jpg',
+    avatarUrl: '/assets/memories/photo-solomon-avatar.jpg',
   },
 };
 
@@ -489,6 +490,20 @@ export const notesService = {
       all.unshift(noteEntry);
     }
     saveLocal(STORAGE_KEYS.NOTES, all);
+
+    if (noteEntry.isShared) {
+      notificationService.sendNotification({
+        type: 'letter',
+        title: '💌 Letter in the Garden',
+        message: `${user.displayName} wrote: "${noteEntry.title || 'A gentle letter for you'}"`,
+        targetTab: 'letters',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        isPrivate: false,
+      });
+    }
+
     return noteEntry;
   },
 
@@ -551,18 +566,27 @@ export const soundGardenService = {
   async addSong(song: {
     title: string;
     artist: string;
-    musicUrl: string;
+    musicUrl?: string;
+    audioUrl?: string;
+    audioFileName?: string;
+    isVoiceNote?: boolean;
+    voiceNoteDuration?: number;
     message?: string;
     status?: SongStatus;
   }): Promise<SongEntry> {
     const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
     const entry: SongEntry = {
       id: `song-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       addedBy: user.id,
       addedByName: user.displayName,
       title: song.title.trim(),
       artist: song.artist.trim(),
-      musicUrl: song.musicUrl.trim(),
+      musicUrl: song.musicUrl?.trim() || '',
+      audioUrl: song.audioUrl,
+      audioFileName: song.audioFileName,
+      isVoiceNote: song.isVoiceNote,
+      voiceNoteDuration: song.voiceNoteDuration,
       message: song.message?.trim() || '',
       status: song.status || 'want_to_listen',
       createdAt: new Date().toISOString(),
@@ -582,6 +606,18 @@ export const soundGardenService = {
     const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.SONGS, all);
+
+    notificationService.sendNotification({
+      type: 'song',
+      title: entry.isVoiceNote ? '🎙️ New Voice Note in Sound Garden' : '🎵 New Song in Sound Garden',
+      message: `${user.displayName} shared "${entry.title} - ${entry.artist}"`,
+      targetTab: 'sound',
+      senderId: user.id,
+      senderName: user.displayName,
+      recipientId: partner.id,
+      isPrivate: false,
+    });
+
     return entry;
   },
 
@@ -641,8 +677,14 @@ export const shelfService = {
     category: ShelfCategory;
     description?: string;
     link?: string;
+    pdfUrl?: string;
+    pdfFileName?: string;
+    pdfFileSize?: number;
+    photoUrl?: string;
+    voiceNoteUrl?: string;
   }): Promise<ShelfEntry> {
     const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
     const entry: ShelfEntry = {
       id: `shelf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       contributorId: user.id,
@@ -651,6 +693,11 @@ export const shelfService = {
       category: item.category,
       description: item.description?.trim(),
       link: item.link?.trim(),
+      pdfUrl: item.pdfUrl,
+      pdfFileName: item.pdfFileName,
+      pdfFileSize: item.pdfFileSize,
+      photoUrl: item.photoUrl,
+      voiceNoteUrl: item.voiceNoteUrl,
       status: 'to_explore',
       createdAt: new Date().toISOString(),
     };
@@ -669,6 +716,18 @@ export const shelfService = {
     const all = loadLocal<ShelfEntry[]>(STORAGE_KEYS.SHELF, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.SHELF, all);
+
+    notificationService.sendNotification({
+      type: 'shelf',
+      title: item.pdfUrl ? '📄 New Book PDF on Exchange Shelf' : '📚 New Recommendation on Shelf',
+      message: `${user.displayName} shared "${entry.title}" (${entry.category})`,
+      targetTab: 'shelf',
+      senderId: user.id,
+      senderName: user.displayName,
+      recipientId: partner.id,
+      isPrivate: false,
+    });
+
     return entry;
   },
 
@@ -730,10 +789,13 @@ export const memoryArchiveService = {
     caption?: string;
     description?: string;
     photoUrl: string;
+    voiceNoteUrl?: string;
+    audioFileName?: string;
     dateTaken?: string;
     isShared?: boolean;
   }): Promise<MemoryEntry> {
     const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
     const entry: MemoryEntry = {
       id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       contributorId: user.id,
@@ -742,6 +804,8 @@ export const memoryArchiveService = {
       caption: memory.caption?.trim(),
       description: memory.description?.trim(),
       photoUrl: memory.photoUrl.trim(),
+      voiceNoteUrl: memory.voiceNoteUrl,
+      audioFileName: memory.audioFileName,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
       isShared: memory.isShared !== undefined ? memory.isShared : true,
       createdAt: new Date().toISOString(),
@@ -762,6 +826,20 @@ export const memoryArchiveService = {
     const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.MEMORIES, all);
+
+    if (entry.isShared) {
+      notificationService.sendNotification({
+        type: 'memory',
+        title: '📷 New Keepsake in Our Archive',
+        message: `${user.displayName} saved a new moment: "${entry.title}"`,
+        targetTab: 'archive',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        isPrivate: false,
+      });
+    }
+
     return entry;
   },
 
@@ -838,6 +916,20 @@ export const petalNotesService = {
     const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.PETALS, all);
+
+    if (entry.isShared) {
+      notificationService.sendNotification({
+        type: 'petal',
+        title: `${entry.emoji} New Petal Note`,
+        message: `${user.displayName} left a petal: "${entry.body.slice(0, 50)}${entry.body.length > 50 ? '...' : ''}"`,
+        targetTab: 'petals',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        isPrivate: false,
+      });
+    }
+
     return entry;
   },
 
@@ -882,8 +974,16 @@ export const hangoutService = {
     return loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
   },
 
-  async addHangout(plan: { title: string; description?: string; proposedDate?: string }): Promise<HangoutEntry> {
+  async addHangout(plan: {
+    title: string;
+    description?: string;
+    proposedDate?: string;
+    location?: string;
+    reminderEnabled?: boolean;
+    reminderTime?: string;
+  }): Promise<HangoutEntry> {
     const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
     const entry: HangoutEntry = {
       id: `hang-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       suggestedBy: user.id,
@@ -891,6 +991,9 @@ export const hangoutService = {
       title: plan.title.trim(),
       description: plan.description?.trim(),
       proposedDate: plan.proposedDate?.trim(),
+      location: plan.location?.trim(),
+      reminderEnabled: plan.reminderEnabled ?? true,
+      reminderTime: plan.reminderTime,
       status: 'proposed',
       createdAt: new Date().toISOString(),
     };
@@ -908,15 +1011,43 @@ export const hangoutService = {
     const all = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.HANGOUTS, all);
+
+    notificationService.sendNotification({
+      type: 'date',
+      title: '📅 New Date Proposal',
+      message: `${user.displayName} suggested: "${entry.title}"${entry.proposedDate ? ` for ${entry.proposedDate}` : ''}`,
+      targetTab: 'time',
+      senderId: user.id,
+      senderName: user.displayName,
+      recipientId: partner.id,
+      isPrivate: false,
+    });
+
     return entry;
   },
 
   async updateHangoutStatus(id: string, status: HangoutStatus): Promise<void> {
+    const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('hangout_suggestions').update({ status }).eq('id', id);
     }
     const all = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, []);
+    const plan = all.find((h) => h.id === id);
     saveLocal(STORAGE_KEYS.HANGOUTS, all.map((h) => (h.id === id ? { ...h, status } : h)));
+
+    if (plan && status === 'confirmed') {
+      notificationService.sendNotification({
+        type: 'date',
+        title: '✨ Date Confirmed!',
+        message: `${user.displayName} confirmed your date: "${plan.title}"! 💖`,
+        targetTab: 'time',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        isPrivate: false,
+      });
+    }
   },
 
   async deleteHangout(id: string): Promise<void> {
@@ -1086,6 +1217,20 @@ export const timeCapsuleService = {
     const all = loadLocal<TimeCapsuleEntry[]>(STORAGE_KEYS.CAPSULES, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.CAPSULES, all);
+
+    if (entry.isShared) {
+      notificationService.sendNotification({
+        type: 'letter',
+        title: '⌛ A Time Capsule was Buried',
+        message: `${user.displayName} sealed a Time Capsule to open on ${new Date(entry.releaseAt).toLocaleDateString()}`,
+        targetTab: 'capsule',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        isPrivate: false,
+      });
+    }
+
     return entry;
   },
 
@@ -1112,7 +1257,7 @@ export const MOOD_OPTIONS = [
   { key: 'happy', label: 'Happy', emoji: '🌷' },
   { key: 'tired', label: 'Tired', emoji: '🌙' },
   { key: 'listening', label: 'Looking for Music', emoji: '🎧' },
-  { key: 'thoughtful', label: 'Thoughtful', emoji: '💭' },
+  { key: 'thoughtful', label: 'Thoughtful', emoji: '☁️' },
 ];
 
 export const moodGardenService = {
@@ -1174,6 +1319,20 @@ export const moodGardenService = {
     const all = loadLocal<MoodEntry[]>(STORAGE_KEYS.MOODS, []);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.MOODS, all);
+
+    if (entry.isShared) {
+      notificationService.sendNotification({
+        type: 'mood',
+        title: '🌙 Mood Shared in the Garden',
+        message: `${user.displayName} is feeling ${entry.emoji} ${entry.moodLabel}${entry.note ? `: "${entry.note}"` : ''}`,
+        targetTab: 'moods',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: authService.getPartner().id,
+        isPrivate: false,
+      });
+    }
+
     return entry;
   },
 };

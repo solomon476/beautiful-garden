@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Camera,
   Plus,
@@ -7,13 +7,17 @@ import {
   Globe2,
   X,
   ZoomIn,
-  Filter,
   Sparkles,
+  Upload,
+  Mic,
 } from 'lucide-react';
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { mediaStorage } from '../../utils/mediaStorage';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
+import { VoiceNoteRecorder } from './VoiceNoteRecorder';
+import { GardenAudioPlayer } from './GardenAudioPlayer';
 
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
@@ -29,6 +33,9 @@ export const LittleArchiveSection: React.FC = () => {
   const [caption, setCaption] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | undefined>(undefined);
+  const [audioFileName, setAudioFileName] = useState<string | undefined>(undefined);
+  const [showRecorder, setShowRecorder] = useState<boolean>(false);
   const [dateTaken, setDateTaken] = useState<string>('');
   const [isShared, setIsShared] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -36,6 +43,7 @@ export const LittleArchiveSection: React.FC = () => {
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const partner = authService.getPartner();
 
   const loadMemories = async () => {
@@ -65,16 +73,47 @@ export const LittleArchiveSection: React.FC = () => {
     setCaption('');
     setDescription('');
     setPhotoUrl('');
+    setVoiceNoteUrl(undefined);
+    setAudioFileName(undefined);
+    setShowRecorder(false);
     setDateTaken('');
     setIsShared(true);
     setErrorMsg(null);
     setIsAdding(true);
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      soundEngine.playSparkle();
+      const stored = await mediaStorage.saveFile(file);
+      setPhotoUrl(stored.dataUrl);
+      if (!title) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Failed to process image file.');
+    }
+  };
+
+  const handleVoiceNoteRecorded = (dataUrl: string, _durationSec: number, name: string) => {
+    soundEngine.playSparkle();
+    setVoiceNoteUrl(dataUrl);
+    setAudioFileName(name);
+    setShowRecorder(false);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !photoUrl.trim()) {
-      setErrorMsg('Please provide a title and a valid photo URL.');
+    if (!title.trim()) {
+      setErrorMsg('Please provide a title for this moment.');
+      return;
+    }
+    if (!photoUrl.trim()) {
+      setErrorMsg('Please select a photo from your phone or provide an image URL.');
       return;
     }
 
@@ -84,6 +123,8 @@ export const LittleArchiveSection: React.FC = () => {
         caption,
         description,
         photoUrl,
+        voiceNoteUrl,
+        audioFileName,
         dateTaken: dateTaken || 'Special Day',
         isShared,
       });
@@ -127,15 +168,14 @@ export const LittleArchiveSection: React.FC = () => {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in pb-10">
-      {/* 1. Panoramic Themed Hero Banner — Matching Mockup Format */}
+    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-10">
+      {/* 1. Panoramic Themed Hero Banner */}
       <section
-        className="relative rounded-3xl overflow-hidden border border-pink-400/30 shadow-2xl p-6 sm:p-10 lg:p-12"
+        className="relative rounded-3xl overflow-hidden border border-pink-400/30 shadow-2xl p-5 sm:p-8 lg:p-10"
         style={{
           background: 'linear-gradient(135deg, rgba(40, 16, 44, 0.94) 0%, rgba(20, 8, 28, 0.98) 100%)',
         }}
       >
-        {/* Ambient Hero Background Art */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
           style={{ backgroundImage: `url('/assets/garden/card_archive.jpg')` }}
@@ -143,192 +183,214 @@ export const LittleArchiveSection: React.FC = () => {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(168, 85, 247, 0.25) 0%, transparent 60%)',
+            background: 'radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(192, 132, 252, 0.25) 0%, transparent 60%)',
           }}
         />
 
-        <div
-          className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6"
-          style={{ width: '100%' }}
-        >
-          {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-5 sm:gap-6">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-pink-300/40 shadow-xl shrink-0 group"
-              style={{ width: '96px', height: '96px', minWidth: '96px', minHeight: '96px' }}
-            >
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
+          {/* Left Decorative Artwork & Subtitles */}
+          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-pink-300/40 shadow-xl shrink-0 group">
               <img
                 src="/assets/garden/card_archive.jpg"
-                alt="Our Little Archive Polaroid"
+                alt="Our Little Archive"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-pink-950/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-rose-950/70 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Camera className="w-8 h-8 text-pink-300 drop-shadow-md animate-pulse" />
+                <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-pink-300 drop-shadow-md animate-pulse" />
               </div>
             </div>
 
-            {/* Title & Romantic Subtitles */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/30 text-pink-200 text-[10px] font-mono uppercase tracking-widest">
+            <div className="space-y-1 sm:space-y-1.5 min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-pink-500/20 border border-pink-400/30 text-pink-200 text-[10px] font-mono uppercase tracking-widest">
                 <span>〰️ Our Little Archive</span>
                 <span className="text-pink-300">✦</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Our Little Archive</span>
-                <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♡</span>
+                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
               </h2>
 
-              <p className="font-serif italic text-sm sm:text-base text-pink-200/90 max-w-xl leading-relaxed">
-                A growing polaroid album for snapshots, dates, and inside memories.
+              <p className="font-serif italic text-xs sm:text-base text-pink-200/90 max-w-xl leading-relaxed">
+                Photos, voice notes, and golden moments we will treasure forever.
               </p>
 
-              <div className="text-[11px] font-mono tracking-widest uppercase text-pink-300/70 pt-1">
-                Capture • Preserve • Remember • Always
+              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-pink-300/70 pt-0.5">
+                Upload from Phone • Voice Notes • Memories
+              </div>
+
+              {/* Direct Left Column Add Trigger Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleOpenAdd}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20"
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  <span>Upload Photo Memory 📷</span>
+                </button>
               </div>
             </div>
           </div>
 
           {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 flex justify-end">
+          <div className="shrink-0 w-full sm:w-auto flex justify-end">
             <button
               onClick={handleOpenAdd}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 shadow-xl"
+              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
             >
-              <Camera className="w-4 h-4 text-white" />
-              <span>Add New Snapshot</span>
+              <Plus className="w-4 h-4 text-white" />
+              <span>Add a Photo Memory 📷</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* 2. Memories Grid — 2 Column Responsive Glass Cards matching Mockup */}
+      {/* Filter Row */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {(['all', 'shared', 'private'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => {
+                soundEngine.playSparkle();
+                setActiveFilter(f);
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                activeFilter === f
+                  ? 'bg-pink-500/30 border border-pink-400/60 text-white shadow-md'
+                  : 'bg-white/[0.04] border border-white/10 text-slate-300 hover:text-white'
+              }`}
+            >
+              {f === 'all' && 'All Memories'}
+              {f === 'shared' && 'Shared ♡'}
+              {f === 'private' && 'My Private 🔒'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Memories Grid */}
       {loading ? (
         <div className="py-16 text-center text-pink-300/60 text-xs font-mono animate-pulse">
-          Unfurling our polaroid memories...
+          Opening the keepsake photo album...
         </div>
       ) : filteredMemories.length === 0 ? (
-        <div className="glass-midnight-card p-10 rounded-3xl text-center space-y-4 border border-pink-400/25">
+        <div className="glass-midnight-card p-8 sm:p-10 rounded-3xl text-center space-y-4 border border-pink-400/25">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-center text-pink-300 shadow-inner">
             <Camera className="w-6 h-6 animate-pulse" />
           </div>
-          <h4 className="font-serif text-2xl text-white">No snapshots in this view yet</h4>
+          <h4 className="font-serif text-xl sm:text-2xl text-white">No photos in this view yet</h4>
           <p className="text-xs sm:text-sm text-pink-200/80 max-w-md mx-auto font-light leading-relaxed">
-            {activeFilter === 'all'
-              ? 'Add a photo from your camera roll or a shared memory to keep in bloom.'
-              : `No memories currently marked as "${activeFilter}".`}
+            Upload your favorite photos from your phone to preserve our beautiful journey.
           </p>
           <button onClick={handleOpenAdd} className="btn-glow-romantic text-xs mx-auto">
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Snapshot 📷</span>
+            <span>Upload First Photo 📸</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {filteredMemories.map((mem) => {
             const isAddedByMe = mem.contributorId === currentUser.id;
 
             return (
               <div
                 key={mem.id}
-                className="group relative rounded-3xl p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between space-y-4 hover:scale-[1.01] hover:border-pink-400/40"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(38, 16, 48, 0.65) 0%, rgba(20, 8, 28, 0.8) 100%)',
-                  border: '1px solid rgba(244, 114, 182, 0.25)',
-                  boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(16px)',
-                }}
+                className="group relative rounded-3xl overflow-hidden bg-[#160b28]/85 border border-pink-400/20 hover:border-pink-400/50 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
               >
-                {/* Upper Section: Artwork on Left + Info on Right */}
-                <div className="flex items-start gap-4 sm:gap-5">
-                  {/* Left Square Polaroid Artwork with Zoom Button */}
-                  <div
-                    onClick={() => setLightboxMemory(mem)}
-                    className="relative rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-lg group/cover cursor-pointer"
-                    style={{ width: '112px', height: '112px', minWidth: '112px', minHeight: '112px', maxWidth: '112px', maxHeight: '112px' }}
-                    title="Click to view full photo"
-                  >
-                    <img
-                      src={mem.photoUrl || '/assets/garden/card_archive.jpg'}
-                      alt={mem.title}
-                      className="w-full h-full object-cover group-hover/cover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/25 group-hover/cover:bg-black/10 transition-colors" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center shadow-lg group-hover/cover:scale-110 transition-all">
-                        <ZoomIn className="w-4 h-4 text-pink-300" />
-                      </div>
-                    </div>
+                {/* Photo Thumbnail */}
+                <div
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setLightboxMemory(mem);
+                  }}
+                  className="relative aspect-4/3 w-full overflow-hidden cursor-pointer"
+                >
+                  <img
+                    src={mem.photoUrl}
+                    alt={mem.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#160b28] via-transparent to-black/30" />
+
+                  {/* Privacy Badge */}
+                  <div className="absolute top-3 right-3">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono backdrop-blur-md border ${
+                        mem.isShared
+                          ? 'bg-pink-500/30 border-pink-400/40 text-pink-200'
+                          : 'bg-white/10 border-white/20 text-slate-300'
+                      }`}
+                    >
+                      {mem.isShared ? <Globe2 className="w-3 h-3 text-pink-300" /> : <Lock className="w-3 h-3" />}
+                      <span>{mem.isShared ? 'Shared' : 'Private'}</span>
+                    </span>
                   </div>
 
-                  {/* Right Column: Title, Privacy Badge, Date & Caption */}
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    {/* Title + Status Badge */}
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-pink-200 transition-colors truncate">
-                        {mem.title}
-                      </h3>
-
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shadow-sm ${
-                          mem.isShared
-                            ? 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200'
-                            : 'bg-purple-500/25 border-purple-400/50 text-purple-200'
-                        }`}
-                      >
-                        {mem.isShared ? <Globe2 className="w-3 h-3 text-emerald-300" /> : <Lock className="w-3 h-3 text-purple-300" />}
-                        <span>{mem.isShared ? 'Shared' : 'Private'}</span>
+                  {/* Date Badge */}
+                  {mem.dateTaken && (
+                    <div className="absolute bottom-3 left-3">
+                      <span className="text-[10px] font-mono text-pink-200/90 px-2 py-0.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10">
+                        📅 {mem.dateTaken}
                       </span>
                     </div>
+                  )}
+                </div>
 
-                    {/* Date Taken */}
-                    <div className="text-[11px] text-pink-300/70 font-mono">
-                      {mem.dateTaken || 'Special Day'}
-                    </div>
-
-                    {/* Caption / Personal Whisper */}
-                    {mem.caption ? (
-                      <p className="text-xs text-pink-100/90 font-serif italic line-clamp-2 leading-relaxed pt-1">
-                        “{mem.caption}” <span className="font-sans not-italic text-pink-300">♡</span>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-pink-300/60 font-serif italic line-clamp-1 pt-1">
-                        Captured in our personal archive...
+                {/* Details */}
+                <div className="p-4 sm:p-5 space-y-2 flex-1 flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <h3
+                      onClick={() => setLightboxMemory(mem)}
+                      className="font-serif text-lg font-bold text-white group-hover:text-pink-200 transition-colors cursor-pointer truncate"
+                    >
+                      {mem.title}
+                    </h3>
+                    {mem.caption && (
+                      <p className="text-xs text-pink-100/90 font-serif italic line-clamp-2 leading-relaxed">
+                        “{mem.caption}” ♡
                       </p>
                     )}
                   </div>
-                </div>
 
-                {/* Footer Row: Author + Reaction + View Memories Button */}
-                <div className="pt-3 border-t border-pink-400/20 flex items-center justify-between gap-3 text-xs">
-                  {/* Contributor Avatar & Name */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-full bg-pink-500/20 border border-pink-400/30 flex items-center justify-center text-[11px] text-pink-300 shrink-0">
-                      👤
-                    </span>
-                    <span className="font-mono text-[11px] text-pink-200/90 truncate">
+                  {/* Voice Note if attached */}
+                  {mem.voiceNoteUrl && (
+                    <div className="pt-2">
+                      <GardenAudioPlayer
+                        src={mem.voiceNoteUrl}
+                        title={`Voice Memo: ${mem.title}`}
+                        subtitle={`Recorded by ${mem.contributorName || 'Garden'}`}
+                        isVoiceNote={true}
+                      />
+                    </div>
+                  )}
+
+                  {/* Footer Row */}
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-mono text-pink-300/80">
                       By: {isAddedByMe ? 'You' : mem.contributorName || partner.displayName}
                     </span>
-                  </div>
 
-                  {/* Reaction Pill & View Memory Button */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleToggleReaction(mem)}
-                      className="px-3 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 text-[11px] text-pink-200 hover:text-white transition-all flex items-center gap-1 active:scale-95"
-                      title="Click to cycle reaction"
-                    >
-                      <span>{(mem as any).reaction || 'Precious! 💖'}</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleToggleReaction(mem)}
+                        className="px-2 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 text-[10px] text-pink-200 active:scale-95"
+                      >
+                        {(mem as any).reaction || 'Precious! 💖'}
+                      </button>
 
-                    <button
-                      onClick={() => setLightboxMemory(mem)}
-                      className="btn-glow-romantic text-[11px] py-1 px-3.5 shadow-sm"
-                    >
-                      <span>View Memory</span>
-                      <span>→</span>
-                    </button>
+                      <button
+                        onClick={() => setLightboxMemory(mem)}
+                        className="p-1 rounded-lg bg-white/[0.06] text-slate-300 hover:text-white"
+                        title="View photo"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -337,214 +399,101 @@ export const LittleArchiveSection: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Bottom Action & Filter Section — Matching Mockup Format */}
-      <section className="flex flex-col lg:flex-row gap-5 sm:gap-6 pt-2 w-full">
-        {/* Left Card: Add Polaroid Banner (~7 Cols) */}
-        <div
-          className="rounded-3xl p-6 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-5 justify-between border border-pink-400/30 shadow-xl"
-          style={{
-            flex: '1.35 1 0%',
-            background: 'linear-gradient(135deg, rgba(36, 16, 44, 0.7) 0%, rgba(20, 8, 28, 0.85) 100%)',
-            backdropFilter: 'blur(16px)',
-          }}
-        >
-          <div className="flex items-center gap-4 sm:gap-5 w-full sm:w-auto">
-            <div
-              className="rounded-2xl overflow-hidden border border-pink-400/30 shrink-0 shadow-lg group"
-              style={{ width: '80px', height: '80px', minWidth: '80px', minHeight: '80px' }}
-            >
-              <img
-                src="/assets/garden/card_archive.jpg"
-                alt="Polaroid Memory"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Add a New Polaroid Keepsake
-              </h4>
-              <p className="text-xs sm:text-sm text-pink-200/80 font-light leading-relaxed">
-                Preserve candid moments, trip photos, and inside smiles forever.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleOpenAdd}
-            className="btn-glow-romantic text-xs py-2.5 px-5 shrink-0 w-full sm:w-auto justify-center"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Add Snapshot →</span>
-          </button>
-        </div>
-
-        {/* Right Card: Quick Filters (~5 Cols) */}
-        <div
-          className="rounded-3xl p-6 relative overflow-hidden flex flex-col justify-between space-y-4 border border-pink-400/30 shadow-xl"
-          style={{
-            flex: '1 1 0%',
-            background: 'linear-gradient(135deg, rgba(30, 14, 40, 0.7) 0%, rgba(18, 8, 26, 0.85) 100%)',
-            backdropFilter: 'blur(16px)',
-          }}
-        >
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-mono text-pink-300/80 uppercase tracking-wider">
-              <Filter className="w-3.5 h-3.5 text-pink-300" />
-              <span>Quick Filters</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setActiveFilter('all');
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  activeFilter === 'all'
-                    ? 'bg-pink-500/30 border border-pink-400/50 text-white shadow-md'
-                    : 'bg-white/[0.05] border border-white/10 text-pink-200/70 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                📷 All
-              </button>
-
-              <button
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setActiveFilter('shared');
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  activeFilter === 'shared'
-                    ? 'bg-emerald-500/30 border border-emerald-400/50 text-white shadow-md'
-                    : 'bg-white/[0.05] border border-white/10 text-pink-200/70 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                ✨ Shared
-              </button>
-
-              <button
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setActiveFilter('private');
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  activeFilter === 'private'
-                    ? 'bg-purple-500/30 border border-purple-400/50 text-white shadow-md'
-                    : 'bg-white/[0.05] border border-white/10 text-pink-200/70 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                🔒 Private
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-pink-400/15 flex items-center justify-between text-xs text-pink-300/80">
-            <span className="font-serif italic text-pink-200/90 text-sm">
-              Every picture is a bloom in our garden ♡
-            </span>
-            <span className="text-base">🌸</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Lightbox View Modal */}
+      {/* 3. Lightbox Modal */}
       {lightboxMemory && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
           onClick={() => setLightboxMemory(null)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-6 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6"
+            className="max-w-3xl w-full rounded-3xl overflow-hidden bg-[#160b28] border border-pink-400/40 shadow-2xl relative space-y-4 p-4 sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-pink-400/20">
-              <div className="flex items-center gap-2 text-xs font-mono text-pink-300/80 uppercase tracking-wider">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
                 <Camera className="w-4 h-4 text-pink-300" />
-                <span>Memory Preview</span>
+                <h3 className="font-serif text-lg font-bold text-white truncate">
+                  {lightboxMemory.title}
+                </h3>
               </div>
               <button
                 onClick={() => setLightboxMemory(null)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
-                aria-label="Close"
+                className="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl max-h-[380px] bg-black/40">
+            <div className="rounded-2xl overflow-hidden max-h-[60vh] bg-black flex items-center justify-center">
               <img
-                src={lightboxMemory.photoUrl || '/assets/garden/card_archive.jpg'}
+                src={lightboxMemory.photoUrl}
                 alt={lightboxMemory.title}
-                className="w-full h-full object-contain max-h-[380px] mx-auto"
+                className="max-h-[60vh] w-auto object-contain mx-auto"
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-2xl font-bold text-white">{lightboxMemory.title}</h3>
-                <span className="text-xs font-mono text-pink-300/80">{lightboxMemory.dateTaken || 'Special Day'}</span>
-              </div>
+            {lightboxMemory.caption && (
+              <p className="text-sm text-pink-100 font-serif italic text-center">
+                “{lightboxMemory.caption}” ♡
+              </p>
+            )}
 
-              {lightboxMemory.caption && (
-                <p className="font-serif italic text-sm text-pink-200/90 leading-relaxed">
-                  “{lightboxMemory.caption}” ♡
-                </p>
-              )}
+            {lightboxMemory.voiceNoteUrl && (
+              <GardenAudioPlayer
+                src={lightboxMemory.voiceNoteUrl}
+                title={`Voice Note: ${lightboxMemory.title}`}
+                subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                isVoiceNote={true}
+              />
+            )}
 
-              {lightboxMemory.description && (
-                <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                  {lightboxMemory.description}
-                </p>
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-pink-400/20 flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
               {lightboxMemory.contributorId === currentUser.id ? (
                 <button
                   onClick={() => handleDelete(lightboxMemory)}
-                  className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-medium transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove Keepsake</span>
+                  <span>Delete</span>
                 </button>
               ) : (
-                <span className="text-xs font-mono text-pink-300/60">
-                  Shared by {lightboxMemory.contributorName || partner.displayName}
+                <span className="text-pink-300 font-mono">
+                  From {lightboxMemory.contributorName}
                 </span>
               )}
 
               <button
                 onClick={() => setLightboxMemory(null)}
-                className="btn-glow-romantic text-xs py-2 px-5"
+                className="btn-glow-romantic text-xs py-1.5 px-4"
               >
-                <span>Close</span>
+                Close
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 5. Add Memory Modal Form */}
+      {/* 4. Add Memory Form Modal */}
       {isAdding && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
           onClick={() => setIsAdding(false)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-7 sm:p-9 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-6"
+            className="glass-midnight-card max-w-xl w-full p-6 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-pink-400/20">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span className="p-2 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300">
                   <Camera className="w-4 h-4 text-pink-300" />
                 </span>
                 <div>
                   <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
-                    Add a New Polaroid Keepsake
+                    Add Moment to Little Archive
                   </h4>
                   <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
-                    Snapshot to keep forever in our archive
+                    Upload from phone camera or gallery
                   </p>
                 </div>
               </div>
@@ -557,8 +506,84 @@ export const LittleArchiveSection: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Upload Buttons */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-3 rounded-2xl border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+                  photoUrl
+                    ? 'bg-pink-500/25 border-pink-400/60 text-white'
+                    : 'bg-white/[0.04] border-white/10 text-pink-200 hover:bg-white/10'
+                }`}
+              >
+                <Upload className="w-4 h-4 text-pink-300" />
+                <span>Choose Photo from Phone</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowRecorder(!showRecorder)}
+                className={`p-3 rounded-2xl border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+                  showRecorder || voiceNoteUrl
+                    ? 'bg-purple-500/25 border-purple-400/60 text-white'
+                    : 'bg-white/[0.04] border-white/10 text-purple-200 hover:bg-white/10'
+                }`}
+              >
+                <Mic className="w-4 h-4 text-purple-300" />
+                <span>Record Voice Note</span>
+              </button>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+
+            {/* Voice Recorder */}
+            {showRecorder && (
+              <VoiceNoteRecorder
+                onRecorded={handleVoiceNoteRecorded}
+                onCancel={() => setShowRecorder(false)}
+              />
+            )}
+
+            {/* Photo Preview */}
+            {photoUrl && (
+              <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
+                <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPhotoUrl('')}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Voice Note Preview */}
+            {voiceNoteUrl && (
+              <div className="p-3 rounded-2xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-between text-xs text-purple-200">
+                <span className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-purple-300" />
+                  <span>Voice Note Attached</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVoiceNoteUrl(undefined)}
+                  className="text-slate-400 hover:text-rose-300"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="form-field-label">
                     <span>Title / Moment *</span>
@@ -580,38 +605,38 @@ export const LittleArchiveSection: React.FC = () => {
                     type="text"
                     value={dateTaken}
                     onChange={(e) => setDateTaken(e.target.value)}
-                    placeholder="e.g. Oct 2026, Summer trip"
+                    placeholder="e.g. Oct 2026, Sunset"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="form-field-label">
-                  <span>Photo URL *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="https://... or /assets/garden/card_archive.jpg"
-                />
-              </div>
+              {!photoUrl && (
+                <div>
+                  <label className="form-field-label">
+                    <span>Or Photo URL (Optional fallback)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={photoUrl}
+                    onChange={(e) => setPhotoUrl(e.target.value)}
+                    placeholder="https://... or choose from phone above"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="form-field-label">
-                  <span>Short Caption / Sweet Thought</span>
+                  <span>Sweet Thought / Caption</span>
                 </label>
                 <input
                   type="text"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  placeholder="e.g. You looked so happy here..."
+                  placeholder="e.g. The way the sunset glowed on your smile..."
                 />
               </div>
 
-              {/* Privacy Toggle */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <DecoratedPrivacyToggle
                   isShared={isShared}
                   onToggle={setIsShared}
@@ -625,7 +650,7 @@ export const LittleArchiveSection: React.FC = () => {
                 </p>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-pink-400/20">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-pink-400/20">
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}

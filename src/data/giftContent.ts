@@ -134,7 +134,7 @@ export const giftContent: GiftConfig = {
       caption: "Supposed to be paying attention in class, but we were too busy taking silly photos and laughing at nonsense. 10/10 would slack off again.",
       tag: "Zero Focus",
       accentColor: "#f472b6",
-      photoUrl: "/assets/memories/photo-desk-selfie.jpg",
+      photoUrl: "/assets/memories/photo-solomon-portrait.jpg",
       altText: "Playful classroom selfie sitting together at the desk",
       objectPosition: "center 55%",
     },

@@ -129,7 +129,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         {/* Polaroid Picture */}
         <div className="w-full aspect-square bg-slate-900 rounded-xl overflow-hidden shadow-inner relative group">
           <img
-            src={memory.photoUrl || '/assets/memories/photo-desk-selfie.jpg'}
+            src={memory.photoUrl || '/assets/memories/photo-solomon-portrait.jpg'}
             alt={memory.altText || memory.title}
             className="w-full h-full object-cover transition-transform duration-300"
             style={{

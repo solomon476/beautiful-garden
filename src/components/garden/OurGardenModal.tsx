@@ -11,7 +11,6 @@ import {
   Hourglass,
   Heart,
   ShieldCheck,
-  ArrowRightLeft,
   CheckCircle2,
   Lock,
   Globe,
@@ -33,6 +32,9 @@ import { authService } from '../../services/gardenService';
 import type { UserProfile } from '../../types/garden';
 import { runPrivacyAndSecurityAudit, type PrivacyTestResult } from '../../utils/privacyTests';
 import { soundEngine } from '../../utils/audio';
+import { UserSwitcher } from './UserSwitcher';
+import { GardenNotificationBell } from './GardenNotificationBell';
+import { QuickAddStudioModal, type QuickAddType } from './QuickAddStudioModal';
 
 interface OurGardenModalProps {
   isOpen: boolean;
@@ -73,6 +75,14 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
   const [auditResults, setAuditResults] = useState<PrivacyTestResult[] | null>(null);
   const [testingAudit, setTestingAudit] = useState<boolean>(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
+  const [quickAddType, setQuickAddType] = useState<QuickAddType>('photo');
+
+  const handleOpenQuickAdd = (type: QuickAddType = 'photo') => {
+    soundEngine.playSparkle();
+    setQuickAddType(type);
+    setIsQuickAddOpen(true);
+  };
 
   useEffect(() => {
     const unsub = authService.subscribeUser((u) => setCurrentUser(u));
@@ -90,22 +100,69 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
     };
   }, [isOpen]);
 
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        if (activeTab !== 'garden') {
+          setActiveTab('garden');
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, activeTab, onClose]);
+
+  const onCloseRef = React.useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Phone Back Button & Browser History Handling
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Push initial garden state
+    window.history.pushState({ gardenModal: true, tab: activeTab }, '');
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (!e.state || !e.state.gardenModal) {
+        // Phone back button pressed from root of modal -> close modal back to main page
+        onCloseRef.current();
+      } else if (e.state.tab) {
+        setActiveTab(e.state.tab);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSwitchUser = () => {
+  const handleSelectTab = (tab: TabKey) => {
     soundEngine.playSparkle();
-    const nextUsername = currentUser.username === 'noella' ? 'solomon' : 'noella';
-    authService.switchUser(nextUsername);
+    setActiveTab(tab);
+    window.history.pushState({ gardenModal: true, tab }, '');
+  };
+
+  const handleGoBackToSanctuary = () => {
+    soundEngine.playSparkle();
+    setActiveTab('garden');
+    window.history.pushState({ gardenModal: true, tab: 'garden' }, '');
+  };
+
+  const handleClose = () => {
+    soundEngine.playSparkle();
+    if (window.history.state?.gardenModal) {
+      window.history.back();
+    } else {
+      onClose();
+    }
   };
 
   const handleRunSecurityAudit = async () => {
@@ -131,7 +188,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         style={{
           minHeight: 0,
           backgroundColor: '#070311',
-          background: 'radial-gradient(circle at 80% 5%, rgba(244, 114, 182, 0.18) 0%, transparent 45%), radial-gradient(circle at 15% 95%, rgba(192, 132, 252, 0.16) 0%, transparent 50%), linear-gradient(175deg, #130a24 0%, #070311 100%)',
+          background:
+            'radial-gradient(circle at 80% 5%, rgba(244, 114, 182, 0.18) 0%, transparent 45%), radial-gradient(circle at 15% 95%, rgba(192, 132, 252, 0.16) 0%, transparent 50%), linear-gradient(175deg, #130a24 0%, #070311 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -139,56 +197,67 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         <div className="garden-glow-orb-top" />
         <div className="garden-glow-orb-bottom" />
 
-        {/* Top Header — Matching Image 2 */}
+        {/* Top Header — Uncramped, Mobile-Optimized with Photos of Both & Notifications */}
         <header
-          className="relative z-10 px-4 sm:px-8 py-3 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-3 bg-garden-header backdrop-blur-xl shrink-0"
-          style={{ backgroundColor: 'rgba(13, 8, 30, 0.96)' }}
+          className="relative z-40 px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-2 sm:gap-4 bg-garden-header backdrop-blur-xl shrink-0"
+          style={{ backgroundColor: 'rgba(13, 8, 30, 0.98)' }}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
-              <Sparkles className="w-4 h-4 fill-white text-white" />
+          {/* Logo & Brand Title */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
+              <h2 className="font-serif text-sm sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
                 <span>Perfect Time</span>
-                <span className="text-pink-400 font-sans">|</span>
-                <span className="text-xs sm:text-sm text-pink-200/90 font-medium">💖 — A Private Garden for Us ♡</span>
+                <span className="text-pink-400 font-sans text-xs sm:text-sm">♡</span>
+                <span className="hidden sm:inline text-xs sm:text-sm text-pink-200/90 font-medium truncate">
+                  — A Private Garden for Us
+                </span>
               </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Account Switcher Matching Image 2 */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-slate-300 text-xs font-mono">
-                <span className="text-slate-400">Viewing as:</span>
-                <span className="text-white font-medium">{currentUser.displayName}</span>
-                <span>👤</span>
-              </div>
+          {/* Right Header Area: Dual Pictures of Noella & Solomon + Notification Bell + Quick Add + Close */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Quick Add Studio Launcher Button (Desktop/Tablet) */}
+            <button
+              onClick={() => handleOpenQuickAdd('photo')}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 shrink-0"
+              aria-label="Add to Our Garden"
+              title="Add photos, suggest a date, upload audio/book, write letter"
+            >
+              <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
+              <span>Add to Garden</span>
+            </button>
 
-              <button
-                onClick={handleSwitchUser}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 border border-white/20 active:scale-95 transition-all"
-                title={`Switch active user to ${currentUser.username === 'noella' ? 'Solomon' : 'Noella'}`}
-              >
-                <ArrowRightLeft className="w-3.5 h-3.5" />
-                <span>Switch to {currentUser.username === 'noella' ? 'Solomon 🌿' : 'Noella ✨'}</span>
-              </button>
-            </div>
+            {/* Visual Dual Photo Avatar Switcher */}
+            <UserSwitcher currentUser={currentUser} compact={true} />
+
+            {/* Notification Bell Dropdown */}
+            <GardenNotificationBell
+              currentUser={currentUser}
+              onSelectTab={(tab) => handleSelectTab(tab)}
+            />
 
             {/* Clean Frosted Close Button */}
             <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
+              onClick={handleClose}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
               aria-label="Close Our Garden"
+              title="Close Sanctuary"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* Feature Tab Navigation Bar — Streamlined & Uncluttered */}
-        <nav className="relative z-10 px-4 sm:px-8 py-2.5 border-b border-purple-400/10 bg-[#090514]/75 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none shrink-0" aria-label="Garden feature sections">
+        {/* Feature Tab Navigation Bar — Smooth Touch Scroll */}
+        <nav
+          className="relative z-10 px-3 sm:px-8 py-2 sm:py-2.5 border-b border-purple-400/10 bg-[#090514]/80 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none shrink-0"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          aria-label="Garden feature sections"
+        >
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -196,11 +265,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setActiveTab(tab.id);
-                }}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none ${
+                onClick={() => handleSelectTab(tab.id)}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none ${
                   isActive ? 'nav-tab-active' : 'nav-tab-inactive'
                 }`}
                 aria-current={isActive ? 'page' : undefined}
@@ -212,40 +278,88 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
           })}
         </nav>
 
-        {/* Tab Content Canvas with Balanced Proportions */}
+        {/* Tab Content Canvas */}
         <main
-          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-8 space-y-8 mx-auto w-full ${
-            activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
+          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
+            activeTab === 'garden' ? 'max-w-7xl' : activeTab === 'moods' ? 'max-w-3xl' : 'max-w-6xl'
           }`}
           style={{ minHeight: 0 }}
         >
-          {/* Quick Back to Sanctuary Bar when inside a specific tab */}
+          {/* Quick Back to Sanctuary Bar with Direct Add Shortcut for Active Section */}
           {activeTab !== 'garden' && (
-            <div className="flex items-center justify-between pb-3 border-b border-purple-400/15">
+            <div className="flex items-center justify-between pb-2.5 border-b border-purple-400/15 gap-2">
               <button
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setActiveTab('garden');
-                }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 hover:border-pink-300/50 text-pink-200 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm"
+                onClick={handleGoBackToSanctuary}
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 hover:border-pink-300/50 text-pink-200 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-pink-300" />
-                <span>← Back to Garden Sanctuary Overview</span>
+                <span>← Back to Sanctuary</span>
               </button>
 
-              <span className="text-[11px] font-mono text-purple-300/70 hidden sm:inline">
-                🌸 Shared Sanctuary Desk
-              </span>
+              <div className="flex items-center gap-2">
+                {activeTab === 'petals' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('letter')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>+ Leave Petal Note 🌸</span>
+                  </button>
+                )}
+                {activeTab === 'letters' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('letter')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <PenLine className="w-3.5 h-3.5" />
+                    <span>+ Write Letter ✉️</span>
+                  </button>
+                )}
+                {activeTab === 'archive' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('photo')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>+ Upload Photo 📸</span>
+                  </button>
+                )}
+                {activeTab === 'time' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('date')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-xs font-semibold shadow-md shadow-teal-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    <span>+ Suggest Date 📅</span>
+                  </button>
+                )}
+                {activeTab === 'sound' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('song')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-semibold shadow-md shadow-purple-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                    <span>+ Add Music / Memo 🎵</span>
+                  </button>
+                )}
+                {activeTab === 'shelf' && (
+                  <button
+                    onClick={() => handleOpenQuickAdd('book')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold shadow-md shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>+ Upload Book / PDF 📚</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
           {activeTab === 'garden' && (
             <GardenDashboardOverview
-              onSelectTab={(tab) => {
-                soundEngine.playSparkle();
-                setActiveTab(tab);
-              }}
+              onSelectTab={(tab) => handleSelectTab(tab)}
               currentUser={currentUser}
+              onOpenAddStudio={handleOpenQuickAdd}
             />
           )}
 
@@ -326,6 +440,20 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
           )}
         </main>
       </div>
+
+      {/* Global Quick Add Studio Modal */}
+      <QuickAddStudioModal
+        isOpen={isQuickAddOpen}
+        initialType={quickAddType}
+        onClose={() => setIsQuickAddOpen(false)}
+        onSuccess={(type) => {
+          if (type === 'photo') setActiveTab('archive');
+          else if (type === 'date') setActiveTab('time');
+          else if (type === 'song') setActiveTab('sound');
+          else if (type === 'book') setActiveTab('shelf');
+          else if (type === 'letter') setActiveTab('letters');
+        }}
+      />
     </div>
   );
 };

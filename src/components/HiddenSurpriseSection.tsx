@@ -179,10 +179,10 @@ export const HiddenSurpriseSection: React.FC = () => {
                         <div
                           key={perk.id}
                           onClick={() => handleSelectPerk(perk.id)}
-                          className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 text-left ${
+                          className={`p-3.5 sm:p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3.5 text-left ${
                             isSelected
-                              ? 'bg-amber-100/90 border-amber-800 shadow-md ring-2 ring-amber-500/30'
-                              : 'bg-white/60 border-amber-200 hover:bg-white/90'
+                              ? 'bg-amber-100/95 border-amber-800 shadow-md ring-2 ring-amber-500/40'
+                              : 'bg-white/70 border-amber-200 hover:bg-white/95'
                           }`}
                           role="radio"
                           aria-checked={isSelected}
@@ -190,27 +190,27 @@ export const HiddenSurpriseSection: React.FC = () => {
                         >
                           <span className="text-2xl mt-0.5">{perk.emoji}</span>
                           <div className="flex-grow">
-                            <div className="flex items-center justify-between">
-                              <h5 className="font-bold text-amber-950 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <h5 className="font-bold text-amber-950 text-sm sm:text-base">
                                 {perk.title}
                               </h5>
-                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-amber-200/60 text-amber-900 font-semibold">
+                              <span className="text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full bg-amber-200/70 text-amber-900 font-semibold shrink-0">
                                 {perk.category}
                               </span>
                             </div>
-                            <p className="text-xs text-amber-900/90 mt-0.5 leading-snug">
+                            <p className="text-xs sm:text-sm text-amber-900/90 mt-1 leading-relaxed">
                               {perk.description}
                             </p>
                           </div>
-                          <div className="pt-1">
+                          <div className="pt-0.5 shrink-0">
                             <div
-                              className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                                 isSelected
-                                  ? 'border-amber-900 bg-amber-900 text-white'
-                                  : 'border-amber-400 bg-white'
+                                  ? 'border-amber-900 bg-amber-900 text-white shadow-sm'
+                                  : 'border-amber-400/80 bg-white'
                               }`}
                             >
-                              {isSelected && <Check className="w-3 h-3" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                             </div>
                           </div>
                         </div>

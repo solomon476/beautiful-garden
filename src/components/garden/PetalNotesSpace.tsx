@@ -119,16 +119,10 @@ export const PetalNotesSpace: React.FC = () => {
           }}
         />
 
-        <div
-          className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6"
-          style={{ width: '100%' }}
-        >
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
           {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-5 sm:gap-6">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-rose-300/40 shadow-xl shrink-0 group"
-              style={{ width: '96px', height: '96px', minWidth: '96px', minHeight: '96px' }}
-            >
+          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-rose-300/40 shadow-xl shrink-0 group">
               <img
                 src="/assets/garden/card_petals.jpg"
                 alt="Petal Notes"
@@ -136,65 +130,77 @@ export const PetalNotesSpace: React.FC = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-rose-950/70 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-rose-300 drop-shadow-md animate-pulse" />
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-rose-300 drop-shadow-md animate-pulse" />
               </div>
             </div>
 
             {/* Title & Romantic Subtitles */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[10px] font-mono uppercase tracking-widest">
+            <div className="space-y-1 sm:space-y-1.5 min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[10px] font-mono uppercase tracking-widest">
                 <span>〰️ The Petal Garden</span>
                 <span className="text-rose-300">✦</span>
               </div>
 
-              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Petal Notes</span>
-                <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♡</span>
+                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
               </h2>
 
-              <p className="font-serif italic text-sm sm:text-base text-rose-200/90 max-w-xl leading-relaxed">
+              <p className="font-serif italic text-xs sm:text-base text-rose-200/90 max-w-xl leading-relaxed">
                 Little whispers, compliments, and sweet feelings that unfurl like petals.
               </p>
 
-              <div className="text-[11px] font-mono tracking-widest uppercase text-rose-300/70 pt-1">
+              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-rose-300/70 pt-0.5">
                 Whisper • Unfurl • Cherish • Bloom
+              </div>
+
+              {/* Direct Left Column Add Trigger Button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleOpenCompose}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20"
+                >
+                  <Plus className="w-4 h-4 text-white" />
+                  <span>Leave a Petal Note 🌸</span>
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 flex justify-end">
+          {/* Right Action Button Inside Hero Banner (Desktop) */}
+          <div className="shrink-0 w-full sm:w-auto hidden md:flex justify-end">
             <button
               onClick={handleOpenCompose}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-3 px-6 shadow-xl"
+              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4 text-white" />
-              <span>Leave a Petal Note</span>
+              <span>Leave a Petal Note 🌸</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* Composing Note */}
+      {/* Composing Note — High-Contrast, Luminous & Un-shady */}
       {isComposing && (
-        <div className="glass-midnight-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-rose-400/35 shadow-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-rose-400/20">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300">
+        <div className="max-w-3xl mx-auto p-6 sm:p-9 rounded-[2rem] space-y-6 animate-fade-in relative overflow-hidden border-2 border-pink-400/50 shadow-2xl shadow-pink-500/10" style={{ backgroundColor: '#140826' }}>
+          <div className="flex items-center justify-between pb-3.5 border-b border-pink-400/25">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shadow-sm">
                 <Sparkles className="w-4 h-4 text-pink-300" />
               </span>
               <div>
-                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                <h4 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight">
                   Craft a Flower Petal Note
                 </h4>
-                <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
+                <p className="text-[11px] text-pink-200/80 font-mono uppercase tracking-wider">
                   Delicate whispers, encouragement, and smiles
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsComposing(false)}
-              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.2] border border-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-all"
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
@@ -203,44 +209,50 @@ export const PetalNotesSpace: React.FC = () => {
 
           <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
             <div>
-              <label className="form-field-label">
+              <label className="text-xs font-mono font-semibold uppercase tracking-wider text-pink-200 mb-2 flex items-center gap-1.5">
                 <span>Choose Floral Essence</span>
               </label>
-              <div className="flex gap-2.5 flex-wrap pt-1">
-                {PALETTE.map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() => setSelectedTheme(p)}
-                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs border transition-all ${
-                      selectedTheme.name === p.name
-                        ? 'border-pink-300 bg-pink-500/25 shadow-md text-white font-medium scale-105'
-                        : 'border-white/10 bg-white/[0.04] text-purple-200/70 hover:text-white hover:bg-white/[0.08]'
-                    }`}
-                  >
-                    <span className="text-sm">{p.emoji}</span>
-                    <span>{p.name}</span>
-                  </button>
-                ))}
+              <div className="flex gap-2 flex-wrap pt-1">
+                {PALETTE.map((p) => {
+                  const isSelected = selectedTheme.name === p.name;
+                  return (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() => setSelectedTheme(p)}
+                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs transition-all border ${
+                        isSelected
+                          ? 'border-2 border-pink-300 bg-pink-500/35 text-white shadow-lg shadow-pink-500/30 ring-2 ring-pink-400/50 font-bold scale-105'
+                          : 'border-white/20 bg-white/[0.08] text-slate-100 hover:text-white hover:bg-white/[0.16] hover:border-pink-300/40 font-medium'
+                      }`}
+                    >
+                      <span className="text-base">{p.emoji}</span>
+                      <span>{p.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="form-field-label mb-0">
+                <label className="text-xs font-mono font-semibold uppercase tracking-wider text-pink-200 mb-0 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-pink-300" />
                   <span>Petal Whisper (Up to 240 characters)</span>
                 </label>
-                <span className="text-[11px] text-purple-300/50 font-mono">
-                  {body.length}/240
+                <span className="text-xs text-pink-300/80 font-mono font-semibold">
+                  {body.length} / 240
                 </span>
               </div>
               <textarea
-                rows={3}
+                rows={4}
                 required
                 maxLength={240}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="A compliment, a teasing observation, or a warm thought for the day..."
+                placeholder="A sweet compliment, gentle observation, or warm whisper for the day..."
+                className="w-full p-4 rounded-2xl border-2 border-pink-400/40 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/40 text-white placeholder:text-pink-200/50 font-body text-sm sm:text-base leading-relaxed outline-none shadow-inner transition-all"
+                style={{ backgroundColor: '#1e0d38' }}
               />
             </div>
 
@@ -255,18 +267,19 @@ export const PetalNotesSpace: React.FC = () => {
               privateSubtitle="Saved secretly on your profile. Hidden from partner until you choose to bloom it 🔒"
             />
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-rose-400/20">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-rose-400/25">
               <button
                 type="button"
                 onClick={() => setIsComposing(false)}
-                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
+                className="px-5 py-2.5 rounded-full text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.1] transition-colors border border-white/10"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="btn-glow-romantic"
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-white/20"
               >
+                <Sparkles className="w-4 h-4 text-white" />
                 <span>Bloom Petal Note 🌸</span>
               </button>
             </div>

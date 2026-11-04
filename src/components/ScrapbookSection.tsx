@@ -72,7 +72,7 @@ export const ScrapbookSection: React.FC = () => {
               {/* Photo Frame */}
               <div className="polaroid-image-wrapper relative">
                 <img
-                  src={memory.photoUrl || '/assets/memories/photo-desk-selfie.jpg'}
+                  src={memory.photoUrl || '/assets/memories/photo-solomon-portrait.jpg'}
                   alt={memory.altText || memory.title}
                   className="polaroid-image"
                   style={{
