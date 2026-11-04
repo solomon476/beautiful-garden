@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Sparkles,
@@ -77,6 +77,11 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
   const [testingAudit, setTestingAudit] = useState<boolean>(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
   const [quickAddType, setQuickAddType] = useState<QuickAddType>('photo');
+  const mainScrollRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeTab]);
 
   const handleOpenQuickAdd = (type: QuickAddType = 'photo') => {
     soundEngine.playSparkle();
@@ -280,6 +285,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
 
         {/* Tab Content Canvas */}
         <main
+          ref={mainScrollRef}
           className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
             activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
           }`}

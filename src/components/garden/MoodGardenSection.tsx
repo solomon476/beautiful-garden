@@ -29,42 +29,42 @@ const ENHANCED_MOODS: MoodOptionConfig[] = [
     label: 'Peaceful',
     subtitle: 'Calm and content',
     emoji: '🌿',
-    artUrl: '/assets/garden/moods/peaceful_art_clean.png',
+    artUrl: '/assets/garden/moods/peaceful_card_art.png',
   },
   {
     key: 'excited',
     label: 'Excited',
     subtitle: 'Full of energy',
     emoji: '✨',
-    artUrl: '/assets/garden/moods/excited_art_clean.png',
+    artUrl: '/assets/garden/moods/excited_card_art.png',
   },
   {
     key: 'happy',
     label: 'Happy',
     subtitle: 'Grateful and joyful',
     emoji: '🌷',
-    artUrl: '/assets/garden/moods/happy_art_clean.png',
+    artUrl: '/assets/garden/moods/happy_card_art.png',
   },
   {
     key: 'tired',
     label: 'Tired',
     subtitle: 'A bit drained',
     emoji: '🌙',
-    artUrl: '/assets/garden/moods/tired_art_clean.png',
+    artUrl: '/assets/garden/moods/tired_card_art.png',
   },
   {
     key: 'listening',
     label: 'Looking for Music',
     subtitle: 'In the mood for tunes',
     emoji: '🎧',
-    artUrl: '/assets/garden/moods/music_art_clean.png',
+    artUrl: '/assets/garden/moods/music_card_art.png',
   },
   {
     key: 'thoughtful',
     label: 'Thoughtful',
     subtitle: 'Deep in thought',
     emoji: '☁️',
-    artUrl: '/assets/garden/moods/thoughtful_art_clean.png',
+    artUrl: '/assets/garden/moods/thoughtful_card_art.png',
   },
 ];
 
@@ -156,18 +156,17 @@ export const MoodGardenSection: React.FC = () => {
     }
   };
 
-  // If no moods recorded yet, display the romantic sample entry matching the design
   const displayList = moods.length > 0 ? (showAllHistory ? moods : moods.slice(0, 5)) : DEFAULT_SAMPLE_MOODS;
 
   return (
-    <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-12 font-sans">
+    <div className="w-full space-y-5 sm:space-y-6 animate-fade-in pb-12 font-sans">
       {/* ================================================================= */}
       {/* 1. HERO BANNER: Magical Twilight Garden with Rustic Bench         */}
       {/* ================================================================= */}
       <div
-        className="relative rounded-3xl overflow-hidden border border-purple-400/25 shadow-2xl p-6 sm:p-8 md:p-10 text-white min-h-[220px] sm:min-h-[260px] flex flex-col md:flex-row items-center justify-between gap-6"
+        className="relative rounded-3xl overflow-hidden border border-purple-400/25 shadow-2xl p-5 sm:p-7 md:p-8 text-white min-h-[190px] sm:min-h-[220px] flex flex-col md:flex-row items-center justify-between gap-5 select-none"
         style={{
-          backgroundImage: `linear-gradient(to right, rgba(13, 6, 28, 0.45) 0%, rgba(22, 9, 44, 0.6) 45%, rgba(13, 6, 28, 0.52) 100%), url(/assets/garden/hero_bench.jpg)`,
+          backgroundImage: `linear-gradient(to right, rgba(13, 6, 28, 0.38) 0%, rgba(26, 10, 48, 0.58) 50%, rgba(13, 6, 28, 0.48) 100%), url(/assets/garden/hero_bench.jpg)`,
           backgroundSize: 'cover',
           backgroundPosition: 'center 40%',
         }}
@@ -199,11 +198,11 @@ export const MoodGardenSection: React.FC = () => {
         </div>
 
         {/* Right Floating Quote Card */}
-        <div className="shrink-0 rounded-2xl bg-[#14072b]/65 backdrop-blur-md border border-purple-300/25 px-6 py-4 max-w-xs text-center shadow-[0_8px_32px_rgba(0,0,0,0.45)] z-10">
-          <p className="font-serif italic text-sm text-pink-100 leading-snug">
+        <div className="shrink-0 rounded-2xl bg-[#14072b]/70 backdrop-blur-md border border-purple-300/30 px-5 py-3.5 max-w-xs text-center shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-10">
+          <p className="font-serif italic text-xs sm:text-sm text-pink-100 leading-snug">
             “Your feelings matter... here, always.”
           </p>
-          <p className="text-xs text-pink-300/80 mt-1.5 font-sans font-light">
+          <p className="text-[11px] text-pink-300/80 mt-1 font-sans font-light">
             — Perfect Time ♡
           </p>
         </div>
@@ -212,9 +211,9 @@ export const MoodGardenSection: React.FC = () => {
       {/* ================================================================= */}
       {/* 2. CHOOSE YOUR MOOD: 6 Illustrated Mood Cards + Check-In Note     */}
       {/* ================================================================= */}
-      <div className="rounded-3xl border border-purple-400/25 bg-gradient-to-b from-[#240e3b]/85 via-[#19092c]/90 to-[#10061e]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_12px_45px_rgba(0,0,0,0.5)] space-y-6">
+      <div className="rounded-3xl border border-purple-400/25 bg-gradient-to-b from-[#240e3b]/85 via-[#19092c]/90 to-[#10061e]/95 backdrop-blur-xl p-5 sm:p-7 shadow-[0_12px_45px_rgba(0,0,0,0.5)] space-y-5">
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-400/15 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-400/15 pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-pink-300 text-lg shadow-inner">
               🪷
@@ -234,8 +233,8 @@ export const MoodGardenSection: React.FC = () => {
           </div>
         </div>
 
-        {/* 6 Mood Cards in 1 Row on Desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+        {/* 6 Mood Cards in 1 Row on Desktop / Tablets */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-3.5">
           {ENHANCED_MOODS.map((card) => {
             const isSelected = selectedMoodKey === card.key;
             return (
@@ -246,23 +245,23 @@ export const MoodGardenSection: React.FC = () => {
                   soundEngine.playSparkle();
                   setSelectedMoodKey(card.key);
                 }}
-                className={`group relative rounded-2xl overflow-hidden flex flex-col text-left transition-all duration-300 focus:outline-none cursor-pointer ${
+                className={`group relative rounded-2xl overflow-hidden flex flex-col justify-between text-left transition-all duration-300 focus:outline-none cursor-pointer h-40 sm:h-44 ${
                   isSelected
-                    ? 'ring-2 ring-pink-400 shadow-[0_0_24px_rgba(236,72,153,0.65)] scale-[1.02] border-pink-400'
-                    : 'border border-purple-400/20 hover:border-purple-300/50 hover:scale-[1.01]'
+                    ? 'ring-2 ring-pink-400 shadow-[0_0_26px_rgba(236,72,153,0.75)] scale-[1.02] border border-pink-300'
+                    : 'border border-purple-400/20 hover:border-purple-300/50 hover:scale-[1.01] hover:shadow-lg'
                 }`}
                 style={{
                   background: 'linear-gradient(180deg, #1f0d36 0%, #120622 100%)',
                 }}
               >
-                {/* Card Artwork */}
-                <div className="relative w-full h-24 sm:h-28 overflow-hidden bg-purple-950/60">
+                {/* Top Artwork Area */}
+                <div className="relative w-full flex-1 overflow-hidden bg-purple-950/70 flex items-center justify-center">
                   <img
                     src={card.artUrl}
                     alt={card.label}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#160829] via-transparent to-black/20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#150727] via-transparent to-black/20" />
 
                   {/* Radio / Checkmark in Top Right */}
                   <div className="absolute top-2 right-2 z-10">
@@ -271,27 +270,27 @@ export const MoodGardenSection: React.FC = () => {
                         <Check className="w-3 h-3 text-white" strokeWidth={3} />
                       </div>
                     ) : (
-                      <div className="w-5 h-5 rounded-full border border-white/50 bg-black/30 backdrop-blur-sm transition-colors group-hover:border-white/80" />
+                      <div className="w-5 h-5 rounded-full border border-white/50 bg-black/35 backdrop-blur-sm transition-colors group-hover:border-white/80" />
                     )}
                   </div>
                 </div>
 
-                {/* Bottom Shelf */}
+                {/* Bottom Shelf with Title and Subtitle */}
                 <div
-                  className={`p-2.5 sm:p-3 flex flex-col justify-center transition-colors ${
+                  className={`p-2.5 sm:p-3 flex flex-col justify-center shrink-0 border-t transition-colors ${
                     isSelected
-                      ? 'bg-gradient-to-b from-purple-900/80 to-[#1b0a30]'
-                      : 'bg-[#150727]/90'
+                      ? 'bg-gradient-to-b from-purple-900/90 to-[#1e0a35] border-pink-400/40'
+                      : 'bg-[#150727]/95 border-purple-400/10'
                   }`}
                 >
                   <span
                     className={`text-xs sm:text-sm font-serif font-bold tracking-tight truncate ${
-                      isSelected ? 'text-white' : 'text-slate-100 group-hover:text-pink-100'
+                      isSelected ? 'text-white font-semibold' : 'text-slate-100 group-hover:text-pink-100'
                     }`}
                   >
                     {card.label}
                   </span>
-                  <span className="text-[10px] sm:text-[11px] text-purple-200/70 font-sans font-light truncate mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] text-purple-200/75 font-sans font-light truncate mt-0.5">
                     {card.subtitle}
                   </span>
                 </div>
@@ -301,88 +300,90 @@ export const MoodGardenSection: React.FC = () => {
         </div>
 
         {/* Bottom Note & Save Row */}
-        <form onSubmit={handleSetMood} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end pt-2">
-          {/* Left (8 cols): Note input & Privacy toggle */}
-          <div className="lg:col-span-8 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="mood-note-input"
-                className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-pink-300" />
-                <span>Anything on your mind?</span>
-              </label>
+        <form onSubmit={handleSetMood} className="space-y-4 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            {/* Left (8 cols): Input */}
+            <div className="md:col-span-8 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="mood-note-input"
+                  className="text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-pink-300" />
+                  <span>Anything on your mind?</span>
+                </label>
 
-              {/* Privacy Pill Toggle */}
+                {/* Privacy Pill Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setIsShared(!isShared);
+                  }}
+                  className="text-[11px] font-sans px-2.5 py-1 rounded-full border border-purple-400/25 bg-white/[0.04] hover:bg-white/[0.08] text-purple-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Toggle privacy"
+                >
+                  {isShared ? (
+                    <>
+                      <Globe2 className="w-3 h-3 text-pink-300" />
+                      <span>Shared with {partner.displayName} 🌸</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3 h-3 text-purple-300" />
+                      <span>Private to you 🔒</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="text-[11px] text-purple-200/60 font-sans">
+                Share a note about your mood (optional).
+              </p>
+
+              <div className="relative rounded-2xl overflow-hidden border border-purple-400/25 focus-within:border-pink-400 focus-within:ring-1 focus-within:ring-pink-400/40 transition-all bg-[#130722]/85 shadow-inner">
+                <textarea
+                  id="mood-note-input"
+                  rows={2}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="e.g. A great day, a busy mind, or just feeling quiet..."
+                  className="w-full p-3 sm:p-3.5 text-xs sm:text-sm font-serif leading-relaxed text-pink-50 placeholder-purple-300/40 bg-transparent resize-none outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Right (4 cols): Save Button & Heart Flourish */}
+            <div className="md:col-span-4 flex flex-col items-center justify-end space-y-2">
               <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setIsShared(!isShared);
+                type="submit"
+                disabled={isSaving}
+                className="w-full py-3 sm:py-3.5 px-6 rounded-2xl text-white font-semibold text-xs sm:text-sm shadow-lg shadow-pink-500/30 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 active:scale-95 disabled:opacity-50 cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 45%, #f97316 100%)',
                 }}
-                className="text-[11px] font-sans px-2.5 py-1 rounded-full border border-purple-400/25 bg-white/[0.04] hover:bg-white/[0.08] text-purple-200 transition-all flex items-center gap-1.5 cursor-pointer"
-                title="Toggle privacy"
               >
-                {isShared ? (
+                {isSaving ? (
                   <>
-                    <Globe2 className="w-3 h-3 text-pink-300" />
-                    <span>Shared with {partner.displayName} 🌸</span>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Saving check-in...</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="w-3 h-3 text-purple-300" />
-                    <span>Private to you 🔒</span>
+                    <Save className="w-4 h-4" />
+                    <span>Save My Check-in →</span>
                   </>
                 )}
               </button>
-            </div>
 
-            <p className="text-[11px] text-purple-200/60 font-sans">
-              Share a note about your mood (optional).
-            </p>
-
-            <div className="relative rounded-2xl overflow-hidden border border-purple-400/25 focus-within:border-pink-400 focus-within:ring-1 focus-within:ring-pink-400/40 transition-all bg-[#130722]/85 shadow-inner">
-              <textarea
-                id="mood-note-input"
-                rows={2}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. A great day, a busy mind, or just feeling quiet..."
-                className="w-full p-3 sm:p-3.5 text-xs sm:text-sm font-serif leading-relaxed text-pink-50 placeholder-purple-300/40 bg-transparent resize-none outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Right (4 cols): Save Button & Heart Flourish */}
-          <div className="lg:col-span-4 flex flex-col items-center justify-end space-y-2">
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="w-full py-3.5 px-6 rounded-2xl text-white font-semibold text-sm shadow-lg shadow-pink-500/30 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 active:scale-95 disabled:opacity-50 cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 45%, #f97316 100%)',
-              }}
-            >
-              {isSaving ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Saving check-in...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save My Check-in →</span>
-                </>
-              )}
-            </button>
-
-            {/* Heart flourish matching screenshot */}
-            <div className="w-24 h-5 flex items-center justify-center text-pink-300/80 select-none">
-              <img
-                src="/assets/garden/moods/heart_flourish_transparent.png"
-                alt="heart flourish"
-                className="h-full object-contain filter drop-shadow-[0_0_6px_rgba(244,114,182,0.4)]"
-              />
+              {/* Heart flourish matching screenshot */}
+              <div className="w-24 h-5 flex items-center justify-center text-pink-300/80 select-none">
+                <img
+                  src="/assets/garden/moods/heart_flourish_transparent.png"
+                  alt="heart flourish"
+                  className="h-full object-contain filter drop-shadow-[0_0_6px_rgba(244,114,182,0.4)]"
+                />
+              </div>
             </div>
           </div>
         </form>
@@ -404,14 +405,14 @@ export const MoodGardenSection: React.FC = () => {
       {/* ================================================================= */}
       {/* 3. A LITTLE HISTORY: Past Mood Reflections                        */}
       {/* ================================================================= */}
-      <div className="rounded-3xl border border-purple-400/20 bg-gradient-to-r from-[#210d38]/80 via-[#18092a]/80 to-[#120622]/80 backdrop-blur-xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div className="rounded-3xl border border-purple-400/20 bg-gradient-to-r from-[#210d38]/80 via-[#18092a]/80 to-[#120622]/80 backdrop-blur-xl p-4 sm:p-5 shadow-xl space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300">
               <Clock className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-serif text-base sm:text-lg font-bold text-white">
+              <h3 className="font-serif text-sm sm:text-base font-bold text-white">
                 A Little History
               </h3>
               <p className="text-[11px] text-purple-200/60 font-sans">
@@ -420,29 +421,27 @@ export const MoodGardenSection: React.FC = () => {
             </div>
           </div>
 
-          {moods.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowAllHistory(!showAllHistory)}
-              className="px-3.5 py-1.5 rounded-full border border-purple-400/30 bg-white/[0.05] hover:bg-white/[0.1] text-xs text-purple-200 font-medium transition-all cursor-pointer"
-            >
-              {showAllHistory ? 'Show Recent' : 'View All →'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowAllHistory(!showAllHistory)}
+            className="px-3.5 py-1 rounded-full border border-purple-400/30 bg-white/[0.05] hover:bg-white/[0.1] text-xs text-purple-200 font-medium transition-all cursor-pointer"
+          >
+            {showAllHistory ? 'Show Recent' : 'View All →'}
+          </button>
         </div>
 
         {/* History Entries */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {displayList.map((item) => (
             <div
               key={item.id}
-              className="rounded-2xl p-3.5 sm:p-4 border border-purple-400/15 bg-white/[0.04] backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm transition-all hover:border-purple-300/30"
+              className="rounded-2xl p-3 sm:p-3.5 border border-purple-400/15 bg-white/[0.04] backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs sm:text-sm transition-all hover:border-purple-300/30"
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-base select-none">{item.emoji}</span>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-sm select-none">{item.emoji}</span>
                 <span className="font-serif font-bold text-white">{item.moodLabel}</span>
                 <span className="text-purple-400/40 select-none">|</span>
-                <span className="text-purple-200/70 font-mono text-xs">
+                <span className="text-purple-200/70 font-mono text-[11px]">
                   {formatHistoryDate(item.createdAt)}
                 </span>
                 {item.note && (

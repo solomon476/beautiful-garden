@@ -8,16 +8,12 @@ import { FlowerNotesSection } from './components/FlowerNotesSection';
 import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
 import { FinalLetterSection } from './components/FinalLetterSection';
 import { OurGardenModal } from './components/garden/OurGardenModal';
-import { QuickAddStudioModal, type QuickAddType } from './components/garden/QuickAddStudioModal';
 import { giftContent } from './data/giftContent';
-import { Sparkles, Plus } from 'lucide-react';
-import { soundEngine } from './utils/audio';
+import { Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('welcome');
   const [isOurGardenOpen, setIsOurGardenOpen] = useState<boolean>(false);
-  const [isQuickAddOpen, setIsQuickAddOpen] = useState<boolean>(false);
-  const [quickAddType, setQuickAddType] = useState<QuickAddType>('photo');
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
@@ -107,37 +103,6 @@ export const App: React.FC = () => {
           Perfect Time ✨ • A Private Corner
         </p>
       </footer>
-
-      {/* Floating Action Button: Add to Our Garden (Accessible Anywhere) */}
-      {!isOurGardenOpen && (
-        <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-30 flex flex-col items-end gap-2 pointer-events-auto animate-fade-in">
-          <button
-            onClick={() => {
-              soundEngine.playSparkle();
-              setQuickAddType('photo');
-              setIsQuickAddOpen(true);
-            }}
-            className="group flex items-center gap-2.5 px-4 py-3 sm:px-5 sm:py-3.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/50 hover:scale-105 active:scale-95 transition-all border border-white/30 backdrop-blur-md"
-            aria-label="Add to Our Garden"
-            title="Upload photo, suggest a date, add music or book"
-          >
-            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-              <Plus className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="tracking-wide">Add to Garden 🌸</span>
-          </button>
-        </div>
-      )}
-
-      {/* Floating Quick Add Studio Modal */}
-      <QuickAddStudioModal
-        isOpen={isQuickAddOpen}
-        initialType={quickAddType}
-        onClose={() => setIsQuickAddOpen(false)}
-        onSuccess={() => {
-          setIsOurGardenOpen(true);
-        }}
-      />
     </div>
   );
 };

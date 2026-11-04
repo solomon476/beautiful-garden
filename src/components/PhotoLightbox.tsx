@@ -111,7 +111,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     >
       {/* Container to prevent backdrop click closing when touching the card */}
       <div
-        className="relative max-w-lg w-full bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border border-white/20 animate-scale-up select-none"
+        className="relative max-w-lg w-full bg-white rounded-2xl p-3.5 sm:p-5 shadow-2xl border border-white/20 animate-scale-up select-none max-h-[92vh] flex flex-col justify-between overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -120,20 +120,19 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute -top-12 right-0 sm:-right-3 w-10 h-10 rounded-full bg-slate-900/90 text-white border border-white/20 flex items-center justify-center hover:bg-pink-600 transition-colors shadow-lg"
+          className="absolute -top-11 right-0 sm:-right-2 w-9 h-9 rounded-full bg-slate-900/90 text-white border border-white/20 flex items-center justify-center hover:bg-pink-600 transition-colors shadow-lg z-20"
           aria-label="Close photo view"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Polaroid Picture */}
-        <div className="w-full aspect-square bg-slate-900 rounded-xl overflow-hidden shadow-inner relative group">
+        {/* Polaroid Picture: Natural Proportions, Never Stretches */}
+        <div className="w-full bg-slate-950 rounded-xl overflow-hidden shadow-inner relative group flex items-center justify-center max-h-[46vh] sm:max-h-[52vh] min-h-[190px]">
           <img
             src={memory.photoUrl || '/assets/memories/photo-solomon-portrait.jpg'}
             alt={memory.altText || memory.title}
-            className="w-full h-full object-cover transition-transform duration-300"
+            className="w-auto h-auto max-w-full max-h-[46vh] sm:max-h-[52vh] object-contain mx-auto rounded-lg transition-transform duration-300"
             style={{
-              objectPosition: memory.objectPosition || 'center',
               filter: memory.filter || undefined,
             }}
             loading="eager"
@@ -143,7 +142,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
               (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
             }}
           />
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5">
+          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10">
             <Sparkles className="w-3 h-3 text-pink-400" />
             <span>{memory.tag}</span>
           </div>
@@ -151,7 +150,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           {/* Interactive Heart Button on Photo */}
           <button
             onClick={handleLike}
-            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform"
+            className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-10"
             aria-label="Love this memory"
           >
             <Heart
