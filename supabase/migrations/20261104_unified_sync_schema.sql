@@ -191,4 +191,6 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "allow_public_storage_select" ON storage.objects;
 CREATE POLICY "allow_public_storage_select" ON storage.objects FOR SELECT USING (bucket_id = 'garden_media');
 
-DROP POLICY IF EXISTS "allow_public_storage_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'garden_media');
+DROP POLICY IF EXISTS "allow_public_storage_insert" ON storage.objects;
+CREATE POLICY "allow_public_storage_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'garden_media');
+
