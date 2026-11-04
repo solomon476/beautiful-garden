@@ -65,7 +65,7 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'time', label: 'Our Time', icon: CalendarDays, color: 'from-teal-400 to-emerald-400' },
   { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'from-sky-400 to-indigo-400' },
   { id: 'capsule', label: 'Time Capsule', icon: Hourglass, color: 'from-amber-300 to-yellow-500' },
-  { id: 'moods', label: 'Moods', icon: Heart, color: 'from-fuchsia-400 to-pink-400' },
+  { id: 'moods', label: 'Mood Garden', icon: Heart, color: 'from-fuchsia-400 to-pink-400' },
   { id: 'world', label: 'The World Around Us', icon: Globe, color: 'from-blue-400 to-teal-400' },
   { id: 'security', label: 'Privacy Test', icon: ShieldCheck, color: 'from-emerald-400 to-teal-400' },
 ];
@@ -281,7 +281,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose 
         {/* Tab Content Canvas */}
         <main
           className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
-            activeTab === 'garden' ? 'max-w-7xl' : activeTab === 'moods' ? 'max-w-3xl' : 'max-w-6xl'
+            activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
           }`}
           style={{ minHeight: 0 }}
         >
