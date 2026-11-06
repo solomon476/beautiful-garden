@@ -15,6 +15,13 @@ import { soundGardenService, authService } from '../../services/gardenService';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
+import {
+  isSpotifyUrl,
+  openSpotifySearch,
+  SpotifyIcon,
+  getCleanSpotifyUrl,
+  fetchSpotifyOEmbed,
+} from '../../utils/spotify';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
 
@@ -41,6 +48,12 @@ export const SoundGardenSection: React.FC = () => {
   const [isVoiceNote, setIsVoiceNote] = useState<boolean>(false);
   const [showRecorder, setShowRecorder] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [spotifyLoading, setSpotifyLoading] = useState<boolean>(false);
+  const [spotifyDetected, setSpotifyDetected] = useState<{
+    title?: string;
+    artist?: string;
+    thumbnail?: string;
+  } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const partner = authService.getPartner();
@@ -78,7 +91,52 @@ export const SoundGardenSection: React.FC = () => {
     setIsVoiceNote(false);
     setShowRecorder(false);
     setErrorMsg(null);
+    setSpotifyLoading(false);
+    setSpotifyDetected(null);
     setIsAdding(true);
+  };
+
+  const handleMusicUrlChange = async (url: string) => {
+    setMusicUrl(url);
+    if (isSpotifyUrl(url)) {
+      setSpotifyLoading(true);
+      try {
+        const clean = getCleanSpotifyUrl(url);
+        const meta = await fetchSpotifyOEmbed(clean);
+        if (meta) {
+          setSpotifyDetected({
+            title: meta.title,
+            artist: meta.artist,
+            thumbnail: meta.thumbnailUrl,
+          });
+          if (meta.title && !title) {
+            setTitle(meta.title);
+          }
+          if (meta.artist && (!artist || artist === currentUser.displayName)) {
+            setArtist(meta.artist);
+          }
+        }
+      } catch (err) {
+        console.warn('Spotify oEmbed parse notice:', err);
+      } finally {
+        setSpotifyLoading(false);
+      }
+    } else {
+      setSpotifyDetected(null);
+    }
+  };
+
+  const handlePasteMusicUrl = async () => {
+    try {
+      if (navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          handleMusicUrlChange(text);
+        }
+      }
+    } catch (err) {
+      console.warn('Clipboard read error', err);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +187,7 @@ export const SoundGardenSection: React.FC = () => {
         isVoiceNote,
         message,
         status,
+        coverUrl: spotifyDetected?.thumbnail || undefined,
       });
 
       soundEngine.playChime(523.25, 1.2, 0.08);
@@ -390,8 +449,8 @@ export const SoundGardenSection: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Embedded Audio Player if uploaded audio / voice note exists */}
-                {song.audioUrl && (
+                {/* Embedded Audio Player if uploaded audio / voice note exists, or direct Spotify Player */}
+                {song.audioUrl ? (
                   <div className="pt-1">
                     <GardenAudioPlayer
                       src={song.audioUrl}
@@ -400,7 +459,36 @@ export const SoundGardenSection: React.FC = () => {
                       isVoiceNote={song.isVoiceNote}
                     />
                   </div>
-                )}
+                ) : isSpotifyUrl(song.musicUrl) ? (
+                  <div className="pt-1">
+                    <div className="p-2.5 sm:p-3 rounded-2xl bg-[#0e0e14]/90 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-md">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-spotify text-black flex items-center justify-center shrink-0 shadow-md">
+                          <SpotifyIcon className="w-4 h-4" style={{ fill: '#000000' }} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold text-white block truncate">
+                            Spotify Track
+                          </span>
+                          <span className="text-[10px] text-spotify block font-mono">
+                            Tap to play full song in Spotify
+                          </span>
+                        </div>
+                      </div>
+
+                      <a
+                        href={song.musicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-spotify inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs active:scale-95 transition-all shrink-0 cursor-pointer"
+                        title="Play in Spotify App"
+                      >
+                        <Play className="w-3.5 h-3.5" style={{ fill: '#000000', color: '#000000' }} />
+                        <span>Play Track ↗</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* Footer Row: Contributor + Reaction + Action Button */}
                 <div className="pt-3 border-t border-purple-400/20 flex flex-wrap items-center justify-between gap-2.5 text-xs">
@@ -422,7 +510,18 @@ export const SoundGardenSection: React.FC = () => {
                       <span>{song.reaction || 'Love it! 💖'}</span>
                     </button>
 
-                    {song.musicUrl && (
+                    {isSpotifyUrl(song.musicUrl) ? (
+                      <a
+                        href={song.musicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-spotify-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] transition-all active:scale-95 cursor-pointer shadow-sm"
+                        title="Open in Spotify App"
+                      >
+                        <SpotifyIcon className="w-3.5 h-3.5" style={{ fill: '#1db954' }} />
+                        <span>Spotify ↗</span>
+                      </a>
+                    ) : song.musicUrl ? (
                       <a
                         href={song.musicUrl}
                         target="_blank"
@@ -432,7 +531,7 @@ export const SoundGardenSection: React.FC = () => {
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
-                    )}
+                    ) : null}
 
                     <button
                       onClick={() => setSelectedSong(song)}
@@ -563,15 +662,27 @@ export const SoundGardenSection: React.FC = () => {
               )}
 
               {selectedSong.musicUrl ? (
-                <a
-                  href={selectedSong.musicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-glow-romantic text-xs py-2 px-4 flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open Link</span>
-                </a>
+                isSpotifyUrl(selectedSong.musicUrl) ? (
+                  <a
+                    href={selectedSong.musicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-spotify inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs shadow-lg transition-all active:scale-95 cursor-pointer"
+                  >
+                    <SpotifyIcon className="w-3.5 h-3.5" style={{ fill: '#000000' }} />
+                    <span>Play on Spotify ↗</span>
+                  </a>
+                ) : (
+                  <a
+                    href={selectedSong.musicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-glow-romantic text-xs py-2 px-4 flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open Link</span>
+                  </a>
+                )
               ) : (
                 <button
                   onClick={() => setSelectedSong(null)}
@@ -723,16 +834,71 @@ export const SoundGardenSection: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="form-field-label">
-                  <span>Music Link (Spotify, YouTube, Apple Music) — Optional</span>
-                </label>
-                <input
-                  type="url"
-                  value={musicUrl}
-                  onChange={(e) => setMusicUrl(e.target.value)}
-                  placeholder="Optional link: https://open.spotify.com/track/... or https://youtube.com/..."
-                />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="form-field-label mb-0">
+                    <span>Music Link (Spotify, YouTube, Apple Music) — Optional</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => openSpotifySearch(title || artist || '')}
+                    className="btn-spotify-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] transition-all active:scale-95 cursor-pointer shadow-sm"
+                    title="Find song on Spotify"
+                  >
+                    <SpotifyIcon className="w-3.5 h-3.5" style={{ fill: '#1db954' }} />
+                    <span>Search Spotify</span>
+                  </button>
+                </div>
+
+                <div className="relative flex items-center">
+                  <input
+                    type="url"
+                    value={musicUrl}
+                    onChange={(e) => handleMusicUrlChange(e.target.value)}
+                    placeholder="Paste link: https://open.spotify.com/track/... or YouTube"
+                    className="w-full pr-16"
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasteMusicUrl}
+                    className="absolute right-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-[11px] font-mono transition-all"
+                  >
+                    Paste
+                  </button>
+                </div>
+
+                {spotifyLoading && (
+                  <p className="text-[11px] font-mono text-emerald-300 animate-pulse">
+                    Connecting to Spotify & fetching song details...
+                  </p>
+                )}
+
+                {spotifyDetected && (
+                  <div className="badge-spotify p-3 rounded-2xl flex items-center gap-3 shadow-md animate-fade-in">
+                    {spotifyDetected.thumbnail ? (
+                      <img
+                        src={spotifyDetected.thumbnail}
+                        alt="Album Cover"
+                        className="w-11 h-11 rounded-xl object-cover shadow border border-white/20 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-xl bg-spotify/20 flex items-center justify-center shrink-0">
+                        <SpotifyIcon className="w-5 h-5" style={{ fill: '#1db954' }} />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-xs text-white block truncate">
+                        {spotifyDetected.title || 'Spotify Track'}
+                      </span>
+                      <span className="text-[11px] text-spotify block truncate">
+                        {spotifyDetected.artist ? `by ${spotifyDetected.artist}` : 'Album cover linked automatically'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-emerald-400 font-bold font-mono shrink-0">
+                      Linked ✓
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div>

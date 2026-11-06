@@ -28,6 +28,13 @@ import type { ShelfCategory, SongStatus } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
 import { compressImage } from '../../utils/imageCompressor';
+import {
+  isSpotifyUrl,
+  openSpotifySearch,
+  SpotifyIcon,
+  getCleanSpotifyUrl,
+  fetchSpotifyOEmbed,
+} from '../../utils/spotify';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 
 export type QuickAddType = 'photo' | 'date' | 'song' | 'book' | 'letter';
@@ -89,6 +96,12 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const [songAudioName, setSongAudioName] = useState<string | undefined>(undefined);
   const [isVoiceNote, setIsVoiceNote] = useState(false);
   const [showSongRecorder, setShowSongRecorder] = useState(false);
+  const [songSpotifyLoading, setSongSpotifyLoading] = useState(false);
+  const [songSpotifyDetected, setSongSpotifyDetected] = useState<{
+    title?: string;
+    artist?: string;
+    thumbnail?: string;
+  } | null>(null);
   const songInputRef = useRef<HTMLInputElement | null>(null);
 
   // 4. Book / PDF state
@@ -214,6 +227,47 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
     if (!songTitle) setSongTitle(`Voice Note for ${partner.displayName}`);
   };
 
+  const handleSongMusicUrlChange = async (val: string) => {
+    setSongMusicUrl(val);
+    if (isSpotifyUrl(val)) {
+      setSongSpotifyLoading(true);
+      try {
+        const clean = getCleanSpotifyUrl(val);
+        const meta = await fetchSpotifyOEmbed(clean);
+        if (meta) {
+          setSongSpotifyDetected({
+            title: meta.title,
+            artist: meta.artist,
+            thumbnail: meta.thumbnailUrl,
+          });
+          if (meta.title && !songTitle) setSongTitle(meta.title);
+          if (meta.artist && (!songArtist || songArtist === currentUser.displayName)) {
+            setSongArtist(meta.artist);
+          }
+        }
+      } catch (err) {
+        console.warn('Spotify link notice:', err);
+      } finally {
+        setSongSpotifyLoading(false);
+      }
+    } else {
+      setSongSpotifyDetected(null);
+    }
+  };
+
+  const handlePasteSongMusicUrl = async () => {
+    try {
+      if (navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          handleSongMusicUrlChange(text);
+        }
+      }
+    } catch (err) {
+      console.warn('Clipboard read error', err);
+    }
+  };
+
   const handleSaveSong = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!songTitle.trim()) {
@@ -232,6 +286,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         isVoiceNote,
         message: songMessage,
         status: 'want_to_listen' as SongStatus,
+        coverUrl: songSpotifyDetected?.thumbnail || undefined,
       });
       finishSuccess('song');
     } catch (err: any) {
@@ -875,14 +930,72 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                 />
               )}
 
-              {/* Optional Music Link */}
-              <div className="pt-1">
-                <input
-                  type="url"
-                  value={songMusicUrl}
-                  onChange={(e) => setSongMusicUrl(e.target.value)}
-                  placeholder="Optional link: https://open.spotify.com/... (can leave empty)"
-                />
+              {/* Optional Music Link with Direct Spotify Linking */}
+              <div className="pt-1 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-purple-200/80">
+                    Music Link (Spotify, YouTube, Apple Music):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => openSpotifySearch(songTitle || songArtist || '')}
+                    className="btn-spotify-pill inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all active:scale-95 cursor-pointer"
+                    title="Find song on Spotify"
+                  >
+                    <SpotifyIcon className="w-3 h-3" style={{ fill: '#1db954' }} />
+                    <span>Search Spotify</span>
+                  </button>
+                </div>
+
+                <div className="relative flex items-center">
+                  <input
+                    type="url"
+                    value={songMusicUrl}
+                    onChange={(e) => handleSongMusicUrlChange(e.target.value)}
+                    placeholder="Paste Spotify link: https://open.spotify.com/track/..."
+                    className="w-full pr-16"
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasteSongMusicUrl}
+                    className="absolute right-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-[11px] font-mono transition-all"
+                  >
+                    Paste
+                  </button>
+                </div>
+
+                {songSpotifyLoading && (
+                  <p className="text-[11px] font-mono text-emerald-300 animate-pulse">
+                    Connecting to Spotify & fetching track info...
+                  </p>
+                )}
+
+                {songSpotifyDetected && (
+                  <div className="badge-spotify p-2.5 rounded-2xl flex items-center gap-2.5 shadow-md animate-fade-in">
+                    {songSpotifyDetected.thumbnail ? (
+                      <img
+                        src={songSpotifyDetected.thumbnail}
+                        alt="Album Cover"
+                        className="w-10 h-10 rounded-xl object-cover shadow border border-white/20 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-spotify/20 flex items-center justify-center shrink-0">
+                        <SpotifyIcon className="w-4 h-4" style={{ fill: '#1db954' }} />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold text-xs text-white block truncate">
+                        {songSpotifyDetected.title || 'Spotify Track'}
+                      </span>
+                      <span className="text-[10px] text-spotify block truncate">
+                        {songSpotifyDetected.artist ? `by ${songSpotifyDetected.artist}` : 'Album artwork linked automatically'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400 font-bold font-mono shrink-0">
+                      Linked ✓
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -1782,3 +1782,53 @@ input[type="checkbox"].decorated-checkbox:hover {
   transform: scale(1.08);
 }
 
+/* ==========================================================================
+   Spotify Integration Design System
+   ========================================================================== */
+.btn-spotify {
+  background-color: #1db954 !important;
+  color: #000000 !important;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(29, 185, 84, 0.35);
+}
+
+.btn-spotify:hover {
+  background-color: #1ed760 !important;
+  color: #000000 !important;
+  transform: scale(1.04);
+}
+
+.btn-spotify-pill {
+  background-color: rgba(29, 185, 84, 0.18) !important;
+  border: 1px solid rgba(29, 185, 84, 0.55) !important;
+  color: #1db954 !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-spotify-pill:hover {
+  background-color: rgba(29, 185, 84, 0.35) !important;
+  color: #ffffff !important;
+  border-color: #1db954 !important;
+}
+
+.badge-spotify {
+  background-color: rgba(29, 185, 84, 0.15) !important;
+  border: 1px solid rgba(29, 185, 84, 0.4) !important;
+  color: #1db954 !important;
+}
+
+.text-spotify {
+  color: #1db954 !important;
+}
+
+.bg-spotify {
+  background-color: #1db954 !important;
+}
+
+.fill-spotify {
+  fill: #1db954 !important;
+}
+
+

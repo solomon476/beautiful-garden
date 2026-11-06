@@ -1,6 +1,7 @@
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
 import { notificationService } from './notificationService';
 import { authService, AUTHORIZED_PROFILES } from './authService';
+import { isSpotifyUrl, getCleanSpotifyUrl, fetchSpotifyOEmbed } from '../utils/spotify';
 export { authService };
 export const DEFAULT_PROFILES = AUTHORIZED_PROFILES;
 export type { UserProfile } from '../types/garden';
@@ -686,22 +687,44 @@ export const soundGardenService = {
     voiceNoteDuration?: number;
     message?: string;
     status?: SongStatus;
+    coverUrl?: string;
+    reaction?: string;
   }): Promise<SongEntry> {
     const user = authService.getCurrentUser();
     const partner = authService.getPartner();
+
+    let cleanMusicUrl = song.musicUrl?.trim() || '';
+    let coverUrl = song.coverUrl;
+
+    if (isSpotifyUrl(cleanMusicUrl)) {
+      cleanMusicUrl = getCleanSpotifyUrl(cleanMusicUrl);
+      if (!coverUrl) {
+        try {
+          const meta = await fetchSpotifyOEmbed(cleanMusicUrl);
+          if (meta?.thumbnailUrl) {
+            coverUrl = meta.thumbnailUrl;
+          }
+        } catch (e) {
+          console.warn('Could not fetch Spotify oEmbed thumbnail:', e);
+        }
+      }
+    }
+
     const entry: SongEntry = {
       id: `song-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       addedBy: user.id,
       addedByName: user.displayName,
       title: song.title.trim(),
       artist: song.artist.trim(),
-      musicUrl: song.musicUrl?.trim() || '',
+      musicUrl: cleanMusicUrl,
       audioUrl: song.audioUrl,
       audioFileName: song.audioFileName,
       isVoiceNote: song.isVoiceNote,
       voiceNoteDuration: song.voiceNoteDuration,
       message: song.message?.trim() || '',
       status: song.status || 'want_to_listen',
+      coverUrl,
+      reaction: song.reaction,
       createdAt: new Date().toISOString(),
     };
 
@@ -714,6 +737,8 @@ export const soundGardenService = {
         music_url: entry.musicUrl,
         message: entry.message,
         status: entry.status,
+        cover_url: entry.coverUrl || null,
+        reaction: entry.reaction || null,
       });
     }
 
