@@ -10,7 +10,6 @@ import {
   HelpCircle,
   Hourglass,
   Globe,
-  Smile,
   Plus,
   ChevronRight,
 } from 'lucide-react';
@@ -484,9 +483,10 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             <div className="relative md:max-w-xs shrink-0 self-start md:self-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 hover:border-pink-300/40 backdrop-blur-xl shadow-2xl transition-all group">
               <span className="text-2xl sm:text-3xl text-pink-300 font-serif leading-none block select-none">“</span>
               <p className="font-serif italic text-xs sm:text-base text-slate-100 leading-relaxed">
-                Some things are better shared... especially the beautiful ones.
+                A beautiful moment... shared forever.
               </p>
-              <div className="mt-2.5 pt-2.5 border-t border-white/10 text-right">
+              <div className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between">
+                <span className="text-pink-300 text-sm font-serif">♡</span>
                 <span className="text-[11px] font-mono text-pink-300 font-medium">
                   — Perfect Time ♡
                 </span>
@@ -651,58 +651,89 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
           </div>
         </div>
 
-        {/* Right: Our Mood Garden Banner (4 cols) */}
-        <div className="lg:col-span-4 p-5 sm:p-7 rounded-3xl sm:rounded-[2rem] bg-[#140b2b]/90 border border-purple-400/25 shadow-xl backdrop-blur-xl flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
-                <span>Our Mood Garden</span>
-                <span className="text-purple-300 text-base sm:text-lg">🌙</span>
+        {/* Right: Our Mood Garden Centerpiece (4 cols) — Matches Romantic Sanctuary Mockup */}
+        <div className="lg:col-span-4 p-6 sm:p-7 rounded-3xl sm:rounded-[2rem] bg-gradient-to-b from-[#220d3d]/90 via-[#18092c]/95 to-[#10051e]/98 border-2 border-pink-500/40 hover:border-pink-400 shadow-[0_12px_45px_rgba(0,0,0,0.6),0_0_35px_rgba(236,72,153,0.25)] backdrop-blur-xl flex flex-col justify-between items-center text-center space-y-4 relative overflow-hidden group">
+          {/* Subtle Ambient Glowing Glow behind Mood Face */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Header */}
+          <div className="space-y-1 relative z-10 w-full">
+            <div className="flex items-center justify-between w-full">
+              <span className="text-xs text-pink-300 font-sans opacity-0 select-none">♡</span>
+              <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-wide flex items-center justify-center gap-1.5 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
+                <span>Mood Garden</span>
+                <span className="text-pink-300 text-xl font-sans">♡</span>
               </h3>
               <button
-                onClick={() => onSelectTab('moods')}
-                className="text-[11px] font-mono text-purple-300 hover:text-pink-200 underline underline-offset-4"
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  onSelectTab('moods');
+                }}
+                className="text-[11px] font-mono text-purple-300 hover:text-pink-200 transition-colors"
+                title="View past mood history"
               >
                 History →
               </button>
             </div>
-            <p className="text-xs text-slate-300/85 font-light mt-1">
-              How are you feeling right now, {currentUser.displayName}?
+            <p className="font-serif italic text-sm sm:text-base text-pink-200/90 font-light drop-shadow">
+              How do you feel today?
             </p>
           </div>
 
-          {/* Emoji Mood Pill Row */}
-          <div className="flex items-center justify-between gap-1 bg-white/[0.03] p-2 rounded-2xl border border-white/10">
+          {/* Glowing Centerpiece Mood Face */}
+          <div
+            className="relative my-1 cursor-pointer group/face z-10"
+            onClick={() => {
+              soundEngine.playSparkle();
+              onSelectTab('moods');
+            }}
+            title="Click to open full mood journal"
+          >
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-pink-400 via-rose-400 to-pink-500 border-2 border-pink-200 flex items-center justify-center text-4xl sm:text-5xl shadow-[0_0_35px_rgba(244,114,182,0.85)] group-hover/face:scale-110 transition-transform duration-300">
+              <span className="select-none filter drop-shadow">😊</span>
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-purple-900 border border-pink-300 flex items-center justify-center text-xs shadow-md">
+              🌸
+            </div>
+          </div>
+
+          {/* 1-Tap Quick Mood Selector Pills */}
+          <div className="flex items-center justify-center gap-1.5 flex-wrap relative z-10">
             {moodsList.map((m) => (
               <button
                 key={m.key}
+                type="button"
                 onClick={() => handleQuickMood(m.key, m.emoji, m.label)}
-                className="flex flex-col items-center gap-1 p-1.5 rounded-xl hover:bg-white/[0.08] active:scale-95 transition-all text-center flex-1"
+                className="px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-pink-500/25 border border-purple-400/25 hover:border-pink-300/60 text-pink-100 text-[11px] font-medium flex items-center gap-1 active:scale-95 transition-all shadow-sm cursor-pointer"
                 title={`I'm feeling ${m.label}`}
               >
-                <span className="text-xl sm:text-2xl transition-transform hover:scale-125">{m.emoji}</span>
-                <span className="text-[8px] sm:text-[9px] font-mono text-slate-300 truncate max-w-[45px]">
-                  {m.label}
-                </span>
+                <span>{m.emoji}</span>
+                <span>{m.label}</span>
               </button>
             ))}
           </div>
 
-          {selectedMoodMessage ? (
-            <div className="p-2.5 rounded-xl bg-pink-500/20 border border-pink-400/30 text-center text-xs text-pink-200 font-medium animate-fade-in">
-              {selectedMoodMessage}
-            </div>
-          ) : (
-            <div className="text-center">
+          {/* Feedback or Choose Mood CTA Button */}
+          <div className="relative z-10 w-full pt-1">
+            {selectedMoodMessage ? (
+              <div className="p-2.5 rounded-full bg-pink-500/25 border border-pink-400/50 text-center text-xs text-pink-100 font-semibold animate-fade-in shadow-md shadow-pink-500/20">
+                {selectedMoodMessage}
+              </div>
+            ) : (
               <button
-                onClick={() => onSelectTab('moods')}
-                className="inline-flex items-center gap-1.5 text-xs text-pink-300 hover:text-pink-200 font-medium"
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  onSelectTab('moods');
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-600 hover:to-pink-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-900/50 hover:shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-pink-400/40 cursor-pointer"
               >
-                <Smile className="w-3.5 h-3.5 text-pink-400" />
-                <span>Open Full Mood Journal & Whispers</span>
+                <span>Choose Mood</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
       </div>

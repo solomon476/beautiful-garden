@@ -215,20 +215,17 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           className="relative z-40 px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-2 sm:gap-4 bg-garden-header backdrop-blur-xl shrink-0"
           style={{ backgroundColor: 'rgba(13, 8, 30, 0.98)' }}
         >
-          {/* Logo & Brand Title */}
+          {/* Logo & Brand Title — Calligraphy Script Matching Sanctuary Mockup */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+            <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
+              <Flower2 className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-serif text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 truncate">
-                <span className="font-serif sm:font-serif">Perfect Time</span>
-                <span className="text-pink-400 font-sans text-xs sm:text-sm">♡</span>
-                <span className="hidden sm:inline text-xs sm:text-sm text-pink-200/90 font-medium truncate">
-                  — A Private Garden for Us
-                </span>
+              <h2 className="text-xl sm:text-2xl md:text-3xl text-white font-script tracking-wide flex items-center gap-1.5 truncate drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
+                <span>Perfect Time</span>
+                <span className="text-pink-300 font-sans text-sm sm:text-base font-light">♡</span>
               </h2>
-              <p className="sm:hidden text-[11px] text-pink-200/90 font-handwriting leading-none pt-0.5">
+              <p className="text-[11px] sm:text-xs text-pink-200/90 font-serif italic tracking-wide leading-none pt-0.5">
                 Together... always
               </p>
             </div>

@@ -24,6 +24,7 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-body: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-handwriting: 'Caveat', cursive, sans-serif;
+  --font-script: 'Great Vibes', 'Alex Brush', 'Caveat', cursive;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
@@ -59,6 +60,7 @@ body {
 .font-display { font-family: var(--font-display); }
 .font-sans { font-family: var(--font-sans); }
 .font-handwriting { font-family: var(--font-handwriting); }
+.font-script { font-family: var(--font-script); }
 .font-mono { font-family: var(--font-mono); }
 
 .font-light { font-weight: 300; }
