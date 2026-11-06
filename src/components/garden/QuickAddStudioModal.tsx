@@ -319,12 +319,17 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-3.5 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in font-body"
+      className="fixed inset-0 z-[2000] flex items-center justify-center p-3.5 sm:p-6 bg-black/92 backdrop-blur-xl animate-fade-in font-body"
       style={{ zIndex: 2000 }}
       onClick={onClose}
     >
       <div
-        className="glass-midnight-card max-w-xl w-full p-5 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-5 max-h-[92vh] overflow-y-auto"
+        className="max-w-xl w-full p-5 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-5 max-h-[92vh] overflow-y-auto"
+        style={{
+          backgroundColor: '#130826',
+          backgroundImage: 'linear-gradient(165deg, #1b0c38 0%, #0e051c 100%)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(167, 139, 250, 0.25)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

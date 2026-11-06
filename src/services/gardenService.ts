@@ -500,6 +500,7 @@ export async function syncLocalDraftsToCloud(): Promise<void> {
 export const notesService = {
   async getNotes(): Promise<NoteEntry[]> {
     const user = authService.getCurrentUser();
+    const isAuthed = authService.isAuthenticated();
 
     if (isLiveSupabaseConfigured && supabase) {
       await syncLocalDraftsToCloud();
@@ -511,7 +512,7 @@ export const notesService = {
       if (error) {
         console.warn('Supabase getNotes error, falling back to local', error);
       } else if (data) {
-        return data.map((d: any) => ({
+        const mapped: NoteEntry[] = data.map((d: any) => ({
           id: d.id,
           authorId: d.author_id,
           recipientId: d.recipient_id,
@@ -522,12 +523,16 @@ export const notesService = {
           updatedAt: d.updated_at,
           authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
         }));
+        return mapped.filter((note) => {
+          if (!isAuthed) return note.isShared;
+          if (note.authorId === user.id) return true;
+          return note.isShared && (!note.recipientId || note.recipientId === user.id);
+        });
       }
     }
 
     // Local simulated RLS
     const all = loadLocal<NoteEntry[]>(STORAGE_KEYS.NOTES, []);
-    const isAuthed = authService.isAuthenticated();
     return all.filter((note) => {
       if (!isAuthed) {
         return note.isShared;
@@ -559,7 +564,7 @@ export const notesService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('notes').upsert({
-        id: note.id || undefined,
+        id: noteEntry.id,
         author_id: user.id,
         recipient_id: partner.id,
         title: noteEntry.title,
@@ -1232,6 +1237,8 @@ export const CONVERSATION_PROMPTS: { id: string; question: string; category: str
 export const questionsService = {
   async getResponses(): Promise<QuestionResponseEntry[]> {
     const user = authService.getCurrentUser();
+    const isAuthed = authService.isAuthenticated();
+
     if (isLiveSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('question_responses')
@@ -1239,19 +1246,21 @@ export const questionsService = {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          questionId: d.question_id,
-          userId: d.user_id,
-          userName: d.user_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          answer: d.response || d.answer || '',
-          isShared: d.is_shared,
-          createdAt: d.created_at,
-        }));
+        return data
+          .map((d: any) => ({
+            id: d.id,
+            questionId: d.question_id,
+            userId: d.user_id,
+            userName: d.user_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            answer: d.response || d.answer || '',
+            isShared: d.is_shared,
+            createdAt: d.created_at,
+          }))
+          .filter((r: QuestionResponseEntry) => (isAuthed ? r.userId === user.id || r.isShared : r.isShared));
       }
     }
     const all = loadLocal<QuestionResponseEntry[]>(STORAGE_KEYS.QUESTIONS, []);
-    return all.filter((r) => r.userId === user.id || r.isShared);
+    return all.filter((r) => (isAuthed ? r.userId === user.id || r.isShared : r.isShared));
   },
 
   async saveResponse(questionId: string, answer: string, isShared: boolean): Promise<QuestionResponseEntry> {
@@ -1291,6 +1300,7 @@ export const timeCapsuleService = {
   async getCapsules(): Promise<TimeCapsuleEntry[]> {
     const user = authService.getCurrentUser();
     const now = new Date();
+    const isAuthed = authService.isAuthenticated();
 
     if (isLiveSupabaseConfigured && supabase) {
       const { data, error } = await supabase
@@ -1299,17 +1309,34 @@ export const timeCapsuleService = {
         .order('release_at', { ascending: true });
 
       if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          authorId: d.author_id,
-          authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          recipientId: d.recipient_id,
-          title: d.title,
-          body: d.message || d.body || '',
-          releaseAt: d.unlock_date || d.release_at || d.created_at,
-          isShared: d.is_shared,
-          createdAt: d.created_at,
-        }));
+        if (!isAuthed) return [];
+        return data
+          .map((d: any) => ({
+            id: d.id,
+            authorId: d.author_id,
+            authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            recipientId: d.recipient_id,
+            title: d.title,
+            body: d.message || d.body || '',
+            releaseAt: d.unlock_date || d.release_at || d.created_at,
+            isShared: d.is_shared,
+            createdAt: d.created_at,
+          }))
+          .filter((c: TimeCapsuleEntry) => {
+            if (c.authorId === user.id) return true;
+            if (c.isShared && (!c.recipientId || c.recipientId === user.id)) return true;
+            return false;
+          })
+          .map((c: TimeCapsuleEntry) => {
+            const isLocked = new Date(c.releaseAt) > now;
+            if (c.authorId !== user.id && isLocked) {
+              return {
+                ...c,
+                body: '[LOCKED UNTIL RELEASE DATE]',
+              };
+            }
+            return c;
+          });
       }
     }
 
@@ -1317,7 +1344,7 @@ export const timeCapsuleService = {
     // 1. Author sees all their capsules (including previewing the message).
     // 2. Intended recipient sees capsule ONLY IF isShared is true.
     // 3. If releaseAt > now and viewer is NOT the author, the body is completely locked/redacted!
-    if (!authService.isAuthenticated()) return [];
+    if (!isAuthed) return [];
     const all = loadLocal<TimeCapsuleEntry[]>(STORAGE_KEYS.CAPSULES, DEFAULT_INITIAL_CAPSULES);
     return all
       .filter((c) => {
@@ -1419,6 +1446,8 @@ export const MOOD_OPTIONS = [
 export const moodGardenService = {
   async getMoods(): Promise<MoodEntry[]> {
     const user = authService.getCurrentUser();
+    const isAuthed = authService.isAuthenticated();
+
     if (isLiveSupabaseConfigured && supabase) {
       await syncLocalDraftsToCloud();
       const { data, error } = await supabase
@@ -1445,7 +1474,6 @@ export const moodGardenService = {
           });
       }
     }
-    const isAuthed = authService.isAuthenticated();
     const all = loadLocal<MoodEntry[]>(STORAGE_KEYS.MOODS, []);
     return all.filter((m) => (isAuthed ? m.userId === user.id || m.isShared : m.isShared));
   },
