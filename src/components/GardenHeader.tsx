@@ -21,11 +21,18 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
       setUnreadCount(notificationService.getUnreadCount(u.id));
     };
     refreshCount();
+    const u = authService.getCurrentUser();
+    notificationService.syncCloudNotifications(u.id);
+    const cleanupRealtime = notificationService.initRealtime(u.id);
     const unsubNotif = notificationService.subscribe(refreshCount);
-    const unsubUser = authService.subscribeUser(refreshCount);
+    const unsubUser = authService.subscribeUser((newUser) => {
+      refreshCount();
+      notificationService.syncCloudNotifications(newUser.id);
+    });
     return () => {
       unsubNotif();
       unsubUser();
+      cleanupRealtime();
     };
   }, []);
 

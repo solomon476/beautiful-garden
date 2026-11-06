@@ -27,8 +27,14 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
 
   useEffect(() => {
     refresh();
+    notificationService.syncCloudNotifications(currentUser.id);
+    const cleanupRealtime = notificationService.initRealtime(currentUser.id);
     const unsub = notificationService.subscribe(refresh);
-    return unsub;
+
+    return () => {
+      unsub();
+      cleanupRealtime();
+    };
   }, [currentUser]);
 
   useEffect(() => {

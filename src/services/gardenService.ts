@@ -485,6 +485,23 @@ export async function syncLocalDraftsToCloud(): Promise<void> {
         });
       }
     }
+
+    // 7. Sync any local hangouts (Dates)
+    const localHangouts = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, []);
+    for (const h of localHangouts) {
+      if (h.suggestedBy === user.id && !h.id.startsWith('seed-')) {
+        await supabase.from('hangout_suggestions').upsert({
+          id: h.id,
+          suggested_by: h.suggestedBy,
+          title: h.title,
+          idea: h.description || h.title || 'Hangout plan',
+          location: h.location || null,
+          date: h.proposedDate || null,
+          status: h.status,
+          is_shared: true,
+        });
+      }
+    }
   } catch (err) {
     console.warn('Syncing local drafts to cloud error:', err);
     hasSyncedDrafts = false;
@@ -1107,6 +1124,7 @@ export const hangoutService = {
   async getHangouts(): Promise<HangoutEntry[]> {
     const local = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
     if (isLiveSupabaseConfigured && supabase) {
+      await syncLocalDraftsToCloud();
       const { data, error } = await supabase
         .from('hangout_suggestions')
         .select('*')
@@ -1118,8 +1136,10 @@ export const hangoutService = {
           suggestedBy: d.suggested_by,
           suggestedByName: d.suggested_by === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
           title: d.title,
-          description: d.description,
-          proposedDate: d.proposed_date,
+          description: d.idea || d.description || '',
+          proposedDate: d.date || d.proposed_date || '',
+          location: d.location || '',
+          reminderEnabled: true,
           status: d.status as HangoutStatus,
           createdAt: d.created_at,
         }));
@@ -1156,14 +1176,19 @@ export const hangoutService = {
     };
 
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('hangout_suggestions').insert({
+      const { error: insertErr } = await supabase.from('hangout_suggestions').insert({
         id: entry.id,
         suggested_by: user.id,
         title: entry.title,
-        description: entry.description,
-        proposed_date: entry.proposedDate,
+        idea: entry.description || entry.title || 'Hangout plan',
+        location: entry.location || null,
+        date: entry.proposedDate || null,
         status: entry.status,
+        is_shared: true,
       });
+      if (insertErr) {
+        console.error('Failed to save date suggestion to Supabase:', insertErr);
+      }
     }
 
     const all = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, []);
