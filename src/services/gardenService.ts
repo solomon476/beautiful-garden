@@ -1435,12 +1435,15 @@ export const timeCapsuleService = {
 // Feature I: Mood Garden (Optional Mood Check-ins)
 // ==============================================================================
 export const MOOD_OPTIONS = [
+  { key: 'happy', label: 'Happy', emoji: '😊' },
+  { key: 'in_love', label: 'In Love', emoji: '😍' },
+  { key: 'calm', label: 'Calm', emoji: '😌' },
+  { key: 'sad', label: 'Sad', emoji: '🥺' },
+  { key: 'thoughtful', label: 'Thoughtful', emoji: '🤔' },
+  { key: 'excited', label: 'Excited', emoji: '🤩' },
   { key: 'peaceful', label: 'Peaceful', emoji: '🌿' },
-  { key: 'excited', label: 'Excited', emoji: '✨' },
-  { key: 'happy', label: 'Happy', emoji: '🌷' },
   { key: 'tired', label: 'Tired', emoji: '🌙' },
   { key: 'listening', label: 'Looking for Music', emoji: '🎧' },
-  { key: 'thoughtful', label: 'Thoughtful', emoji: '☁️' },
 ];
 
 export const moodGardenService = {
