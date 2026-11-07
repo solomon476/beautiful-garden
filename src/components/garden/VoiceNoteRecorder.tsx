@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, Trash2, Check, RefreshCw } from 'lucide-react';
+import { Mic, Square, Play, Pause, RefreshCw } from 'lucide-react';
 import { mediaStorage } from '../../utils/mediaStorage';
 import { soundEngine } from '../../utils/audio';
 
 interface VoiceNoteRecorderProps {
   onRecorded: (dataUrl: string, durationSeconds: number, fileName: string) => void;
+  onReset?: () => void;
   onCancel?: () => void;
 }
 
-export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded, onCancel }) => {
+export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded, onReset, onCancel }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -63,6 +64,8 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
         const audioBlob = new Blob(audioChunksRef.current, { type: blobType });
         const stored = await mediaStorage.saveFile(audioBlob, `VoiceNote-${Date.now()}.${blobType.includes('mp4') ? 'm4a' : 'webm'}`);
         setAudioUrl(stored.dataUrl);
+        soundEngine.playSparkle();
+        onRecorded(stored.dataUrl, duration, `Voice Note (${formatTime(duration)})`);
       };
 
       recorder.start(100);
@@ -106,12 +109,6 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
     }
   };
 
-  const handleConfirm = () => {
-    if (!audioUrl) return;
-    soundEngine.playSparkle();
-    onRecorded(audioUrl, duration, `Voice Note (${formatTime(duration)})`);
-  };
-
   const handleReset = () => {
     if (audioElementRef.current) {
       audioElementRef.current.pause();
@@ -121,6 +118,7 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
     setDuration(0);
     setIsPlaying(false);
     setErrorMsg(null);
+    onReset?.();
   };
 
   const formatTime = (secs: number) => {
@@ -174,64 +172,50 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
           </button>
         </div>
       ) : audioUrl ? (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.05] border border-white/10">
-            <div className="flex items-center gap-2.5">
+        <div className="p-3.5 rounded-2xl bg-pink-500/15 border border-pink-400/40 space-y-2.5 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={togglePlayback}
-                className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+                aria-label={isPlaying ? 'Pause voice note' : 'Play voice note'}
               >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
               </button>
-              <div className="text-xs">
-                <span className="font-mono text-pink-200 font-medium">Voice Note Ready</span>
-                <span className="text-[10px] text-slate-400 block font-mono">Duration: {formatTime(duration)}</span>
+              <div className="min-w-0">
+                <span className="font-serif text-sm text-pink-100 font-semibold block truncate">
+                  Voice Note Recorded ✨
+                </span>
+                <span className="text-[11px] text-pink-300/80 font-mono block">
+                  Duration: {formatTime(duration)} • Attached & ready to save
+                </span>
               </div>
             </div>
 
             <button
               type="button"
               onClick={handleReset}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-pink-200 text-xs font-mono transition-all cursor-pointer shrink-0"
               title="Record again"
             >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-3 py-1.5 rounded-xl border border-white/10 text-slate-300 text-xs hover:bg-white/[0.05]"
-            >
-              <Trash2 className="w-3.5 h-3.5 inline mr-1" />
-              Discard
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-pink-500/20 active:scale-95"
-            >
-              <Check className="w-3.5 h-3.5" />
-              Attach Voice Note
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Re-record</span>
             </button>
           </div>
         </div>
       ) : (
-        <div className="text-center py-3">
+        <div className="text-center py-4 space-y-2">
           <button
             type="button"
             onClick={startRecording}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20"
+            className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white text-sm font-semibold shadow-xl shadow-pink-500/30 hover:shadow-pink-500/50 hover:scale-105 active:scale-95 transition-all border border-white/20 cursor-pointer"
           >
-            <Mic className="w-4 h-4 text-white" />
+            <Mic className="w-5 h-5 text-white animate-pulse" />
             <span>Tap to Record Voice Note</span>
           </button>
-          <p className="text-[11px] text-slate-400 font-light mt-2">
-            Speak from the heart — records cleanly right from your phone.
+          <p className="text-[11px] text-pink-200/70 font-light max-w-sm mx-auto">
+            Speak from the heart — records cleanly right from your phone or mic.
           </p>
         </div>
       )}
