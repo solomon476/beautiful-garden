@@ -649,19 +649,47 @@ export const soundGardenService = {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          addedBy: d.added_by,
-          addedByName: d.added_by === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          title: d.title,
-          artist: d.artist,
-          musicUrl: d.music_url,
-          message: d.message || '',
-          status: d.status as SongStatus,
-          createdAt: d.created_at,
-          coverUrl: d.cover_url || (d.title?.toLowerCase().includes('flying') ? '/assets/garden/cover_flying.jpg' : d.title?.toLowerCase().includes('golden hour') ? '/assets/garden/cover_golden_hour.jpg' : undefined),
-          reaction: d.reaction || (d.title?.toLowerCase().includes('flying') ? 'Love it!' : 'My Vibe'),
-        }));
+        return data.map((d: any) => {
+          const rawUrl = d.music_url || '';
+          const isAudioData =
+            rawUrl.startsWith('data:audio') ||
+            rawUrl.startsWith('blob:') ||
+            rawUrl.endsWith('.mp3') ||
+            rawUrl.endsWith('.m4a') ||
+            rawUrl.endsWith('.webm') ||
+            rawUrl.endsWith('.wav') ||
+            rawUrl.endsWith('.ogg');
+
+          const isVoice =
+            d.is_voice_note ??
+            (d.title?.toLowerCase().includes('voice note') ||
+              d.title?.toLowerCase().includes('voice memo') ||
+              (isAudioData && !rawUrl.startsWith('http')));
+
+          return {
+            id: d.id,
+            addedBy: d.added_by,
+            addedByName: d.added_by === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            title: d.title,
+            artist: d.artist,
+            musicUrl: isAudioData ? undefined : (rawUrl || undefined),
+            audioUrl: isAudioData ? rawUrl : (d.audio_url || undefined),
+            isVoiceNote: isVoice,
+            message: d.message || '',
+            status: d.status as SongStatus,
+            createdAt: d.created_at,
+            coverUrl:
+              d.cover_url ||
+              (d.title?.toLowerCase().includes('flying')
+                ? '/assets/garden/cover_flying.jpg'
+                : d.title?.toLowerCase().includes('golden hour')
+                ? '/assets/garden/cover_golden_hour.jpg'
+                : undefined),
+            reaction:
+              d.reaction ||
+              (d.title?.toLowerCase().includes('flying') ? 'Love it!' : 'My Vibe'),
+          };
+        });
       }
     }
 
@@ -734,7 +762,7 @@ export const soundGardenService = {
         added_by: user.id,
         title: entry.title,
         artist: entry.artist,
-        music_url: entry.musicUrl,
+        music_url: song.audioUrl || cleanMusicUrl || '',
         message: entry.message,
         status: entry.status,
         cover_url: entry.coverUrl || null,

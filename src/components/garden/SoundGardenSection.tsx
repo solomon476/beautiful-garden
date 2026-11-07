@@ -459,6 +459,17 @@ export const SoundGardenSection: React.FC = () => {
                       isVoiceNote={song.isVoiceNote}
                     />
                   </div>
+                ) : song.isVoiceNote ? (
+                  <div className="pt-1">
+                    <div className="p-3 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center gap-2.5 text-xs text-pink-200">
+                      <div className="w-7 h-7 rounded-full bg-pink-500/20 flex items-center justify-center shrink-0">
+                        <Mic className="w-3.5 h-3.5 text-pink-300" />
+                      </div>
+                      <span className="font-mono text-[11px] text-pink-200/90">
+                        Heartfelt voice note memo
+                      </span>
+                    </div>
+                  </div>
                 ) : isSpotifyUrl(song.musicUrl) ? (
                   <div className="pt-1">
                     <div className="p-2.5 sm:p-3 rounded-2xl bg-[#0e0e14]/90 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-md">
@@ -601,7 +612,7 @@ export const SoundGardenSection: React.FC = () => {
               </div>
             </div>
 
-            {selectedSong.audioUrl && (
+            {selectedSong.audioUrl ? (
               <div className="pt-2">
                 <GardenAudioPlayer
                   src={selectedSong.audioUrl}
@@ -610,7 +621,12 @@ export const SoundGardenSection: React.FC = () => {
                   isVoiceNote={selectedSong.isVoiceNote}
                 />
               </div>
-            )}
+            ) : selectedSong.isVoiceNote ? (
+              <div className="p-3 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center gap-2 text-xs text-pink-200">
+                <Mic className="w-4 h-4 text-pink-400 shrink-0" />
+                <span>Personal voice memo</span>
+              </div>
+            ) : null}
 
             {selectedSong.message && (
               <div className="quote-whisper-bubble space-y-1">
