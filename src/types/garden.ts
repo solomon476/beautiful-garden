@@ -113,6 +113,7 @@ export interface GardenNotification {
   isRead: boolean;
   createdAt: string;
   isPrivate?: boolean;
+  entityId?: string;
 }
 
 export interface QuestionPrompt {

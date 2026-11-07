@@ -615,6 +615,7 @@ export const notesService = {
         senderName: user.displayName,
         recipientId: partner.id,
         isPrivate: false,
+        entityId: noteEntry.id,
       });
     }
 
@@ -783,6 +784,7 @@ export const soundGardenService = {
       senderName: user.displayName,
       recipientId: partner.id,
       isPrivate: false,
+      entityId: entry.id,
     });
 
     return entry;
@@ -899,6 +901,7 @@ export const shelfService = {
       senderName: user.displayName,
       recipientId: partner.id,
       isPrivate: false,
+      entityId: entry.id,
     });
 
     return entry;
@@ -1039,6 +1042,7 @@ export const memoryArchiveService = {
         senderName: user.displayName,
         recipientId: partner.id,
         isPrivate: false,
+        entityId: entry.id,
       });
     }
 
@@ -1150,6 +1154,7 @@ export const petalNotesService = {
         senderName: user.displayName,
         recipientId: partner.id,
         isPrivate: false,
+        entityId: entry.id,
       });
     }
 
@@ -1257,6 +1262,7 @@ export const hangoutService = {
       senderName: user.displayName,
       recipientId: partner.id,
       isPrivate: false,
+      entityId: entry.id,
     });
 
     return entry;
@@ -1282,6 +1288,7 @@ export const hangoutService = {
         senderName: user.displayName,
         recipientId: partner.id,
         isPrivate: false,
+        entityId: `confirmed-${plan.id}`,
       });
     }
   },
@@ -1489,6 +1496,7 @@ export const timeCapsuleService = {
         senderName: user.displayName,
         recipientId: partner.id,
         isPrivate: false,
+        entityId: entry.id,
       });
     }
 
@@ -1600,6 +1608,7 @@ export const moodGardenService = {
         senderName: user.displayName,
         recipientId: authService.getPartner().id,
         isPrivate: false,
+        entityId: entry.id,
       });
     }
 

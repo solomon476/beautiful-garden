@@ -3,55 +3,67 @@ import { AUTHORIZED_PROFILES as DEFAULT_PROFILES } from './authService';
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
 import { soundEngine } from '../utils/audio';
 
-const STORAGE_KEY = 'perfect_time_notifications';
-const READ_IDS_KEY = 'perfect_time_read_notification_ids';
+const STORAGE_KEY = 'perfect_time_notifications_v2';
+const READ_IDS_KEY = 'perfect_time_read_notification_ids_v2';
+const CLEARED_AT_KEY = 'perfect_time_notifications_cleared_at';
+const DELETED_IDS_KEY = 'perfect_time_deleted_notif_ids';
+const V2_INIT_KEY = 'perfect_time_notifs_fresh_v2';
 
-const INITIAL_NOTIFICATIONS: GardenNotification[] = [
-  {
-    id: 'seed-notif-1',
-    type: 'letter',
-    title: '💌 Letter in the Garden',
-    message: 'Solomon shared a sweet letter: "Looking at our little universe..."',
-    targetTab: 'letters',
-    senderId: DEFAULT_PROFILES.solomon.id,
-    senderName: DEFAULT_PROFILES.solomon.displayName,
-    recipientId: DEFAULT_PROFILES.noella.id,
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    isPrivate: false,
-  },
-  {
-    id: 'seed-notif-2',
-    type: 'song',
-    title: '🎵 Song Shared with You',
-    message: 'Noella added "Golden Hour - JVKE" to Sound Garden!',
-    targetTab: 'sound',
-    senderId: DEFAULT_PROFILES.noella.id,
-    senderName: DEFAULT_PROFILES.noella.displayName,
-    recipientId: DEFAULT_PROFILES.solomon.id,
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    isPrivate: false,
-  },
-  {
-    id: 'seed-notif-3',
-    type: 'date',
-    title: '📅 Date Suggestion',
-    message: 'Solomon proposed: Sunset walk & coffee downtown ✨',
-    targetTab: 'time',
-    senderId: DEFAULT_PROFILES.solomon.id,
-    senderName: DEFAULT_PROFILES.solomon.displayName,
-    recipientId: DEFAULT_PROFILES.noella.id,
-    isRead: false,
-    createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    isPrivate: false,
-  },
-];
+export function deduplicateNotifications(list: GardenNotification[]): GardenNotification[] {
+  const seenIds = new Set<string>();
+  const seenFingerprints = new Set<string>();
+  const deduped: GardenNotification[] = [];
 
-function getReadNotificationIds(): Set<string> {
+  for (const n of list) {
+    if (!n || !n.id) continue;
+    if (seenIds.has(n.id)) continue;
+
+    // Build fingerprint by normalizing message and title to eliminate duplicated notifications
+    // across local action generation, Supabase sync, and Realtime broadcasts
+    const normMsg = (n.message || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 45);
+    const normTitle = (n.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 25);
+    const fingerprint = `${n.type || ''}-${n.senderId || ''}-${n.recipientId || ''}-${normTitle}-${normMsg}`;
+
+    if (seenFingerprints.has(fingerprint)) {
+      continue;
+    }
+
+    seenIds.add(n.id);
+    seenFingerprints.add(fingerprint);
+    deduped.push(n);
+  }
+
+  return deduped;
+}
+
+function getClearedAt(userId?: string): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const key = userId ? `${CLEARED_AT_KEY}_${userId}` : CLEARED_AT_KEY;
+    const raw = localStorage.getItem(key);
+    return raw ? parseInt(raw, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function setClearedAt(userId?: string, timestamp: number = Date.now()): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (userId) {
+      localStorage.setItem(`${CLEARED_AT_KEY}_${userId}`, timestamp.toString());
+    }
+    localStorage.setItem(CLEARED_AT_KEY, timestamp.toString());
+  } catch (err) {
+    console.error('Failed to set cleared at timestamp', err);
+  }
+}
+
+function getDeletedNotificationIds(userId?: string): Set<string> {
   if (typeof window === 'undefined') return new Set();
   try {
-    const raw = localStorage.getItem(READ_IDS_KEY);
+    const key = userId ? `${DELETED_IDS_KEY}_${userId}` : DELETED_IDS_KEY;
+    const raw = localStorage.getItem(key);
     if (!raw) return new Set();
     const arr = JSON.parse(raw);
     return new Set(Array.isArray(arr) ? arr : []);
@@ -60,34 +72,73 @@ function getReadNotificationIds(): Set<string> {
   }
 }
 
-function saveReadNotificationIds(ids: Set<string>): void {
+function saveDeletedNotificationIds(ids: Set<string>, userId?: string): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(READ_IDS_KEY, JSON.stringify(Array.from(ids)));
+    const arr = Array.from(ids);
+    if (userId) {
+      localStorage.setItem(`${DELETED_IDS_KEY}_${userId}`, JSON.stringify(arr));
+    }
+    localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(arr));
+  } catch (err) {
+    console.error('Failed to save deleted notification IDs', err);
+  }
+}
+
+function getReadNotificationIds(userId?: string): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const key = userId ? `${READ_IDS_KEY}_${userId}` : READ_IDS_KEY;
+    const raw = localStorage.getItem(key) || (userId ? localStorage.getItem(READ_IDS_KEY) : null);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadNotificationIds(ids: Set<string>, userId?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const arr = Array.from(ids);
+    if (userId) {
+      localStorage.setItem(`${READ_IDS_KEY}_${userId}`, JSON.stringify(arr));
+    }
+    localStorage.setItem(READ_IDS_KEY, JSON.stringify(arr));
   } catch (err) {
     console.error('Failed to save read notification IDs', err);
   }
 }
 
 function loadNotifications(): GardenNotification[] {
-  if (typeof window === 'undefined') return INITIAL_NOTIFICATIONS;
+  if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      saveNotifications(INITIAL_NOTIFICATIONS);
-      return INITIAL_NOTIFICATIONS;
+    const isFreshV2 = localStorage.getItem(V2_INIT_KEY);
+    if (!isFreshV2) {
+      // Clear out all historical seed and repetitive notifications for a clean slate
+      localStorage.setItem(V2_INIT_KEY, 'true');
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+      setClearedAt(DEFAULT_PROFILES.solomon.id, Date.now());
+      setClearedAt(DEFAULT_PROFILES.noella.id, Date.now());
+      return [];
     }
+
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : INITIAL_NOTIFICATIONS;
+    if (!Array.isArray(parsed)) return [];
+    return deduplicateNotifications(parsed);
   } catch {
-    return INITIAL_NOTIFICATIONS;
+    return [];
   }
 }
 
 function saveNotifications(data: GardenNotification[]): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const deduped = deduplicateNotifications(data);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
   } catch (err) {
     console.error('Failed to save notifications', err);
   }
@@ -96,6 +147,7 @@ function saveNotifications(data: GardenNotification[]): void {
 const listeners = new Set<() => void>();
 let realtimeChannel: any = null;
 let isChannelSubscribed = false;
+let realtimeSubscribersCount = 0;
 
 export const notificationService = {
   subscribe(callback: () => void): () => void {
@@ -115,9 +167,9 @@ export const notificationService = {
 
   getNotificationsForUser(userId: string): GardenNotification[] {
     const all = loadNotifications();
-    const readIds = getReadNotificationIds();
+    const readIds = getReadNotificationIds(userId);
 
-    return all
+    return deduplicateNotifications(all)
       .filter((n) => n.recipientId === userId && !n.isPrivate)
       .map((n) => (readIds.has(n.id) ? { ...n, isRead: true } : n))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -135,8 +187,23 @@ export const notificationService = {
       return () => {};
     }
 
+    realtimeSubscribersCount++;
+
+    const cleanup = () => {
+      realtimeSubscribersCount = Math.max(0, realtimeSubscribersCount - 1);
+      if (realtimeSubscribersCount === 0 && supabase && realtimeChannel) {
+        try {
+          supabase.removeChannel(realtimeChannel);
+        } catch (e) {
+          console.warn('Error unsubscribing realtime channel', e);
+        }
+        realtimeChannel = null;
+        isChannelSubscribed = false;
+      }
+    };
+
     if (realtimeChannel && isChannelSubscribed) {
-      return () => {};
+      return cleanup;
     }
 
     try {
@@ -187,20 +254,10 @@ export const notificationService = {
         }
       });
 
-      return () => {
-        try {
-          if (supabase && realtimeChannel) {
-            supabase.removeChannel(realtimeChannel);
-            realtimeChannel = null;
-            isChannelSubscribed = false;
-          }
-        } catch (e) {
-          console.warn('Error unsubscribing realtime channel', e);
-        }
-      };
+      return cleanup;
     } catch (err) {
       console.warn('Realtime subscription initialization error', err);
-      return () => {};
+      return cleanup;
     }
   },
 
@@ -209,41 +266,53 @@ export const notificationService = {
    */
   handleIncomingNotification(notif: GardenNotification): void {
     const all = loadNotifications();
-    const readIds = getReadNotificationIds();
+    const readIds = getReadNotificationIds(notif.recipientId);
 
-    // Check if duplicate
+    // Check duplicate by id
     const exists = all.some((n) => n.id === notif.id);
-    if (!exists) {
+
+    // Check duplicate by content fingerprint to prevent broadcast vs db echo
+    const normMsg = (notif.message || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 45);
+    const normTitle = (notif.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 25);
+    const fingerprint = `${notif.type || ''}-${notif.senderId || ''}-${notif.recipientId || ''}-${normTitle}-${normMsg}`;
+    const hasDuplicateContent = all.some((n) => {
+      const m = (n.message || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 45);
+      const t = (n.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 25);
+      return `${n.type || ''}-${n.senderId || ''}-${n.recipientId || ''}-${t}-${m}` === fingerprint;
+    });
+
+    if (!exists && !hasDuplicateContent) {
       const entry: GardenNotification = {
         ...notif,
         isRead: readIds.has(notif.id) ? true : Boolean(notif.isRead),
       };
       all.unshift(entry);
-      if (all.length > 100) all.length = 100;
-      saveNotifications(all);
-    }
+      const deduped = deduplicateNotifications(all);
+      if (deduped.length > 100) deduped.length = 100;
+      saveNotifications(deduped);
 
-    // Gentle audio chime for incoming notification
-    try {
-      soundEngine.playChime(659.25, 1.0, 0.08);
-    } catch {
-      // Audio autoplay policy fallback
-    }
-
-    // Trigger browser banner if permitted
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      // Play gentle chime ONLY for genuine new incoming notification
       try {
-        new Notification(notif.title, {
-          body: notif.message,
-          icon: '/icon.svg',
-          badge: '/icon.svg',
-        });
-      } catch (err) {
-        console.warn('Browser push notification failed', err);
+        soundEngine.playChime(659.25, 1.0, 0.08);
+      } catch {
+        // Audio autoplay policy fallback
       }
-    }
 
-    this.notifyListeners();
+      // Trigger browser banner if permitted
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(notif.title, {
+            body: notif.message,
+            icon: '/icon.svg',
+            badge: '/icon.svg',
+          });
+        } catch (err) {
+          console.warn('Browser push notification failed', err);
+        }
+      }
+
+      this.notifyListeners();
+    }
   },
 
   /**
@@ -310,12 +379,21 @@ export const notificationService = {
       ]);
 
       const cloudNotifs: GardenNotification[] = [];
-      const readIds = getReadNotificationIds();
+      const readIds = getReadNotificationIds(userId);
+      const clearedAt = getClearedAt(userId);
+      const deletedIds = getDeletedNotificationIds(userId);
+
+      const shouldInclude = (id: string, createdAt: string) => {
+        if (deletedIds.has(id)) return false;
+        if (clearedAt > 0 && new Date(createdAt).getTime() <= clearedAt) return false;
+        return true;
+      };
 
       // 1. Hangouts / Date Proposals
       if (hangouts.data) {
         for (const h of hangouts.data) {
-          const id = `notif-hangout-${h.id}`;
+          const id = `notif-date-${h.id}`;
+          if (!shouldInclude(id, h.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'date',
@@ -328,6 +406,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: h.created_at,
             isPrivate: false,
+            entityId: h.id,
           });
         }
       }
@@ -336,6 +415,7 @@ export const notificationService = {
       if (notes.data) {
         for (const n of notes.data) {
           const id = `notif-letter-${n.id}`;
+          if (!shouldInclude(id, n.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'letter',
@@ -348,6 +428,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: n.created_at,
             isPrivate: false,
+            entityId: n.id,
           });
         }
       }
@@ -356,6 +437,7 @@ export const notificationService = {
       if (petals.data) {
         for (const p of petals.data) {
           const id = `notif-petal-${p.id}`;
+          if (!shouldInclude(id, p.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'petal',
@@ -368,6 +450,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: p.created_at,
             isPrivate: false,
+            entityId: p.id,
           });
         }
       }
@@ -376,6 +459,7 @@ export const notificationService = {
       if (songs.data) {
         for (const s of songs.data) {
           const id = `notif-song-${s.id}`;
+          if (!shouldInclude(id, s.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'song',
@@ -388,6 +472,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: s.created_at,
             isPrivate: false,
+            entityId: s.id,
           });
         }
       }
@@ -396,6 +481,7 @@ export const notificationService = {
       if (memories.data) {
         for (const m of memories.data) {
           const id = `notif-memory-${m.id}`;
+          if (!shouldInclude(id, m.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'memory',
@@ -408,6 +494,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: m.created_at,
             isPrivate: false,
+            entityId: m.id,
           });
         }
       }
@@ -416,6 +503,7 @@ export const notificationService = {
       if (moods.data) {
         for (const md of moods.data) {
           const id = `notif-mood-${md.id}`;
+          if (!shouldInclude(id, md.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'mood',
@@ -428,6 +516,7 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: md.created_at,
             isPrivate: false,
+            entityId: md.id,
           });
         }
       }
@@ -436,6 +525,7 @@ export const notificationService = {
       if (shelf.data) {
         for (const sh of shelf.data) {
           const id = `notif-shelf-${sh.id}`;
+          if (!shouldInclude(id, sh.created_at)) continue;
           cloudNotifs.push({
             id,
             type: 'shelf',
@@ -448,21 +538,14 @@ export const notificationService = {
             isRead: readIds.has(id),
             createdAt: sh.created_at,
             isPrivate: false,
+            entityId: sh.id,
           });
         }
       }
 
-      // Merge cloud notifications with local ones
+      // Merge cloud notifications with local ones and deduplicate
       const existing = loadNotifications();
-      const existingIds = new Set(existing.map((e) => e.id));
-
-      const merged = [...existing];
-      for (const cn of cloudNotifs) {
-        if (!existingIds.has(cn.id)) {
-          merged.push(cn);
-          existingIds.add(cn.id);
-        }
-      }
+      const merged = deduplicateNotifications([...cloudNotifs, ...existing]);
 
       // Sort newest first
       merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -484,12 +567,18 @@ export const notificationService = {
     senderName: string;
     recipientId: string;
     isPrivate?: boolean;
+    entityId?: string;
   }): void {
     // If it's private, NEVER notify the partner!
     if (params.isPrivate) return;
 
+    // Use deterministic entity-based ID to ensure cloud-sync never duplicates local actions
+    const notifId = params.entityId
+      ? `notif-${params.type}-${params.entityId}`
+      : `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
     const notif: GardenNotification = {
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: notifId,
       type: params.type,
       title: params.title,
       message: params.message,
@@ -500,13 +589,18 @@ export const notificationService = {
       isRead: false,
       createdAt: new Date().toISOString(),
       isPrivate: false,
+      entityId: params.entityId,
     };
 
     const all = loadNotifications();
-    all.unshift(notif);
-    if (all.length > 100) all.length = 100;
-    saveNotifications(all);
-    this.notifyListeners();
+    const exists = all.some((n) => n.id === notif.id);
+    if (!exists) {
+      all.unshift(notif);
+      const deduped = deduplicateNotifications(all);
+      if (deduped.length > 100) deduped.length = 100;
+      saveNotifications(deduped);
+      this.notifyListeners();
+    }
 
     // Broadcast across devices via Supabase Realtime channel
     if (typeof window !== 'undefined' && isLiveSupabaseConfigured && supabase) {
@@ -538,10 +632,10 @@ export const notificationService = {
     }
   },
 
-  markAsRead(id: string): void {
-    const readIds = getReadNotificationIds();
+  markAsRead(id: string, userId?: string): void {
+    const readIds = getReadNotificationIds(userId);
     readIds.add(id);
-    saveReadNotificationIds(readIds);
+    saveReadNotificationIds(readIds, userId);
 
     const all = loadNotifications();
     const updated = all.map((n) => (n.id === id ? { ...n, isRead: true } : n));
@@ -551,23 +645,46 @@ export const notificationService = {
 
   markAllAsRead(userId: string): void {
     const all = loadNotifications();
-    const readIds = getReadNotificationIds();
+    const readIds = getReadNotificationIds(userId);
 
     all.forEach((n) => {
       if (n.recipientId === userId) {
         readIds.add(n.id);
       }
     });
-    saveReadNotificationIds(readIds);
+    saveReadNotificationIds(readIds, userId);
 
     const updated = all.map((n) => (n.recipientId === userId ? { ...n, isRead: true } : n));
     saveNotifications(updated);
     this.notifyListeners();
   },
 
+  deleteNotification(id: string, userId: string): void {
+    const deletedIds = getDeletedNotificationIds(userId);
+    deletedIds.add(id);
+    saveDeletedNotificationIds(deletedIds, userId);
+
+    const all = loadNotifications();
+    const remaining = all.filter((n) => !(n.id === id && n.recipientId === userId));
+    saveNotifications(remaining);
+    this.notifyListeners();
+  },
+
   clearAll(userId: string): void {
+    setClearedAt(userId, Date.now());
     const all = loadNotifications();
     const remaining = all.filter((n) => n.recipientId !== userId);
+    saveNotifications(remaining);
+    this.notifyListeners();
+  },
+
+  clearRead(userId: string): void {
+    const readIds = getReadNotificationIds(userId);
+    const all = loadNotifications();
+    const remaining = all.filter((n) => {
+      if (n.recipientId !== userId) return true;
+      return !n.isRead && !readIds.has(n.id);
+    });
     saveNotifications(remaining);
     this.notifyListeners();
   },

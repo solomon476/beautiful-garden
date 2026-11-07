@@ -1835,4 +1835,30 @@ input[type="checkbox"].decorated-checkbox:hover {
   fill: #1db954 !important;
 }
 
+/* Garden Notification Dropdown Panel */
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.5rem;
+  right: 0;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  z-index: 3000;
+  background-color: #0c071a;
+  border-radius: 1rem;
+  border: 2px solid rgba(244, 114, 182, 0.45);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95), 0 0 20px rgba(244, 114, 182, 0.15);
+  overflow: hidden;
+  color: #ffffff;
+}
+
+@media (max-width: 639px) {
+  .notification-dropdown {
+    right: -42px;
+    width: calc(100vw - 28px);
+    max-width: 380px;
+  }
+}
+
+
 
