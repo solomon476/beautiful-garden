@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   Globe,
-  ExternalLink,
+  Compass,
+  Sparkles,
   BookOpen,
-  MessageSquare,
+  Heart,
   Plus,
   X,
-  Trash2,
-  Send,
-  Heart,
-  Smile,
-  ArrowUpRight,
-  Filter,
+  ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
 import {
   worldAroundUsService,
@@ -25,68 +22,52 @@ import type {
   UserProfile,
 } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
+import styles from './WorldAroundUsSection.module.css';
 
-type SubTab = 'causes' | 'articles' | 'prompts' | 'actions';
+type WorldTab = 'travel' | 'inspiration' | 'facts' | 'world';
 
 export const WorldAroundUsSection: React.FC = () => {
-  const [subTab, setSubTab] = useState<SubTab>('causes');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
+  const [activeTab, setActiveTab] = useState<WorldTab>('travel');
+  const [, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
   // Data states
   const [causes, setCauses] = useState<WorldCause[]>([]);
   const [articles, setArticles] = useState<WorldArticle[]>([]);
   const [prompts, setPrompts] = useState<WorldPrompt[]>([]);
   const [actions, setActions] = useState<WorldSmallAction[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  // Form toggles
-  const [showAddCause, setShowAddCause] = useState<boolean>(false);
-  const [showAddArticle, setShowAddArticle] = useState<boolean>(false);
-  const [showAddPrompt, setShowAddPrompt] = useState<boolean>(false);
-  const [showAddAction, setShowAddAction] = useState<boolean>(false);
+  // Reader Modal State
+  const [isReaderOpen, setIsReaderOpen] = useState<boolean>(false);
+  const [readerData, setReaderData] = useState<{
+    title: string;
+    subtitle?: string;
+    content: string;
+    tag?: string;
+    link?: string;
+    image?: string;
+  } | null>(null);
 
-  // Active prompt reflection drafting
-  const [activePromptId, setActivePromptId] = useState<string | null>(null);
-  const [promptReflectionText, setPromptReflectionText] = useState<string>('');
-
-  // Form states - Causes
-  const [causeTitle, setCauseTitle] = useState('');
-  const [causeCategory, setCauseCategory] = useState('Mental Wellbeing');
-  const [causeDesc, setCauseDesc] = useState('');
-  const [causeWhy, setCauseWhy] = useState('');
-  const [causeLink, setCauseLink] = useState('');
-  const [causeResourceName, setCauseResourceName] = useState('');
-
-  // Form states - Articles
-  const [articleTitle, setArticleTitle] = useState('');
-  const [articleSource, setArticleSource] = useState('');
-  const [articleLink, setArticleLink] = useState('');
-  const [articleType, setArticleType] = useState<WorldArticle['type']>('article');
-  const [articleWhy, setArticleWhy] = useState('');
-  const [articleIsShared, setArticleIsShared] = useState(true);
-
-  // Form states - Custom Prompt
-  const [newPromptText, setNewPromptText] = useState('');
-  const [newPromptCategory, setNewPromptCategory] = useState('Perspective');
-  const [newPromptNote, setNewPromptNote] = useState('');
-
-  // Form states - Small Action
-  const [actionTitle, setActionTitle] = useState('');
-  const [actionDesc, setActionDesc] = useState('');
-  const [actionCategory, setActionCategory] = useState<WorldSmallAction['category']>('listening');
+  // Form Modal States
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [newTitle, setNewTitle] = useState<string>('');
+  const [newDesc, setNewDesc] = useState<string>('');
+  const [newLink, setNewLink] = useState<string>('');
 
   const loadAll = async () => {
-    const [c, a, p, ac] = await Promise.all([
-      worldAroundUsService.getCauses(),
-      worldAroundUsService.getArticles(),
-      worldAroundUsService.getPrompts(),
-      worldAroundUsService.getSmallActions(),
-    ]);
-    setCauses(c);
-    setArticles(a);
-    setPrompts(p);
-    setActions(ac);
+    try {
+      const [c, a, p, ac] = await Promise.all([
+        worldAroundUsService.getCauses(),
+        worldAroundUsService.getArticles(),
+        worldAroundUsService.getPrompts(),
+        worldAroundUsService.getSmallActions(),
+      ]);
+      setCauses(c);
+      setArticles(a);
+      setPrompts(p);
+      setActions(ac);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -99,996 +80,618 @@ export const WorldAroundUsSection: React.FC = () => {
     };
   }, []);
 
-  // Handlers for Causes
-  const handleCreateCause = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!causeTitle.trim() || !causeDesc.trim() || !causeWhy.trim()) return;
+  const handleOpenFeatured = () => {
     soundEngine.playSparkle();
-    await worldAroundUsService.addCause({
-      title: causeTitle,
-      category: causeCategory,
-      description: causeDesc,
-      whyItMatters: causeWhy,
-      resourceLink: causeLink,
-      resourceName: causeResourceName,
+    setReaderData({
+      title: 'Beautiful Places on Earth',
+      subtitle: 'Because the world is more beautiful when we explore it together... ♡',
+      content:
+        'From the sun-drenched cliffside villages of the Amalfi Coast and Santorini, to the quiet lantern-lit bamboo paths of Kyoto and the lavender fields of Provence—traveling together is about discovering wonder in every corner of the earth.\n\nEvery journey becomes a page in our story. Whether walking along quiet turquoise shores or tasting warm pastries in a cobblestone café, the greatest destination is wherever we are side-by-side.',
+      tag: 'Travel & Wonder',
+      image: '/assets/garden/coastal_town.jpg',
     });
-    setCauseTitle('');
-    setCauseDesc('');
-    setCauseWhy('');
-    setCauseLink('');
-    setCauseResourceName('');
-    setShowAddCause(false);
+    setIsReaderOpen(true);
   };
 
-  const handleDeleteCause = async (id: string) => {
-    if (window.confirm('Remove this cause from our space?')) {
-      await worldAroundUsService.deleteCause(id);
-    }
-  };
-
-  // Handlers for Articles
-  const handleCreateArticle = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!articleTitle.trim() || !articleLink.trim() || !articleWhy.trim()) return;
-    soundEngine.playSparkle();
-    await worldAroundUsService.addArticle({
-      title: articleTitle,
-      source: articleSource,
-      link: articleLink,
-      type: articleType,
-      whyItMatters: articleWhy,
-      isShared: articleIsShared,
-    });
-    setArticleTitle('');
-    setArticleSource('');
-    setArticleLink('');
-    setArticleWhy('');
-    setShowAddArticle(false);
-  };
-
-  const handleDeleteArticle = async (id: string) => {
-    if (window.confirm('Remove this entry?')) {
-      await worldAroundUsService.deleteArticle(id);
-    }
-  };
-
-  // Handlers for Prompts & Reflections
-  const handleSubmitReflection = async (promptId: string) => {
-    if (!promptReflectionText.trim()) return;
-    soundEngine.playSparkle();
-    await worldAroundUsService.addPromptReflection(promptId, promptReflectionText);
-    setPromptReflectionText('');
-    setActivePromptId(null);
-  };
-
-  const handleCreatePrompt = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPromptText.trim()) return;
-    soundEngine.playSparkle();
-    await worldAroundUsService.addCustomPrompt(newPromptText, newPromptCategory, newPromptNote);
-    setNewPromptText('');
-    setNewPromptNote('');
-    setShowAddPrompt(false);
-  };
-
-  // Handlers for Small Actions
   const handleToggleHeart = async (actionId: string) => {
-    soundEngine.playChime(659.25, 0.9, 0.08); // pleasant chime
+    soundEngine.playChime(659.25, 0.9, 0.08);
     await worldAroundUsService.toggleHeartAction(actionId);
   };
 
-  const handleCreateAction = async (e: React.FormEvent) => {
+  const handleAddEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!actionTitle.trim() || !actionDesc.trim()) return;
+    if (!newTitle.trim() || !newDesc.trim()) return;
+
     soundEngine.playSparkle();
-    await worldAroundUsService.addSmallAction(actionTitle, actionDesc, actionCategory);
-    setActionTitle('');
-    setActionDesc('');
-    setShowAddAction(false);
+    if (activeTab === 'travel' || activeTab === 'facts') {
+      await worldAroundUsService.addArticle({
+        title: newTitle,
+        source: 'Sanctuary Wanderlust',
+        link: newLink || 'https://earth.google.com',
+        type: 'article',
+        whyItMatters: newDesc,
+        isShared: true,
+      });
+    } else if (activeTab === 'inspiration') {
+      await worldAroundUsService.addCustomPrompt(newTitle, 'Perspective', newDesc);
+    } else {
+      await worldAroundUsService.addCause({
+        title: newTitle,
+        category: 'Our World',
+        description: newDesc,
+        whyItMatters: 'A topic we deeply care about in our sanctuary.',
+        resourceLink: newLink,
+        resourceName: 'Reference',
+      });
+    }
+
+    setNewTitle('');
+    setNewDesc('');
+    setNewLink('');
+    setShowAddModal(false);
+    await loadAll();
   };
 
-  // Filtered causes
-  const causeCategories = ['All', ...Array.from(new Set(causes.map((c) => c.category)))];
-  const filteredCauses =
-    selectedCategory === 'All'
-      ? causes
-      : causes.filter((c) => c.category === selectedCategory);
-
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
-      {/* Editorial Header with Thoughtful Personal Introduction */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto px-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-500/10 border border-blue-400/25 text-blue-200 text-xs font-mono tracking-wider uppercase">
-          <Globe className="w-3.5 h-3.5 text-blue-300" />
-          <span>A World Worth Caring About 🌍</span>
-        </div>
+    <div className={styles.worldSection}>
+      {/* 1. Panoramic Themed Hero Banner */}
+      <section className={styles.heroBanner}>
+        <div className={styles.heroAmbientGlow} />
 
-        <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-          The World Around Us
-        </h2>
-
-        {/* Verbatim Personal Introduction requested by User */}
-        <p className="font-serif italic text-base sm:text-lg text-pink-200/90 leading-relaxed max-w-2xl mx-auto">
-          &ldquo;Some things deserve more than a passing glance. This is a little space for the issues that matter, the voices that deserve to be heard, and the conversations that can help us understand one another better.&rdquo;
-        </p>
-
-        <p className="text-xs sm:text-sm text-slate-300/80 max-w-xl mx-auto font-light">
-          A quiet corner to explore issues that matter, share what makes us think, and learn from each other's perspectives without pressure.
-        </p>
-      </div>
-
-      {/* 4-Pill Sub-Navigation Desk */}
-      <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none pb-2 w-full max-w-full">
-        <button
-          onClick={() => {
-            soundEngine.playSparkle();
-            setSubTab('causes');
-          }}
-          className={`flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 transition-all ${
-            subTab === 'causes'
-              ? 'bg-gradient-to-r from-blue-500/30 to-indigo-500/30 text-blue-200 border border-blue-400/50 shadow-lg shadow-blue-500/15'
-              : 'bg-white/[0.04] text-slate-300 hover:text-white border border-white/10 hover:border-white/20'
-          }`}
-        >
-          <Globe className="w-4 h-4 text-blue-400" />
-          <span>1. Causes That Matter</span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30">
-            {causes.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => {
-            soundEngine.playSparkle();
-            setSubTab('articles');
-          }}
-          className={`flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 transition-all ${
-            subTab === 'articles'
-              ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-200 border border-purple-400/50 shadow-lg shadow-purple-500/15'
-              : 'bg-white/[0.04] text-slate-300 hover:text-white border border-white/10 hover:border-white/20'
-          }`}
-        >
-          <BookOpen className="w-4 h-4 text-purple-400" />
-          <span>2. Things Worth Knowing</span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-400/30">
-            {articles.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => {
-            soundEngine.playSparkle();
-            setSubTab('prompts');
-          }}
-          className={`flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 transition-all ${
-            subTab === 'prompts'
-              ? 'bg-gradient-to-r from-teal-500/30 to-emerald-500/30 text-teal-200 border border-teal-400/50 shadow-lg shadow-teal-500/15'
-              : 'bg-white/[0.04] text-slate-300 hover:text-white border border-white/10 hover:border-white/20'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4 text-teal-400" />
-          <span>3. Let's Think About This</span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 border border-teal-400/30">
-            {prompts.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => {
-            soundEngine.playSparkle();
-            setSubTab('actions');
-          }}
-          className={`flex items-center gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap shrink-0 transition-all ${
-            subTab === 'actions'
-              ? 'bg-gradient-to-r from-amber-500/30 to-rose-500/30 text-amber-200 border border-amber-400/50 shadow-lg shadow-amber-500/15'
-              : 'bg-white/[0.04] text-slate-300 hover:text-white border border-white/10 hover:border-white/20'
-          }`}
-        >
-          <Smile className="w-4 h-4 text-amber-400" />
-          <span>4. Small Things That Matter</span>
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30">
-            {actions.length}
-          </span>
-        </button>
-      </div>
-
-      {/* ============================================================== */}
-      {/* PART 1: CAUSES THAT MATTER                                     */}
-      {/* ============================================================== */}
-      {subTab === 'causes' && (
-        <div className="space-y-6 animate-fade-in">
-          {/* Action Row & Category Filter */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
-              <Filter className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              {causeCategories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-blue-500/20 text-blue-200 border border-blue-400/40 font-semibold'
-                      : 'bg-white/[0.04] text-slate-400 hover:text-slate-200 border border-white/5'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={() => {
-                soundEngine.playSparkle();
-                setShowAddCause(!showAddCause);
-              }}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-semibold uppercase tracking-wider shadow-md shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 border border-white/20"
-            >
-              {showAddCause ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              <span>{showAddCause ? 'Cancel' : '+ Add an Issue or Cause'}</span>
-            </button>
+        <div className={styles.heroContent}>
+          <div className={styles.heroTagline}>
+            <span>Shared Horizons</span>
+            <span className={styles.heroTagDot}>✦</span>
+            <span>A Bigger World</span>
           </div>
 
-          {/* Add Cause Form Modal / Expanded Desk */}
-          {showAddCause && (
-            <div className="max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] bg-[#140d2b]/95 border border-blue-400/30 shadow-2xl backdrop-blur-2xl space-y-6 animate-scale-up">
-              <div className="border-b border-blue-400/20 pb-4">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-blue-300">
-                  New Topic to Care About
-                </span>
-                <h3 className="font-serif text-2xl font-bold text-white mt-1">
-                  Add an Issue or Awareness Focus
-                </h3>
-                <p className="text-xs text-slate-300 font-light mt-1">
-                  Share a topic you care about, along with reliable context or awareness resources.
+          <h1 className={styles.heroTitle}>
+            <span>The World Around Us</span>
+            <span className={styles.heroTitleHeart}>♡</span>
+          </h1>
+
+          <p className={styles.heroVerbs}>Explore · Learn · Dream</p>
+
+          <p className={styles.heroSubtitle}>
+            Discover together, a bigger world... ♡
+          </p>
+        </div>
+
+        {/* 3D Cosmic Earth Globe Artwork Frame */}
+        <div className={styles.heroArtworkContainer}>
+          <img
+            src="/assets/garden/card_world.jpg"
+            alt="Cosmic Earth Globe Artwork"
+            className={styles.heroArtworkImg}
+          />
+        </div>
+      </section>
+
+      {/* 2. Main Sanctuary Panel with Sub-Nav Filter Pills */}
+      <div className={styles.mainPanel}>
+        {/* Filter Pills Row — Exactly matching master card */}
+        <div className={styles.filterPillsRow}>
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              setActiveTab('travel');
+            }}
+            className={`${styles.pillBtn} ${activeTab === 'travel' ? styles.pillBtnActive : ''}`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Travel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              setActiveTab('inspiration');
+            }}
+            className={`${styles.pillBtn} ${activeTab === 'inspiration' ? styles.pillBtnActive : ''}`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Inspiration</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              setActiveTab('facts');
+            }}
+            className={`${styles.pillBtn} ${activeTab === 'facts' ? styles.pillBtnActive : ''}`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Interesting Facts</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              setActiveTab('world');
+            }}
+            className={`${styles.pillBtn} ${activeTab === 'world' ? styles.pillBtnActive : ''}`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Our World</span>
+          </button>
+        </div>
+
+        {/* 3. Featured Destination Card (Row 3, Col 3 master visual) */}
+        {activeTab === 'travel' && (
+          <div className={styles.featuredCard}>
+            <div className={styles.featuredImgContainer}>
+              <img
+                src="/assets/garden/coastal_town.jpg"
+                alt="Beautiful Places on Earth"
+                className={styles.featuredImg}
+              />
+            </div>
+
+            <div className={styles.featuredBody}>
+              <div>
+                <span className={styles.featuredTag}>Wonders & Horizons</span>
+                <h2 className={styles.featuredTitle}>
+                  Beautiful Places on Earth
+                </h2>
+                <p className={styles.featuredSubtitle}>
+                  Because the world is more beautiful when we explore it together... ♡
                 </p>
               </div>
 
-              <form onSubmit={handleCreateCause} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                      Topic / Cause Title *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Men's Mental Health & Vulnerability"
-                      value={causeTitle}
-                      onChange={(e) => setCauseTitle(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
+              <div className={styles.featuredFooter}>
+                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--wld-muted)' }}>
+                  Santorini • Amalfi • Kyoto • Paris
+                </span>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                      Category
-                    </label>
-                    <select
-                      value={causeCategory}
-                      onChange={(e) => setCauseCategory(e.target.value)}
-                      className="w-full garden-input"
-                    >
-                      <option value="Mental Wellbeing">Mental Wellbeing</option>
-                      <option value="Health & Awareness">Health & Awareness</option>
-                      <option value="Equality & Dignity">Equality & Dignity</option>
-                      <option value="Kindness & Society">Kindness & Society</option>
-                      <option value="Human Rights">Human Rights</option>
-                      <option value="Neurodiversity">Neurodiversity</option>
-                    </select>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleOpenFeatured}
+                  className={styles.readMoreBtn}
+                >
+                  <span>Read More</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                    What is this issue about? *
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Briefly describe what this topic entails and what people often overlook..."
-                    value={causeDesc}
-                    onChange={(e) => setCauseDesc(e.target.value)}
-                    className="w-full garden-textarea"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                    Why does this matter? *
-                  </label>
-                  <textarea
-                    required
-                    rows={2}
-                    placeholder="Share why this topic resonates with you or why attention here changes lives..."
-                    value={causeWhy}
-                    onChange={(e) => setCauseWhy(e.target.value)}
-                    className="w-full garden-textarea"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                      Resource Name / Organisation (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Movember, Mind UK, UN Women"
-                      value={causeResourceName}
-                      onChange={(e) => setCauseResourceName(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-blue-200">
-                      Resource URL / Info Link (Optional)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={causeLink}
-                      onChange={(e) => setCauseLink(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3">
+        {/* 4. Tab Content: Inspiration Prompts */}
+        {activeTab === 'inspiration' && (
+          <div className={styles.cardsGrid}>
+            {prompts.map((p) => (
+              <div key={p.id} className={styles.subCard}>
+                <span className={styles.subCardCategory}>
+                  {p.category} • Reflection
+                </span>
+                <h3 className={styles.subCardTitle}>“{p.promptText}”</h3>
+                {p.contextNote && (
+                  <p className={styles.subCardDesc}>{p.contextNote}</p>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--wld-muted)' }}>
+                    Reflections: {p.responses?.length || 0}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => setShowAddCause(false)}
-                    className="px-5 py-2.5 rounded-full text-xs font-medium text-slate-300 hover:text-white"
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setReaderData({
+                        title: p.promptText,
+                        subtitle: p.contextNote,
+                        content: p.responses?.length
+                          ? p.responses.map((r) => `${r.authorName}: "${r.reflection}"`).join('\n\n')
+                          : 'No reflections added yet. What are your heartfelt thoughts on this prompt?',
+                        tag: p.category,
+                      });
+                      setIsReaderOpen(true);
+                    }}
+                    className={styles.readMoreBtn}
+                    style={{ padding: '6px 14px', fontSize: '11.5px' }}
                   >
-                    Cancel
+                    <span>Reflect ♡</span>
                   </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    Pin to Our Space 🌍
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Causes Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredCauses.map((cause) => (
-              <div
-                key={cause.id}
-                className="group relative p-6 sm:p-7 rounded-[1.75rem] bg-[#140c26]/85 hover:bg-[#1a1032]/95 border border-white/10 hover:border-blue-400/40 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 backdrop-blur-xl flex flex-col justify-between"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 border border-blue-400/30 uppercase tracking-wide">
-                      {cause.category}
-                    </span>
-
-                    {cause.addedBy === currentUser.id && (
-                      <button
-                        onClick={() => handleDeleteCause(cause.id)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors p-1"
-                        title="Remove cause"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div>
-                    <h3 className="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-blue-200 transition-colors">
-                      {cause.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-300/90 font-light mt-2 leading-relaxed">
-                      {cause.description}
-                    </p>
-                  </div>
-
-                  {/* Why it Matters Callout */}
-                  <div className="p-4 rounded-2xl bg-blue-950/30 border border-blue-400/20 space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-blue-300 font-bold block">
-                      Why This Matters 💡
-                    </span>
-                    <p className="text-xs text-blue-100/90 font-serif italic leading-relaxed">
-                      &ldquo;{cause.whyItMatters}&rdquo;
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-5 mt-5 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
-                  {cause.resourceLink ? (
-                    <a
-                      href={cause.resourceLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-blue-300 hover:text-blue-200 font-medium group-hover:underline underline-offset-4"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                      <span>{cause.resourceName || 'Explore Verified Resource'}</span>
-                      <ArrowUpRight className="w-3 h-3" />
-                    </a>
-                  ) : (
-                    <span className="text-[11px] text-slate-400 italic">Discussion Topic</span>
-                  )}
-
-                  <span className="text-[11px] font-mono text-slate-400">
-                    Added by {cause.addedByName || 'Solomon 🌿'}
-                  </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ============================================================== */}
-      {/* PART 2: THINGS WORTH KNOWING                                   */}
-      {/* ============================================================== */}
-      {subTab === 'articles' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
-                Articles, Campaigns & Voices
-              </h3>
-              <p className="text-xs text-slate-300 font-light mt-0.5">
-                Thoughtful reads, documentaries, and visual awareness campaigns worth sharing.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                soundEngine.playSparkle();
-                setShowAddArticle(!showAddArticle);
-              }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs font-semibold uppercase tracking-wider shadow-md shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 border border-white/20"
-            >
-              {showAddArticle ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              <span>{showAddArticle ? 'Cancel' : '+ Share Something Worth Knowing'}</span>
-            </button>
-          </div>
-
-          {/* Add Article Form */}
-          {showAddArticle && (
-            <div className="max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] bg-[#140d2b]/95 border border-purple-400/30 shadow-2xl backdrop-blur-2xl space-y-6 animate-scale-up">
-              <div className="border-b border-purple-400/20 pb-4">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-purple-300">
-                  New Resource Entry
-                </span>
-                <h3 className="font-serif text-2xl font-bold text-white mt-1">
-                  Share an Article, Video or Campaign
-                </h3>
-              </div>
-
-              <form onSubmit={handleCreateArticle} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-purple-200">
-                      Title *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. How Journaling Clarifies Mental Clutter"
-                      value={articleTitle}
-                      onChange={(e) => setArticleTitle(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-purple-200">
-                      Source / Creator
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Behance, TED, The Atlantic, Mind"
-                      value={articleSource}
-                      onChange={(e) => setArticleSource(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-purple-200">
-                      Link / URL *
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://..."
-                      value={articleLink}
-                      onChange={(e) => setArticleLink(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-purple-200">
-                      Format
-                    </label>
-                    <select
-                      value={articleType}
-                      onChange={(e) => setArticleType(e.target.value as any)}
-                      className="w-full garden-input"
-                    >
-                      <option value="article">Article / Essay</option>
-                      <option value="video">Video / Talk</option>
-                      <option value="post">Visual Campaign / Post</option>
-                      <option value="book">Book / Study</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-purple-200">
-                    Why It Matters (Personal Note) *
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Tell each other what stood out to you and why you wanted to share it..."
-                    value={articleWhy}
-                    onChange={(e) => setArticleWhy(e.target.value)}
-                    className="w-full garden-textarea"
-                  />
-                </div>
-
-                {/* Decorated Privacy Card */}
-                <DecoratedPrivacyToggle
-                  isShared={articleIsShared}
-                  onToggle={setArticleIsShared}
-                  partnerName={currentUser.username === 'noella' ? 'Solomon' : 'Noella'}
-                  sharedTitle="Share in Our World Corner"
-                  privateTitle="Save to My Private Reading List"
-                  sharedSubtitle="Visible to both Noella & Solomon for gentle mutual reflection"
-                  privateSubtitle="Saved only to your private personal collection"
-                />
-
-                <div className="flex items-center justify-end gap-3 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddArticle(false)}
-                    className="px-5 py-2.5 rounded-full text-xs font-medium text-slate-300 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    Share Entry 📖
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Articles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* 5. Tab Content: Interesting Facts & Articles */}
+        {activeTab === 'facts' && (
+          <div className={styles.cardsGrid}>
             {articles.map((art) => (
-              <div
-                key={art.id}
-                className="group relative p-6 rounded-[1.75rem] bg-[#140c26]/85 hover:bg-[#1a1032]/95 border border-white/10 hover:border-purple-400/40 shadow-xl hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 backdrop-blur-xl flex flex-col justify-between"
-              >
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-400/30 uppercase tracking-wider">
-                      {art.type} • {art.source}
-                    </span>
-
-                    {art.addedBy === currentUser.id && (
-                      <button
-                        onClick={() => handleDeleteArticle(art.id)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors p-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  <h4 className="font-serif text-lg font-bold text-white group-hover:text-purple-200 transition-colors leading-snug">
-                    {art.title}
-                  </h4>
-
-                  <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-400/15">
-                    <span className="text-[10px] font-mono text-purple-300 block font-semibold mb-1 uppercase tracking-wider">
-                      Why it matters 💡
-                    </span>
-                    <p className="text-xs text-purple-100/90 font-serif italic leading-relaxed">
-                      &ldquo;{art.whyItMatters}&rdquo;
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between gap-3">
+              <div key={art.id} className={styles.subCard}>
+                <span className={styles.subCardCategory}>
+                  {art.source || 'Curiosity'}
+                </span>
+                <h3 className={styles.subCardTitle}>{art.title}</h3>
+                <p className={styles.subCardDesc}>{art.whyItMatters}</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px' }}>
                   <a
                     href={art.link}
                     target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-purple-100 font-medium group-hover:underline underline-offset-4"
+                    rel="noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: 'var(--wld-cyan-light)',
+                      fontSize: '11.5px',
+                      textDecoration: 'none',
+                    }}
                   >
-                    <span>Read / View</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <span>Read Article</span>
+                    <ExternalLink className="w-3 h-3" />
                   </a>
-
-                  <span className="text-[10px] font-mono text-slate-400">
-                    From {art.addedByName || 'Solomon 🌿'}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setReaderData({
+                        title: art.title,
+                        subtitle: `Source: ${art.source}`,
+                        content: art.whyItMatters,
+                        tag: 'Things Worth Knowing',
+                        link: art.link,
+                      });
+                      setIsReaderOpen(true);
+                    }}
+                    className={styles.readMoreBtn}
+                    style={{ padding: '6px 14px', fontSize: '11.5px' }}
+                  >
+                    <span>Details</span>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ============================================================== */}
-      {/* PART 3: LET'S THINK ABOUT THIS                                 */}
-      {/* ============================================================== */}
-      {subTab === 'prompts' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
-                Quiet Reflections & Thought Prompts
-              </h3>
-              <p className="text-xs text-slate-300 font-light mt-0.5">
-                Questions where either person can share a perspective without pressure or expectation to agree.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                soundEngine.playSparkle();
-                setShowAddPrompt(!showAddPrompt);
-              }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs font-semibold uppercase tracking-wider shadow-md shadow-teal-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 border border-white/20"
-            >
-              {showAddPrompt ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              <span>{showAddPrompt ? 'Cancel' : '+ Propose a Prompt'}</span>
-            </button>
-          </div>
-
-          {/* Add Prompt Form */}
-          {showAddPrompt && (
-            <div className="max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] bg-[#140d2b]/95 border border-teal-400/30 shadow-2xl backdrop-blur-2xl space-y-6 animate-scale-up">
-              <div className="border-b border-teal-400/20 pb-4">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-teal-300">
-                  New Discussion Prompt
-                </span>
-                <h3 className="font-serif text-2xl font-bold text-white mt-1">
-                  Propose a Question to Think About
-                </h3>
-              </div>
-
-              <form onSubmit={handleCreatePrompt} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-teal-200">
-                    Prompt Question *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. What do you think people misunderstand about men's mental health?"
-                    value={newPromptText}
-                    onChange={(e) => setNewPromptText(e.target.value)}
-                    className="w-full garden-input"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-teal-200">
-                      Category
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Mental Health, Empathy, Daily Connection"
-                      value={newPromptCategory}
-                      onChange={(e) => setNewPromptCategory(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-mono uppercase tracking-wider text-teal-200">
-                      Context / Gentle Note (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Reflecting on invisible expectations..."
-                      value={newPromptNote}
-                      onChange={(e) => setNewPromptNote(e.target.value)}
-                      className="w-full garden-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddPrompt(false)}
-                    className="px-5 py-2.5 rounded-full text-xs font-medium text-slate-300 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-teal-500/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    Add Prompt ✨
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Prompts Cards */}
-          <div className="space-y-6">
-            {prompts.map((prompt) => (
-              <div
-                key={prompt.id}
-                className="p-6 sm:p-8 rounded-[2rem] bg-[#140c26]/90 border border-teal-400/25 shadow-xl backdrop-blur-xl space-y-6"
-              >
-                <div>
-                  <span className="text-[10px] font-mono px-3 py-1 rounded-full bg-teal-500/15 text-teal-300 border border-teal-400/30 uppercase tracking-widest">
-                    {prompt.category}
-                  </span>
-                  <h4 className="font-serif text-xl sm:text-2xl font-bold text-white mt-3 leading-snug">
-                    &ldquo;{prompt.promptText}&rdquo;
-                  </h4>
-                  {prompt.contextNote && (
-                    <p className="text-xs text-slate-300/80 font-light mt-1.5 italic">
-                      {prompt.contextNote}
-                    </p>
-                  )}
-                </div>
-
-                {/* Reflections List */}
-                <div className="space-y-3">
-                  {prompt.responses && prompt.responses.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {prompt.responses.map((resp) => (
-                        <div
-                          key={resp.id}
-                          className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-teal-400/30 transition-all space-y-2"
-                        >
-                          <div className="flex items-center justify-between text-[11px] font-mono text-teal-300">
-                            <span className="font-semibold">{resp.authorName}</span>
-                            <span className="text-slate-400">
-                              {new Date(resp.createdAt).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-xs sm:text-sm text-slate-200 font-serif italic leading-relaxed">
-                            &ldquo;{resp.reflection}&rdquo;
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">
-                      No thoughts shared yet. Be the first to jot down your perspective.
-                    </p>
-                  )}
-                </div>
-
-                {/* Add Reflection Box */}
-                {activePromptId === prompt.id ? (
-                  <div className="p-5 rounded-2xl bg-[#1b1035] border border-teal-400/30 space-y-4 animate-scale-up">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-teal-200">
-                        Sharing as {currentUser.displayName}
-                      </span>
-                      <button
-                        onClick={() => setActivePromptId(null)}
-                        className="text-slate-400 hover:text-white"
+        {/* 6. Tab Content: Causes & Small Actions */}
+        {activeTab === 'world' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className={styles.cardsGrid}>
+              {causes.map((c) => (
+                <div key={c.id} className={styles.subCard}>
+                  <span className={styles.subCardCategory}>{c.category}</span>
+                  <h3 className={styles.subCardTitle}>{c.title}</h3>
+                  <p className={styles.subCardDesc}>{c.whyItMatters}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px' }}>
+                    {c.resourceLink && (
+                      <a
+                        href={c.resourceLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          color: 'var(--wld-pink-light)',
+                          fontSize: '11.5px',
+                          textDecoration: 'none',
+                        }}
                       >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <textarea
-                      rows={3}
-                      value={promptReflectionText}
-                      onChange={(e) => setPromptReflectionText(e.target.value)}
-                      placeholder="Share your personal perspective, honestly and gently..."
-                      className="w-full garden-textarea"
-                    />
-
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => setActivePromptId(null)}
-                        className="px-4 py-2 text-xs text-slate-300 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleSubmitReflection(prompt.id)}
-                        className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-teal-500 hover:bg-teal-400 text-white text-xs font-semibold uppercase tracking-wider"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Post Perspective</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
+                        <span>{c.resourceName || 'Resource'}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
                     <button
+                      type="button"
                       onClick={() => {
                         soundEngine.playSparkle();
-                        setActivePromptId(prompt.id);
-                        setPromptReflectionText('');
+                        setReaderData({
+                          title: c.title,
+                          subtitle: c.category,
+                          content: `${c.description}\n\nWhy it matters to us:\n${c.whyItMatters}`,
+                          tag: 'Causes That Matter',
+                          link: c.resourceLink,
+                        });
+                        setIsReaderOpen(true);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-teal-400/30 text-teal-200 text-xs font-medium transition-all"
+                      className={styles.readMoreBtn}
+                      style={{ padding: '6px 14px', fontSize: '11.5px' }}
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Share your perspective</span>
+                      <span>Learn More</span>
                     </button>
                   </div>
-                )}
+                </div>
+              ))}
+            </div>
+
+            {/* Small daily actions */}
+            {actions.length > 0 && (
+              <div style={{
+                background: 'rgba(20, 8, 36, 0.7)',
+                border: '1px solid var(--wld-border)',
+                borderRadius: '18px',
+                padding: '20px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}>
+                <span style={{ fontSize: '11px', fontFamily: 'monospace', textTransform: 'uppercase', color: 'var(--wld-lavender)' }}>
+                  Small Acts of Light & Empathy
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {actions.map((act) => (
+                    <div
+                      key={act.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: '1px solid rgba(218, 160, 255, 0.1)',
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontWeight: 600, color: '#fff', fontSize: '13px' }}>
+                          {act.title}
+                        </span>
+                        <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--wld-muted)' }}>
+                          {act.description}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleHeart(act.id)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '6px 12px',
+                          borderRadius: '999px',
+                          background: act.heartsCount > 0 ? 'rgba(240, 68, 181, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                          border: `1px solid ${act.heartsCount > 0 ? 'var(--wld-pink)' : 'var(--wld-border)'}`,
+                          color: act.heartsCount > 0 ? 'var(--wld-pink-light)' : 'var(--wld-muted)',
+                          fontSize: '11.5px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Heart className="w-3.5 h-3.5 fill-current" />
+                        <span>{act.heartsCount}</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+          </div>
+        )}
+
+        {/* Add Entry CTA */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '8px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playSparkle();
+              setShowAddModal(true);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '10px 20px',
+              borderRadius: '999px',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--wld-border)',
+              color: 'var(--wld-text)',
+              fontSize: '12.5px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Destination / Topic</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 7. Reader / Detail Modal */}
+      {isReaderOpen && readerData && (
+        <div className={styles.modalOverlay} onClick={() => setIsReaderOpen(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                {readerData.tag && (
+                  <span style={{ fontSize: '10.5px', fontFamily: 'monospace', textTransform: 'uppercase', color: 'var(--wld-cyan-light)' }}>
+                    {readerData.tag}
+                  </span>
+                )}
+                <h3 className={styles.modalTitle}>{readerData.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReaderOpen(false)}
+                className={styles.modalCloseBtn}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {readerData.image && (
+              <div style={{ borderRadius: '16px', overflow: 'hidden', height: '180px' }}>
+                <img
+                  src={readerData.image}
+                  alt={readerData.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            )}
+
+            {readerData.subtitle && (
+              <p style={{
+                margin: 0,
+                fontFamily: 'Playfair Display, serif',
+                fontStyle: 'italic',
+                color: 'var(--wld-pink-light)',
+                fontSize: '1.05rem',
+              }}>
+                {readerData.subtitle}
+              </p>
+            )}
+
+            <div style={{
+              background: 'rgba(15, 6, 26, 0.7)',
+              border: '1px solid var(--wld-border)',
+              borderRadius: '16px',
+              padding: '18px 22px',
+              maxHeight: '260px',
+              overflowY: 'auto',
+            }}>
+              <p style={{
+                margin: 0,
+                fontSize: '0.92rem',
+                lineHeight: 1.6,
+                color: '#fff',
+                whiteSpace: 'pre-line',
+              }}>
+                {readerData.content}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
+              {readerData.link && (
+                <a
+                  href={readerData.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '999px',
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    color: '#93c5fd',
+                    fontSize: '12px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>Explore Online</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsReaderOpen(false)}
+                className={styles.readMoreBtn}
+              >
+                <span>Close</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================== */}
-      {/* PART 4: SMALL THINGS THAT MATTER                               */}
-      {/* ============================================================== */}
-      {subTab === 'actions' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
-                Everyday Gentle Micro-Actions
-              </h3>
-              <p className="text-xs text-slate-300 font-light mt-0.5">
-                Simple everyday ways to make a genuine difference in how we treat each other.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                soundEngine.playSparkle();
-                setShowAddAction(!showAddAction);
-              }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-xs font-semibold uppercase tracking-wider shadow-md shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all shrink-0 border border-white/20"
-            >
-              {showAddAction ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              <span>{showAddAction ? 'Cancel' : '+ Share a Gentle Practice'}</span>
-            </button>
-          </div>
-
-          {/* Add Action Form */}
-          {showAddAction && (
-            <div className="max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] bg-[#140d2b]/95 border border-amber-400/30 shadow-2xl backdrop-blur-2xl space-y-6 animate-scale-up">
-              <div className="border-b border-amber-400/20 pb-4">
-                <span className="text-[11px] font-mono uppercase tracking-widest text-amber-300">
-                  New Gentle Practice
-                </span>
-                <h3 className="font-serif text-2xl font-bold text-white mt-1">
-                  Share a Small Thing That Matters
-                </h3>
-              </div>
-
-              <form onSubmit={handleCreateAction} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-amber-200">
-                    Practice Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Check in on someone with no agenda"
-                    value={actionTitle}
-                    onChange={(e) => setActionTitle(e.target.value)}
-                    className="w-full garden-input"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-amber-200">
-                    Category
-                  </label>
-                  <select
-                    value={actionCategory}
-                    onChange={(e) => setActionCategory(e.target.value as any)}
-                    className="w-full garden-input"
-                  >
-                    <option value="listening">Listening & Presence</option>
-                    <option value="care">Everyday Care</option>
-                    <option value="perspective">Respectful Perspective</option>
-                    <option value="learning">Helpful Learning & Resources</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-mono uppercase tracking-wider text-amber-200">
-                    Description *
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Describe how to practice this gently in everyday moments..."
-                    value={actionDesc}
-                    onChange={(e) => setActionDesc(e.target.value)}
-                    className="w-full garden-textarea"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddAction(false)}
-                    className="px-5 py-2.5 rounded-full text-xs font-medium text-slate-300 hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-600 text-white text-xs font-semibold uppercase tracking-wider shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    Add Practice 🌻
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Small Actions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {actions.map((act) => (
-              <div
-                key={act.id}
-                className="p-6 rounded-[1.75rem] bg-[#140c26]/85 hover:bg-[#1a1032]/95 border border-white/10 hover:border-amber-400/40 shadow-xl backdrop-blur-xl flex flex-col justify-between transition-all"
+      {/* 8. Add Destination / Topic Modal */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Add to The World Around Us</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className={styles.modalCloseBtn}
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] font-mono px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 uppercase tracking-widest">
-                      {act.category}
-                    </span>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-                    <button
-                      onClick={() => handleToggleHeart(act.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border transition-all ${
-                        act.hasHeartedByMe
-                          ? 'bg-rose-500/20 border-rose-400/40 text-rose-300 scale-105'
-                          : 'bg-white/[0.04] border-white/10 text-slate-400 hover:text-rose-300'
-                      }`}
-                      title="Heart this practice"
-                    >
-                      <Heart
-                        className={`w-3.5 h-3.5 ${
-                          act.hasHeartedByMe ? 'fill-rose-400 text-rose-400' : ''
-                        }`}
-                      />
-                      <span>{act.heartsCount || 0}</span>
-                    </button>
-                  </div>
-
-                  <h4 className="font-serif text-lg font-bold text-white leading-snug">
-                    {act.title}
-                  </h4>
-
-                  <p className="text-xs sm:text-sm text-slate-300/90 font-light leading-relaxed">
-                    {act.description}
-                  </p>
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-white/10 text-right">
-                  <span className="text-[10px] font-mono text-slate-400">
-                    Suggested by {act.suggestedByName || 'Noella ✨'}
-                  </span>
-                </div>
+            <form onSubmit={handleAddEntry} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--wld-muted)' }}>Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. Kyoto Cherry Blossom Trail or Ocean Conservation"
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    padding: '0 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(18, 5, 31, 0.75)',
+                    border: '1px solid var(--wld-border)',
+                    color: 'var(--wld-text)',
+                    outline: 'none',
+                  }}
+                />
               </div>
-            ))}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--wld-muted)' }}>Why It Inspires Us *</label>
+                <textarea
+                  required
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="Share what makes this special or why you want to discover it together..."
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(18, 5, 31, 0.75)',
+                    border: '1px solid var(--wld-border)',
+                    color: 'var(--wld-text)',
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--wld-muted)' }}>Reference Link (Optional)</label>
+                <input
+                  type="text"
+                  value={newLink}
+                  onChange={(e) => setNewLink(e.target.value)}
+                  placeholder="https://..."
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    padding: '0 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(18, 5, 31, 0.75)',
+                    border: '1px solid var(--wld-border)',
+                    color: 'var(--wld-text)',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{
+                    background: 'transparent',
+                    border: '0',
+                    color: 'var(--wld-muted)',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className={styles.readMoreBtn}>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Save to Our World</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

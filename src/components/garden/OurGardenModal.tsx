@@ -87,6 +87,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
       if (normalized === 'mood') normalized = 'moods';
       if (normalized === 'question') normalized = 'questions';
       if (normalized === 'capsules' || normalized === 'timecapsule') normalized = 'capsule';
+      if (normalized === 'theworld' || normalized === 'worldaroundus') normalized = 'world';
       setActiveTab(normalized as TabKey);
     }
   }, [initialTab, isOpen]);

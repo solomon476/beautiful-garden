@@ -1,0 +1,509 @@
+/* ==========================================================================
+   PERFECT TIME — THE WORLD AROUND US MODULE (SCOPED STYLES)
+   Phase 4: CSS Isolation & Exact Visual Alignment with 9-Module Design
+   ========================================================================== */
+
+.worldSection {
+  --wld-bg: #120924;
+  --wld-surface: #200e38;
+  --wld-surface-card: rgba(32, 13, 54, 0.82);
+  --wld-surface-hover: rgba(48, 18, 78, 0.92);
+
+  --wld-purple: #8d35bd;
+  --wld-lavender: #c69ae8;
+  --wld-pink: #f044b5;
+  --wld-pink-light: #ff8acb;
+  --wld-cyan: #06b6d4;
+  --wld-cyan-light: #67e8f9;
+  --wld-blue: #3b82f6;
+
+  --wld-text: #fff5ff;
+  --wld-muted: #cbb5dd;
+  --wld-muted-dark: #9e85b5;
+
+  --wld-border: rgba(218, 160, 255, 0.22);
+  --wld-border-hover: rgba(240, 68, 181, 0.45);
+  --wld-border-active: rgba(240, 68, 181, 0.9);
+
+  --wld-glass: rgba(28, 10, 48, 0.84);
+  --wld-radius-sm: 12px;
+  --wld-radius: 20px;
+  --wld-radius-lg: 26px;
+  --wld-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  width: 100%;
+  color: var(--wld-text);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: wldFadeIn 0.35s ease-out;
+}
+
+@keyframes wldFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   1. HERO BANNER — Panoramic cosmic header with 3D Earth globe artwork
+   ========================================================================== */
+
+.heroBanner {
+  position: relative;
+  isolation: isolate;
+  min-height: 190px;
+  padding: 30px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-radius: var(--wld-radius-lg);
+  border: 1px solid var(--wld-border);
+  overflow: hidden;
+  box-shadow: var(--wld-shadow);
+  background:
+    linear-gradient(115deg, rgba(16, 7, 32, 0.92) 0%, rgba(28, 14, 58, 0.78) 55%, rgba(14, 6, 28, 0.9) 100%),
+    url('/assets/garden/card_world.jpg') center / cover no-repeat;
+}
+
+.heroAmbientGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(240, 68, 181, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 82% 50%, rgba(6, 182, 212, 0.25) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.heroTagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--wld-lavender);
+}
+
+.heroTagDot {
+  color: var(--wld-pink-light);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+.heroTitleHeart {
+  font-family: sans-serif;
+  color: var(--wld-pink-light);
+  font-size: 0.85em;
+  filter: drop-shadow(0 0 10px rgba(240, 68, 181, 0.8));
+}
+
+.heroVerbs {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wld-muted);
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  color: var(--wld-text);
+  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero Right 3D Artwork Frame */
+.heroArtworkContainer {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.heroArtworkContainer:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(240, 68, 181, 0.3);
+}
+
+.heroArtworkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   2. FILTER PILLS NAV — Exactly matching master card:
+   Travel, Inspiration, Interesting Facts, Our World
+   ========================================================================== */
+
+.filterPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.filterPillsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.pillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--wld-border);
+  color: var(--wld-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pillBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--wld-pink-light);
+  transform: translateY(-1px);
+}
+
+.pillBtnActive {
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-weight: 650;
+  box-shadow: 0 4px 16px rgba(237, 50, 168, 0.35);
+}
+
+/* ==========================================================================
+   3. MAIN CONTENT PANEL & FEATURED CARD (Row 3, Col 3)
+   ========================================================================== */
+
+.mainPanel {
+  position: relative;
+  background: var(--wld-glass);
+  border: 1px solid var(--wld-border);
+  border-radius: var(--wld-radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--wld-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Featured Destination / Travel Card */
+.featuredCard {
+  background: var(--wld-surface-card);
+  border: 1px solid var(--wld-border);
+  border-radius: var(--wld-radius);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.featuredCard:hover {
+  background: var(--wld-surface-hover);
+  border-color: var(--wld-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.featuredImgContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  overflow: hidden;
+  background: rgba(20, 8, 36, 0.8);
+}
+
+.featuredImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.featuredCard:hover .featuredImg {
+  transform: scale(1.05);
+}
+
+.featuredBody {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.featuredTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--wld-cyan-light);
+}
+
+.featuredTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.featuredSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--wld-muted);
+  line-height: 1.45;
+}
+
+.featuredFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(218, 160, 255, 0.12);
+}
+
+.readMoreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 0;
+  box-shadow: 0 4px 16px rgba(225, 49, 170, 0.3);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.readMoreBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Secondary Cards Grid */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.subCard {
+  background: var(--wld-surface-card);
+  border: 1px solid var(--wld-border);
+  border-radius: var(--wld-radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.subCard:hover {
+  background: var(--wld-surface-hover);
+  border-color: var(--wld-border-hover);
+  transform: translateY(-2px);
+}
+
+.subCardCategory {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--wld-lavender);
+}
+
+.subCardTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.subCardDesc {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--wld-muted);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   4. MODALS & READERS
+   ========================================================================== */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 4, 18, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: wldFadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(28, 10, 48, 0.96);
+  border: 1px solid var(--wld-border);
+  border-radius: var(--wld-radius-lg);
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--wld-border);
+  padding-bottom: 14px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: 0;
+  color: var(--wld-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   5. RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .heroBanner {
+    padding: 24px 20px;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .heroContent {
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTitle {
+    justify-content: center;
+  }
+
+  .heroArtworkContainer {
+    width: 110px;
+    height: 110px;
+  }
+
+  .mainPanel {
+    padding: 20px 16px;
+  }
+
+  .featuredCard {
+    grid-template-columns: 1fr;
+  }
+
+  .featuredImgContainer {
+    min-height: 180px;
+  }
+
+  .readMoreBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
