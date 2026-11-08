@@ -195,18 +195,6 @@ export const OurTimeSection: React.FC = () => {
               <div className={styles.heroSubmeta}>
                 Plan • Remind • Experience • Cherish
               </div>
-
-              {/* Direct Left Column Add Trigger Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleOpenAdd}
-                  className={styles.heroTriggerBtn}
-                >
-                  <CalendarDays className="w-4 h-4 text-white" />
-                  <span>Suggest an Adventure 📅</span>
-                </button>
-              </div>
             </div>
           </div>
 

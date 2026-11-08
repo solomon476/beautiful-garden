@@ -270,18 +270,6 @@ export const ExchangeShelfSection: React.FC = () => {
               <div className={styles.heroSubmeta}>
                 PDF Uploads • Photos • Recommendations
               </div>
-
-              {/* Direct Left Column Add Trigger Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => handleOpenAdd('books')}
-                  className={styles.heroTriggerBtn}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span>Upload Book / PDF 📚</span>
-                </button>
-              </div>
             </div>
           </div>
 

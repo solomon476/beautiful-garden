@@ -168,18 +168,6 @@ export const LettersSection: React.FC = () => {
               <p className={styles.heroSubtitle}>
                 Quiet thoughts, long letters, and feelings you wish to keep in bloom.
               </p>
-
-              {/* Direct Left Column Add Trigger Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleStartCompose}
-                  className={styles.heroTriggerBtn}
-                >
-                  <PenLine className="w-4 h-4 text-white" />
-                  <span>Write New Letter ✉️</span>
-                </button>
-              </div>
             </div>
           </div>
 
@@ -207,7 +195,7 @@ export const LettersSection: React.FC = () => {
               className={styles.heroRightActionBtn}
             >
               <PenLine className="w-4 h-4 text-white" />
-              <span>Write New Letter</span>
+              <span>Write New Letter ✉️</span>
             </button>
           </div>
         </div>

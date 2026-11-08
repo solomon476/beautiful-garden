@@ -238,16 +238,18 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
 
           {/* Right Header Area: Dual Pictures of Noella & Solomon + Notification Bell + Quick Add + Close */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Add Studio Launcher Button (Desktop/Tablet) */}
-            <button
-              onClick={() => handleOpenQuickAdd('photo')}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 shrink-0"
-              aria-label="Add to Our Garden"
-              title="Add photos, suggest a date, upload audio/book, write letter"
-            >
-              <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
-              <span>Add to Garden</span>
-            </button>
+            {/* Quick Add Studio Launcher Button (Shown on Sanctuary Dashboard) */}
+            {activeTab === 'garden' && (
+              <button
+                onClick={() => handleOpenQuickAdd('photo')}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 shrink-0"
+                aria-label="Add to Our Garden"
+                title="Add photos, suggest a date, upload audio/book, write letter"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
+                <span>Add to Garden</span>
+              </button>
+            )}
 
             {/* Visual Dual Photo Avatar Switcher */}
             <UserSwitcher currentUser={currentUser} compact={true} />
@@ -304,7 +306,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           }`}
           style={{ minHeight: 0 }}
         >
-          {/* Quick Back to Sanctuary Bar with Direct Add Shortcut for Active Section */}
+          {/* Quick Back to Sanctuary Bar */}
           {activeTab !== 'garden' && (
             <div className="flex items-center justify-between pb-2.5 border-b border-purple-400/15 gap-2">
               <button
@@ -314,63 +316,6 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
                 <ArrowLeft className="w-3.5 h-3.5 text-pink-300" />
                 <span>← Back to Sanctuary</span>
               </button>
-
-              <div className="flex items-center gap-2">
-                {activeTab === 'petals' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('letter')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>+ Leave Petal Note 🌸</span>
-                  </button>
-                )}
-                {activeTab === 'letters' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('letter')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <PenLine className="w-3.5 h-3.5" />
-                    <span>+ Write Letter ✉️</span>
-                  </button>
-                )}
-                {activeTab === 'archive' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('photo')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-semibold shadow-md shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>+ Upload Photo 📸</span>
-                  </button>
-                )}
-                {activeTab === 'time' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('date')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-xs font-semibold shadow-md shadow-teal-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <CalendarDays className="w-3.5 h-3.5" />
-                    <span>+ Suggest Date 📅</span>
-                  </button>
-                )}
-                {activeTab === 'sound' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('song')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-semibold shadow-md shadow-purple-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <Headphones className="w-3.5 h-3.5" />
-                    <span>+ Add Music / Memo 🎵</span>
-                  </button>
-                )}
-                {activeTab === 'shelf' && (
-                  <button
-                    onClick={() => handleOpenQuickAdd('book')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold shadow-md shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>+ Upload Book / PDF 📚</span>
-                  </button>
-                )}
-              </div>
             </div>
           )}
 

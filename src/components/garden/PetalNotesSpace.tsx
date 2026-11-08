@@ -138,18 +138,6 @@ export const PetalNotesSpace: React.FC = () => {
               <div className={styles.heroSubmeta}>
                 Whisper • Unfurl • Cherish • Bloom
               </div>
-
-              {/* Direct Left Column Add Trigger Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleOpenCompose}
-                  className={styles.heroTriggerBtn}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span>Leave a Petal Note 🌸</span>
-                </button>
-              </div>
             </div>
           </div>
 

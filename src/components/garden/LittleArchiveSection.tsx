@@ -241,18 +241,6 @@ export const LittleArchiveSection: React.FC = () => {
               <div className={styles.heroSubmeta}>
                 Upload from Phone • Voice Notes • Memories
               </div>
-
-              {/* Direct Left Column Add Trigger Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleOpenAdd}
-                  className={styles.heroTriggerBtn}
-                >
-                  <Plus className="w-4 h-4 text-white" />
-                  <span>Upload Photo Memory 📷</span>
-                </button>
-              </div>
             </div>
           </div>
 
