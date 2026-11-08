@@ -1,0 +1,804 @@
+/* ==========================================================================
+   PERFECT TIME — OUR TIME MODULE DESIGN SYSTEM (CSS Module)
+   Shared calendar, hangout proposals, adventures, and RSVPs.
+   100% Scoped under .ourTimeSection to guarantee zero cross-module leakage.
+   ========================================================================== */
+
+.ourTimeSection {
+  /* Our Time Design Tokens */
+  --tim-bg: #0d1e28;
+  --tim-surface: #10242c;
+  --tim-surface-light: #16323c;
+  --tim-surface-card: rgba(16, 36, 44, 0.88);
+
+  --tim-teal: #14b8a6;
+  --tim-teal-light: #5eead4;
+  --tim-teal-dark: #0f766e;
+  --tim-emerald: #10b981;
+  --tim-pink: #f472b6;
+
+  --tim-text: #f0fdfa;
+  --tim-muted: #b2d8d8;
+  --tim-muted-dark: #6e9d9d;
+
+  --tim-border: rgba(20, 184, 166, 0.28);
+  --tim-border-glow: rgba(20, 184, 166, 0.55);
+
+  --tim-radius: 24px;
+  --tim-radius-sm: 16px;
+  --tim-radius-pill: 9999px;
+
+  --tim-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+
+  min-height: 100%;
+  color: var(--tim-text);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3.5rem;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   1. Panoramic Themed Hero Banner (.heroBanner)
+   ========================================================================== */
+.heroBanner {
+  position: relative;
+  border-radius: var(--tim-radius);
+  overflow: hidden;
+  border: 1px solid var(--tim-border);
+  box-shadow: var(--tim-shadow);
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(16, 36, 44, 0.94) 0%, rgba(10, 20, 30, 0.98) 100%);
+  isolation: isolate;
+}
+
+.heroAmbientBg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/garden/card_time.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.heroRadialGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(20, 184, 166, 0.25) 0%, transparent 60%),
+    radial-gradient(circle at 85% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.heroLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.heroArtwork {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--tim-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.heroArtwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroArtwork:hover img {
+  transform: scale(1.1);
+}
+
+.heroArtworkOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(16, 36, 44, 0.8) 0%, transparent 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroArtworkOverlay svg {
+  color: var(--tim-teal-light);
+  filter: drop-shadow(0 2px 8px rgba(20, 184, 166, 0.6));
+  animation: pulseCalendar 2.5s infinite;
+}
+
+@keyframes pulseCalendar {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.heroTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--tim-radius-pill);
+  background: rgba(20, 184, 166, 0.18);
+  border: 1px solid var(--tim-border);
+  color: var(--tim-teal-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: fit-content;
+}
+
+.heroTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.15;
+}
+
+.heroTitleHeart {
+  color: var(--tim-pink);
+  font-family: sans-serif;
+  font-size: 0.85em;
+}
+
+.heroSubtitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+  color: var(--tim-muted);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.heroSubmeta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tim-teal-light);
+  opacity: 0.75;
+}
+
+.heroTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--tim-radius-pill);
+  background: linear-gradient(135deg, #14b8a6 0%, #10b981 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 18px rgba(20, 184, 166, 0.4);
+  cursor: pointer;
+  transition: all 200ms ease;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.heroTriggerBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.6);
+  filter: brightness(1.08);
+}
+
+.heroRightBtnWrapper {
+  flex-shrink: 0;
+}
+
+.heroRightActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--tim-radius-pill);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+  cursor: pointer;
+  transition: all 220ms ease;
+  white-space: nowrap;
+}
+
+.heroRightActionBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.6);
+  filter: brightness(1.08);
+}
+
+/* ==========================================================================
+   2. Spotlight Card (.spotlightCard)
+   ========================================================================== */
+.spotlightCard {
+  padding: 18px 22px;
+  border-radius: var(--tim-radius);
+  background: linear-gradient(90deg, rgba(20, 184, 166, 0.18) 0%, rgba(16, 185, 129, 0.12) 50%, rgba(244, 114, 182, 0.12) 100%);
+  border: 1px solid var(--tim-border-glow);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--tim-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.spotlightLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.spotlightIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tim-radius-sm);
+  background: rgba(20, 184, 166, 0.25);
+  border: 1px solid var(--tim-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tim-teal-light);
+  flex-shrink: 0;
+}
+
+.spotlightMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spotlightTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.spotlightSub {
+  font-size: 0.8rem;
+  color: var(--tim-muted);
+  margin: 0;
+}
+
+.calendarLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--tim-radius-pill);
+  background: rgba(20, 184, 166, 0.22);
+  border: 1px solid var(--tim-border);
+  color: var(--tim-teal-light);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.calendarLinkBtn:hover {
+  background: rgba(20, 184, 166, 0.35);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   3. Filter Row (.filterRow)
+   ========================================================================== */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.filterPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: var(--tim-radius-pill);
+  font-size: 0.775rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--tim-muted);
+  white-space: nowrap;
+}
+
+.filterPill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.filterPillActive {
+  background: rgba(20, 184, 166, 0.3) !important;
+  border-color: rgba(20, 184, 166, 0.6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(20, 184, 166, 0.3);
+}
+
+/* ==========================================================================
+   4. Plans Grid (.plansGrid) — 2 Columns Responsive
+   ========================================================================== */
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.planCard {
+  position: relative;
+  border-radius: var(--tim-radius);
+  padding: 22px 24px;
+  background: var(--tim-surface-card);
+  border: 1px solid var(--tim-border);
+  box-shadow: var(--tim-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.planCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--tim-border-glow);
+  box-shadow: 0 18px 45px -8px rgba(20, 184, 166, 0.28);
+}
+
+.planHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.planTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+  transition: color 180ms ease;
+}
+
+.planCard:hover .planTitle {
+  color: var(--tim-teal-light);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--tim-radius-pill);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--tim-muted);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reminderTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--tim-pink);
+  background: rgba(244, 114, 182, 0.12);
+  padding: 2px 8px;
+  border-radius: var(--tim-radius-pill);
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+
+.planDesc {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--tim-muted);
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.planFooter {
+  padding-top: 14px;
+  border-top: 1px solid rgba(20, 184, 166, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.authorRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.authorAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--tim-radius-pill);
+  background: rgba(20, 184, 166, 0.2);
+  border: 1px solid var(--tim-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--tim-teal-light);
+  flex-shrink: 0;
+}
+
+.authorName {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--tim-teal-light);
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardActionBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.calIconBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--tim-radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--tim-teal-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.calIconBtn:hover {
+  background: rgba(20, 184, 166, 0.3);
+  color: #ffffff;
+}
+
+.detailsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--tim-radius-pill);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.85) 0%, rgba(16, 185, 129, 0.85) 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.detailsBtn:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.1);
+}
+
+/* Empty State Card */
+.emptyStateCard {
+  background: linear-gradient(150deg, #10242c 0%, #0a141e 100%);
+  border: 1px solid var(--tim-border);
+  border-radius: var(--tim-radius);
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--tim-shadow);
+}
+
+/* ==========================================================================
+   5. Modals (Details & Add Adventure Form)
+   ========================================================================== */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 3, 14, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 28px;
+  padding: 28px;
+  background: linear-gradient(150deg, #10242c 0%, #081218 100%);
+  border: 1px solid var(--tim-border-glow);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(20, 184, 166, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(20, 184, 166, 0.2);
+}
+
+.modalHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalCloseBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--tim-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--tim-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  color: #ffffff;
+}
+
+.statusChangeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.statusChoiceBtn {
+  padding: 8px 10px;
+  border-radius: var(--tim-radius-sm);
+  font-size: 0.775rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--tim-muted);
+}
+
+.statusChoiceBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.statusChoiceActive {
+  background: rgba(20, 184, 166, 0.3) !important;
+  border-color: rgba(20, 184, 166, 0.6) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tim-teal-light);
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.formInput {
+  width: 100%;
+  border-radius: var(--tim-radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--tim-border);
+  padding: 12px 16px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 180ms ease;
+}
+
+.formInput:focus {
+  border-color: var(--tim-teal);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+}
+
+.reminderBox {
+  padding: 12px 16px;
+  border-radius: var(--tim-radius-sm);
+  background: rgba(20, 184, 166, 0.12);
+  border: 1px solid var(--tim-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.formFooter {
+  padding-top: 14px;
+  border-top: 1px solid rgba(20, 184, 166, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  border-radius: var(--tim-radius-pill);
+  background: transparent;
+  border: 0;
+  color: var(--tim-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 26px;
+  border-radius: var(--tim-radius-pill);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(20, 184, 166, 0.6);
+  filter: brightness(1.08);
+}
+
+/* ==========================================================================
+   6. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 860px) {
+  .heroContent {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .heroRightBtnWrapper {
+    width: 100%;
+  }
+
+  .heroRightActionBtn {
+    width: 100%;
+  }
+
+  .plansGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
