@@ -1628,6 +1628,20 @@
   box-shadow: 0 4px 14px rgba(237, 50, 168, 0.35);
 }
 
+@media (max-width: 480px) {
+  .sgSharingOptions {
+    gap: 4px;
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+  .sgOption {
+    padding: 8px 4px;
+    font-size: 11px;
+    gap: 4px;
+    white-space: nowrap;
+  }
+}
+
 .btnSpotify {
   display: inline-flex;
   align-items: center;

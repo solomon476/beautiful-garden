@@ -12,6 +12,7 @@ import {
   Mic,
   ChevronLeft,
   ChevronRight,
+  RotateCw,
 } from 'lucide-react';
 import { memoryArchiveService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
@@ -22,6 +23,37 @@ import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
 import styles from './LittleArchiveSection.module.css';
 
+export const formatMemoryDisplayTitle = (
+  title: string,
+  caption?: string,
+  dateTaken?: string
+): string => {
+  if (!title) return 'Treasured Keepsake ♡';
+  const trimmed = title.trim();
+
+  // WhatsApp auto exports: e.g. "WhatsApp Image 2026-10-01 at 14.51.24(1)"
+  const whatsAppMatch = trimmed.match(/^WhatsApp Image (\d{4}-\d{2}-\d{2})/i);
+  if (whatsAppMatch) {
+    if (caption && caption.trim().length > 0) return caption.trim();
+    return `Special Day • ${whatsAppMatch[1]}`;
+  }
+
+  // Pure numbers: e.g. "65645", "30778", "66018"
+  if (/^\d+$/.test(trimmed)) {
+    if (caption && caption.trim().length > 0) return caption.trim();
+    if (dateTaken && dateTaken !== 'Special Day') return `Memory from ${dateTaken}`;
+    return 'Treasured Keepsake ♡';
+  }
+
+  // Raw file extensions: e.g. "IMG_20261001.jpg"
+  if (/\.(jpe?g|png|webp|gif|heic)$/i.test(trimmed)) {
+    if (caption && caption.trim().length > 0) return caption.trim();
+    return trimmed.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+  }
+
+  return trimmed;
+};
+
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>(() =>
     memoryArchiveService.getCachedMemories()
@@ -31,6 +63,9 @@ export const LittleArchiveSection: React.FC = () => {
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'shared' | 'private'>('all');
+
+  // Interactive Flip Cards (Touch to see note on picture)
+  const [flippedMemories, setFlippedMemories] = useState<Record<string, boolean>>({});
 
   // Form state
   const [isAdding, setIsAdding] = useState<boolean>(false);
@@ -149,12 +184,18 @@ export const LittleArchiveSection: React.FC = () => {
   };
 
   const handleDelete = async (memory: MemoryEntry) => {
-    if (memory.contributorId !== currentUser.id) return;
-    if (window.confirm(`Delete keepsake "${memory.title}"?`)) {
+    const displayTitle = formatMemoryDisplayTitle(memory.title, memory.caption, memory.dateTaken);
+    if (window.confirm(`Delete keepsake "${displayTitle}"?`)) {
+      soundEngine.playSparkle();
       await memoryArchiveService.deleteMemory(memory.id);
       setLightboxMemory(null);
       await loadMemories();
     }
+  };
+
+  const handleTouchCard = (id: string) => {
+    soundEngine.playSparkle();
+    setFlippedMemories((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleToggleReaction = (mem: MemoryEntry) => {
@@ -335,64 +376,166 @@ export const LittleArchiveSection: React.FC = () => {
         >
           {filteredMemories.map((mem) => {
             const isAddedByMe = mem.contributorId === currentUser.id;
+            const displayTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
+            const isFlipped = Boolean(flippedMemories[mem.id]);
 
             return (
               <div key={mem.id} className={styles.memoryCard}>
-                {/* Photo Thumbnail */}
+                {/* 3D Flip Photo Container (Touch to see note on picture) */}
                 <div
-                  onClick={() => {
-                    soundEngine.playSparkle();
-                    setLightboxMemory(mem);
-                  }}
                   className={styles.cardThumbContainer}
+                  onClick={() => handleTouchCard(mem.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTouchCard(mem.id);
+                    }
+                  }}
+                  aria-label={`Photo memory: ${displayTitle}. Touch to flip.`}
                 >
-                  <img
-                    src={mem.photoUrl}
-                    alt={mem.title}
-                    className={styles.cardThumbImage}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
-                    }}
-                  />
-                  <div className={styles.cardThumbOverlay} />
+                  <div className={`${styles.thumbFlipper} ${isFlipped ? styles.isFlipped : ''}`}>
+                    {/* Front of Photo */}
+                    <div className={styles.thumbFront}>
+                      {/* Ambient Blur Backdrop (Eliminates harsh black bars) */}
+                      <img
+                        src={mem.photoUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className={styles.cardThumbAmbient}
+                        loading="lazy"
+                      />
 
-                  {/* Pinned Marker Badge */}
-                  <span className={styles.pinnedBadge}>
-                    <span>📌 Pinned</span>
-                  </span>
+                      {/* Main Photo (Heads, faces, and smiles centered at 15%) */}
+                      <img
+                        src={mem.photoUrl}
+                        alt={displayTitle}
+                        className={styles.cardThumbImage}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
+                        }}
+                      />
+                      <div className={styles.cardThumbOverlay} />
 
-                  {/* Privacy Badge */}
-                  <span
-                    className={`${styles.privacyPill} ${
-                      mem.isShared ? styles.privacyPillShared : styles.privacyPillPrivate
-                    }`}
-                  >
-                    {mem.isShared ? (
-                      <Globe2 className="w-3 h-3 text-pink-300" />
-                    ) : (
-                      <Lock className="w-3 h-3" />
-                    )}
-                    <span>{mem.isShared ? 'Shared' : 'Private'}</span>
-                  </span>
+                      {/* Pinned Marker Badge */}
+                      <span className={styles.pinnedBadge}>
+                        <span>📌 Pinned</span>
+                      </span>
 
-                  {/* Date Badge */}
-                  {mem.dateTaken && (
-                    <span className={styles.dateBadge}>
-                      📅 {mem.dateTaken}
-                    </span>
-                  )}
+                      {/* Privacy Badge */}
+                      <span
+                        className={`${styles.privacyPill} ${
+                          mem.isShared ? styles.privacyPillShared : styles.privacyPillPrivate
+                        }`}
+                      >
+                        {mem.isShared ? (
+                          <Globe2 className="w-3 h-3 text-pink-300" />
+                        ) : (
+                          <Lock className="w-3 h-3" />
+                        )}
+                        <span>{mem.isShared ? 'Shared' : 'Private'}</span>
+                      </span>
+
+                      {/* Date Badge */}
+                      {mem.dateTaken && (
+                        <span className={styles.dateBadge}>
+                          📅 {mem.dateTaken}
+                        </span>
+                      )}
+
+                      {/* Touch To See Note Badge */}
+                      <span className={styles.cardTapHint}>
+                        <span>✍️ Touch for note</span>
+                      </span>
+                    </div>
+
+                    {/* Back of Photo (Interactive Keepsake Note) */}
+                    <div
+                      className={styles.thumbBack}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Top Header */}
+                      <div className={styles.thumbBackHeader}>
+                        <span className="text-[10px] font-mono text-pink-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                          <span>Keepsake Note 💌</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleTouchCard(mem.id)}
+                          className="p-1 rounded-full text-pink-300/80 hover:text-white transition-colors cursor-pointer"
+                          title="Flip back to photo"
+                        >
+                          <RotateCw className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Clean Display Title */}
+                      <h4 className={styles.thumbBackTitle} title={displayTitle}>
+                        {displayTitle}
+                      </h4>
+
+                      {/* Handwritten Romantic Note */}
+                      <div className={styles.thumbBackNoteCard}>
+                        <p className={styles.thumbBackCaption}>
+                          “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
+                        </p>
+                      </div>
+
+                      {/* Submeta */}
+                      <div className={styles.thumbBackMeta}>
+                        <span>📅 {mem.dateTaken || 'Special Day'}</span>
+                        <span className="text-pink-300">By {isAddedByMe ? 'You' : mem.contributorName || partner.displayName}</span>
+                      </div>
+
+                      {/* Action Buttons on Note */}
+                      <div className={styles.thumbBackActions}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundEngine.playSparkle();
+                            setLightboxMemory(mem);
+                          }}
+                          className="flex-1 py-1 px-2 rounded-lg bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                        >
+                          <ZoomIn className="w-3 h-3" />
+                          <span>Fullscreen</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(mem)}
+                          className="py-1 px-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/30 text-rose-300 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                          title="Delete memory"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleTouchCard(mem.id)}
+                          className="py-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                        >
+                          <RotateCw className="w-3 h-3" />
+                          <span>Flip</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Details */}
                 <div className={styles.cardBody}>
                   <div className={styles.cardMetaGroup}>
                     <h3
-                      onClick={() => setLightboxMemory(mem)}
+                      onClick={() => handleTouchCard(mem.id)}
                       className={styles.cardTitle}
+                      title={displayTitle}
                     >
-                      {mem.title}
+                      {displayTitle}
                     </h3>
                     {mem.caption && (
                       <p className={styles.cardCaption}>
@@ -406,7 +549,7 @@ export const LittleArchiveSection: React.FC = () => {
                     <div style={{ paddingTop: '8px' }}>
                       <GardenAudioPlayer
                         src={mem.voiceNoteUrl}
-                        title={`Voice Memo: ${mem.title}`}
+                        title={`Voice Memo: ${displayTitle}`}
                         subtitle={`Recorded by ${mem.contributorName || 'Garden'}`}
                         isVoiceNote={true}
                       />
@@ -430,11 +573,23 @@ export const LittleArchiveSection: React.FC = () => {
 
                       <button
                         type="button"
-                        onClick={() => setLightboxMemory(mem)}
+                        onClick={() => {
+                          soundEngine.playSparkle();
+                          setLightboxMemory(mem);
+                        }}
                         className={styles.zoomBtn}
                         title="View photo"
                       >
                         <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(mem)}
+                        className={styles.cardDeleteBtn}
+                        title="Delete keepsake"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -459,7 +614,7 @@ export const LittleArchiveSection: React.FC = () => {
               <div className={styles.modalHeaderTitleGroup}>
                 <Camera className="w-4 h-4 text-pink-300" />
                 <h3 className="font-serif text-lg font-bold text-white truncate">
-                  {lightboxMemory.title}
+                  {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                 </h3>
               </div>
               <button
@@ -474,7 +629,13 @@ export const LittleArchiveSection: React.FC = () => {
             <div className={styles.lightboxImageStage}>
               <img
                 src={lightboxMemory.photoUrl}
-                alt={lightboxMemory.title}
+                alt=""
+                aria-hidden="true"
+                className={styles.cardThumbAmbient}
+              />
+              <img
+                src={lightboxMemory.photoUrl}
+                alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
               />
             </div>
 
@@ -487,7 +648,7 @@ export const LittleArchiveSection: React.FC = () => {
             {lightboxMemory.voiceNoteUrl && (
               <GardenAudioPlayer
                 src={lightboxMemory.voiceNoteUrl}
-                title={`Voice Note: ${lightboxMemory.title}`}
+                title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
                 subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
                 isVoiceNote={true}
               />
@@ -533,20 +694,14 @@ export const LittleArchiveSection: React.FC = () => {
             )}
 
             <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-              {lightboxMemory.contributorId === currentUser.id ? (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(lightboxMemory)}
-                  className="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete</span>
-                </button>
-              ) : (
-                <span className="text-pink-300 font-mono">
-                  From {lightboxMemory.contributorName}
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(lightboxMemory)}
+                className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Memory</span>
+              </button>
 
               <button
                 type="button"

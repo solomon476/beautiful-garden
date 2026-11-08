@@ -1058,16 +1058,14 @@ export const memoryArchiveService = {
   },
 
   async deleteMemory(id: string): Promise<void> {
-    const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('garden_memories').delete().eq('id', id).eq('contributor_id', user.id);
+      await supabase.from('garden_memories').delete().eq('id', id);
     }
     const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    const target = all.find((m) => m.id === id);
-    if (target && target.contributorId !== user.id) {
-      throw new Error('Unauthorized: You can only delete memories you added.');
-    }
     saveLocal(STORAGE_KEYS.MEMORIES, all.filter((m) => m.id !== id));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
+    }
   },
 };
 
