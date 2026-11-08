@@ -10,6 +10,7 @@ import type {
   SongEntry,
   ShelfEntry,
   MemoryEntry,
+  DeletedMemoryItem,
   PetalNoteEntry,
   HangoutEntry,
   QuestionResponseEntry,
@@ -327,6 +328,8 @@ const STORAGE_KEYS = {
   SONGS: 'perfect_time_songs',
   SHELF: 'perfect_time_shelf',
   MEMORIES: 'perfect_time_archive_memories',
+  DELETED_MEMORIES: 'perfect_time_deleted_memories_v1',
+  DELETED_MEMORY_IDS: 'perfect_time_deleted_memory_ids_v1',
   PETALS: 'perfect_time_petal_notes',
   HANGOUTS: 'perfect_time_hangouts',
   QUESTIONS: 'perfect_time_questions',
@@ -928,24 +931,30 @@ export const shelfService = {
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
 export const memoryArchiveService = {
+  getDeletedMemoryIds(): string[] {
+    return loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+  },
+
   getCachedMemories(): MemoryEntry[] {
     const user = authService.getCurrentUser();
+    const deletedIds = new Set(this.getDeletedMemoryIds());
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     const isAuthed = authService.isAuthenticated();
-    return localAll.filter((m) =>
-      isAuthed ? m.contributorId === user.id || m.isShared : m.isShared
-    );
+    return localAll
+      .filter((m) => !deletedIds.has(m.id))
+      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
   },
 
   async getMemories(): Promise<MemoryEntry[]> {
     const user = authService.getCurrentUser();
+    const deletedIds = new Set(this.getDeletedMemoryIds());
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     const isAuthed = authService.isAuthenticated();
-    const localVisible = localAll.filter((m) =>
-      isAuthed ? m.contributorId === user.id || m.isShared : m.isShared
-    );
+    const localVisible = localAll
+      .filter((m) => !deletedIds.has(m.id))
+      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
 
     if (isLiveSupabaseConfigured && supabase) {
       syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
@@ -955,18 +964,20 @@ export const memoryArchiveService = {
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        const cloudEntries: MemoryEntry[] = data.map((d: any) => ({
-          id: d.id,
-          contributorId: d.contributor_id,
-          contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-          title: d.title,
-          caption: d.caption,
-          description: d.description,
-          photoUrl: d.photo_url,
-          dateTaken: d.date_taken,
-          isShared: d.is_shared,
-          createdAt: d.created_at,
-        }));
+        const cloudEntries: MemoryEntry[] = data
+          .map((d: any) => ({
+            id: d.id,
+            contributorId: d.contributor_id,
+            contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            title: d.title,
+            caption: d.caption,
+            description: d.description,
+            photoUrl: d.photo_url,
+            dateTaken: d.date_taken,
+            isShared: d.is_shared,
+            createdAt: d.created_at,
+          }))
+          .filter((d) => !deletedIds.has(d.id));
 
         // Filter cloud entries by privacy (private memories only visible to contributor)
         const visibleCloudEntries = cloudEntries.filter((d) =>
@@ -1058,13 +1069,145 @@ export const memoryArchiveService = {
   },
 
   async deleteMemory(id: string): Promise<void> {
-    if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('garden_memories').delete().eq('id', id);
+    const user = authService.getCurrentUser();
+    // 1. Locate the item being deleted from local storage, defaults or memory store
+    const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
+    const target = localActive.find((m) => m.id === id);
+
+    // 2. Add ID to DELETED_MEMORY_IDS so it immediately disappears everywhere
+    const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveLocal(STORAGE_KEYS.DELETED_MEMORY_IDS, deletedIds);
     }
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    saveLocal(STORAGE_KEYS.MEMORIES, all.filter((m) => m.id !== id));
+
+    // 3. Move into Garden Recycle Bin with user attribution (Private on either side)
+    const binItems = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const alreadyInBin = binItems.some((b) => b.id === id);
+    if (!alreadyInBin) {
+      const deletedEntry: DeletedMemoryItem = {
+        id,
+        originalMemory: target || {
+          id,
+          contributorId: user.id,
+          contributorName: user.displayName,
+          title: 'Treasured Keepsake ♡',
+          photoUrl: '/assets/dreamy_night_garden.jpg',
+          isShared: true,
+          createdAt: new Date().toISOString(),
+        },
+        deletedAt: new Date().toISOString(),
+        deletedBy: user.id,
+      };
+      binItems.unshift(deletedEntry);
+      saveLocal(STORAGE_KEYS.DELETED_MEMORIES, binItems);
+    }
+
+    // 4. Remove from active local array
+    saveLocal(STORAGE_KEYS.MEMORIES, localActive.filter((m) => m.id !== id));
+
+    // 5. Delete from cloud database if available
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('garden_memories').delete().eq('id', id);
+      } catch (err) {
+        console.warn('[Archive] Cloud delete failed:', err);
+      }
+    }
+
+    // 6. Broadcast event so Archive, Scrapbook and More Tab Bin update instantly
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('garden-memories-updated'));
+      window.dispatchEvent(new Event('garden-memory-deleted'));
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+  },
+
+  // -------------------------------------------------------------
+  // Private Garden Recycle Bin Methods (Private per user)
+  // -------------------------------------------------------------
+  getDeletedMemories(userId?: string): DeletedMemoryItem[] {
+    const user = authService.getCurrentUser();
+    const targetUserId = userId || user.id;
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    // Completely private! Solomon only sees items deleted by Solomon; Noella sees items deleted by Noella.
+    return allDeleted.filter((item) => item.deletedBy === targetUserId);
+  },
+
+  getDeletedCount(userId?: string): number {
+    return this.getDeletedMemories(userId).length;
+  },
+
+  async restoreMemory(id: string): Promise<boolean> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const item = allDeleted.find((b) => b.id === id);
+    if (!item) return false;
+
+    // Remove from bin
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORIES,
+      allDeleted.filter((b) => b.id !== id)
+    );
+
+    // Remove from deleted IDs
+    const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORY_IDS,
+      deletedIds.filter((did) => did !== id)
+    );
+
+    // Add back to active memories
+    const active = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    if (!active.some((m) => m.id === item.originalMemory.id)) {
+      active.unshift(item.originalMemory);
+      saveLocal(STORAGE_KEYS.MEMORIES, active);
+    }
+
+    // Cloud re-add if available
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('garden_memories').upsert({
+          id: item.originalMemory.id,
+          contributor_id: item.originalMemory.contributorId,
+          title: item.originalMemory.title,
+          caption: item.originalMemory.caption,
+          description: item.originalMemory.description,
+          photo_url: item.originalMemory.photoUrl,
+          date_taken: item.originalMemory.dateTaken,
+          is_shared: item.originalMemory.isShared,
+        });
+      } catch (e) {
+        console.warn('Cloud restore error', e);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
+      window.dispatchEvent(new Event('garden-memory-added'));
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+
+    return true;
+  },
+
+  async permanentlyDelete(id: string): Promise<void> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORIES,
+      allDeleted.filter((b) => b.id !== id)
+    );
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+  },
+
+  async emptyBin(userId: string): Promise<void> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    // Keep other partner's deleted items untouched
+    const kept = allDeleted.filter((b) => b.deletedBy !== userId);
+    saveLocal(STORAGE_KEYS.DELETED_MEMORIES, kept);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-bin-updated'));
     }
   },
 };

@@ -167,17 +167,44 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
     : notifications;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div
+      className="relative inline-flex items-center justify-center shrink-0"
+      ref={dropdownRef}
+      style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px' }}
+    >
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="relative w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-pink-300/40 text-slate-200 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
+        className="relative rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-pink-300/40 text-slate-200 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
+        style={{
+          width: '36px',
+          height: '36px',
+          minWidth: '36px',
+          minHeight: '36px',
+          maxWidth: '36px',
+          maxHeight: '36px',
+          borderRadius: '50%',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
         aria-label="Garden Notifications"
         title="Garden Reminders & Notifications"
       >
         <Bell className="w-4 h-4 text-pink-200" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-md shadow-pink-500/50 animate-pulse border border-white/40">
+          <span
+            className="absolute rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold flex items-center justify-center shadow-md shadow-pink-500/50 animate-pulse border border-white/40"
+            style={{
+              top: '-2px',
+              right: '-2px',
+              minWidth: '16px',
+              height: '16px',
+              padding: '0 3px',
+              fontSize: '9px',
+            }}
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

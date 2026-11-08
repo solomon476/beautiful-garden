@@ -57,13 +57,18 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
     const handleUpdate = () => loadArchiveMemories();
     window.addEventListener('garden-memory-added', handleUpdate);
     window.addEventListener('garden-memory-deleted', handleUpdate);
+    window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
       window.removeEventListener('garden-memory-added', handleUpdate);
       window.removeEventListener('garden-memory-deleted', handleUpdate);
+      window.removeEventListener('garden-bin-updated', handleUpdate);
     };
   }, []);
 
-  const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories];
+  const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
+  const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories].filter(
+    (m) => !deletedIds.has(m.id)
+  );
 
   const handleOpenPhoto = (index: number) => {
     soundEngine.playChime(523.25, 1.2, 0.08);

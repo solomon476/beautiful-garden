@@ -134,9 +134,11 @@ export const LittleArchiveSection: React.FC = () => {
     });
     const handleUpdate = () => loadMemories();
     window.addEventListener('garden-memories-updated', handleUpdate);
+    window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
       unsubscribe();
       window.removeEventListener('garden-memories-updated', handleUpdate);
+      window.removeEventListener('garden-bin-updated', handleUpdate);
     };
   }, []);
 
@@ -213,20 +215,25 @@ export const LittleArchiveSection: React.FC = () => {
 
   const handleDelete = async (memory: MemoryEntry) => {
     const displayTitle = formatMemoryDisplayTitle(memory.title, memory.caption, memory.dateTaken);
-    if (window.confirm(`Delete keepsake "${displayTitle}"?`)) {
+    if (window.confirm(`Move "${displayTitle}" to Recycle Bin? You can restore it anytime from the More tab.`)) {
       soundEngine.playSparkle();
-      await memoryArchiveService.deleteMemory(memory.id);
       setLightboxMemory(null);
+      // Instantly remove from state for real-time visual feedback
+      setMemories((prev) => prev.filter((m) => m.id !== memory.id));
+      await memoryArchiveService.deleteMemory(memory.id);
       await loadMemories();
     }
   };
 
-  const filteredMemories = memories.filter((m) => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'shared') return m.isShared;
-    if (activeFilter === 'private') return !m.isShared;
-    return true;
-  });
+  const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
+  const filteredMemories = memories
+    .filter((m) => !deletedIds.has(m.id))
+    .filter((m) => {
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'shared') return m.isShared;
+      if (activeFilter === 'private') return !m.isShared;
+      return true;
+    });
 
   const currentLightboxIdx = lightboxMemory
     ? filteredMemories.findIndex((m) => m.id === lightboxMemory.id)
@@ -796,7 +803,7 @@ export const LittleArchiveSection: React.FC = () => {
                 className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Memory</span>
+                <span>Move to Bin</span>
               </button>
 
               <button

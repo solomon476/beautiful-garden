@@ -64,24 +64,60 @@ export const PartnerHeaderAvatar: React.FC<PartnerHeaderAvatarProps> = ({ curren
 
   return (
     <>
-      <div className="relative inline-block" ref={popoverRef}>
+      <div
+        className="relative inline-flex items-center justify-center shrink-0"
+        ref={popoverRef}
+        style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px' }}
+      >
         {/* Partner Avatar Button — Pure Visual Romance, Zero Text Clutter */}
         <button
           type="button"
           onClick={handleToggle}
-          className="relative p-[2px] rounded-full bg-gradient-to-tr from-pink-500 via-rose-400 to-purple-500 hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-500/20 cursor-pointer focus:outline-none focus:ring-2 focus:ring-pink-400/50"
+          className="relative rounded-full hover:scale-105 active:scale-95 transition-all shadow-md shadow-pink-500/20 cursor-pointer focus:outline-none"
+          style={{
+            width: '36px',
+            height: '36px',
+            minWidth: '36px',
+            minHeight: '36px',
+            maxWidth: '36px',
+            maxHeight: '36px',
+            borderRadius: '50%',
+            padding: '2px',
+            background: 'linear-gradient(135deg, #ec4899, #f43f5e, #a855f7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            border: 'none',
+          }}
           title={`Connected to ${partner.displayName} ♡ (Tap for status)`}
           aria-label={`Partner: ${partner.displayName}`}
         >
           <div
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-[#120726] border border-white/20"
-            style={{ width: '30px', height: '30px' }}
+            style={{
+              width: '32px',
+              height: '32px',
+              minWidth: '32px',
+              minHeight: '32px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              backgroundColor: '#120726',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             <img
               src={partner.avatarUrl}
               alt={partner.displayName}
-              className="w-full h-full object-cover"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%',
+                display: 'block',
+              }}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = '/assets/memories/photo-sun-portrait.jpg';
               }}
@@ -90,7 +126,18 @@ export const PartnerHeaderAvatar: React.FC<PartnerHeaderAvatarProps> = ({ curren
 
           {/* Glowing Connected Dot */}
           <span
-            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0d081e] shadow-sm animate-pulse"
+            style={{
+              position: 'absolute',
+              bottom: '1px',
+              right: '1px',
+              width: '9px',
+              height: '9px',
+              borderRadius: '50%',
+              backgroundColor: '#34d399',
+              border: '2px solid #0d081e',
+              boxShadow: '0 0 6px rgba(52, 211, 153, 0.8)',
+              zIndex: 10,
+            }}
             title="Connected in Sanctuary"
           />
         </button>

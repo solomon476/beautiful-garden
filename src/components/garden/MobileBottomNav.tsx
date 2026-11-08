@@ -16,12 +16,15 @@ import {
   Camera,
   KeyRound,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import { soundEngine } from '../../utils/audio';
 import { authService } from '../../services/authService';
+import { memoryArchiveService } from '../../services/gardenService';
 import { ChangeProfilePhotoModal } from './ChangeProfilePhotoModal';
 import { ChangePasscodeModal } from './ChangePasscodeModal';
 import { AuthModal } from './AuthModal';
+import { GardenBinModal } from './GardenBinModal';
 
 interface MobileBottomNavProps {
   currentView: 'home' | 'garden' | 'music' | 'archive' | 'more' | string;
@@ -38,15 +41,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const [isChangePhotoOpen, setIsChangePhotoOpen] = useState(false);
   const [isChangePasscodeOpen, setIsChangePasscodeOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isBinOpen, setIsBinOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
+  const [deletedCount, setDeletedCount] = useState(() => memoryArchiveService.getDeletedCount());
 
   useEffect(() => {
-    const unsub = authService.subscribeUser((u) => setCurrentUser(u));
+    const unsub = authService.subscribeUser((u) => {
+      setCurrentUser(u);
+      setDeletedCount(memoryArchiveService.getDeletedCount(u.id));
+    });
     const handleAvatarUpdate = () => setCurrentUser(authService.getCurrentUser());
+    const handleBinUpdate = () => setDeletedCount(memoryArchiveService.getDeletedCount());
     window.addEventListener('garden-profile-updated', handleAvatarUpdate);
+    window.addEventListener('garden-bin-updated', handleBinUpdate);
     return () => {
       unsub();
       window.removeEventListener('garden-profile-updated', handleAvatarUpdate);
+      window.removeEventListener('garden-bin-updated', handleBinUpdate);
     };
   }, []);
 
@@ -226,6 +237,43 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </div>
             </div>
 
+            {/* Private Garden Recycle Bin Button (Private on either side) */}
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playSparkle();
+                setIsBinOpen(true);
+              }}
+              className="w-full p-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-purple-500/15 to-pink-500/15 border border-pink-400/30 hover:border-pink-300/50 text-left flex items-center justify-between transition-all cursor-pointer active:scale-98 group shadow-sm"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform">
+                  <Trash2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-serif font-bold text-xs text-white flex items-center gap-1.5">
+                    <span>Garden Recycle Bin</span>
+                    <span className="text-[9.5px] font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-full border border-emerald-400/30">
+                      Private 🔒
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-pink-200/70 font-sans mt-0.5">
+                    {deletedCount > 0
+                      ? `${deletedCount} deleted item${deletedCount > 1 ? 's' : ''} • Tap to view or restore`
+                      : 'Restore or permanently delete photos'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-pink-300">
+                {deletedCount > 0 && (
+                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold flex items-center justify-center shadow-sm">
+                    {deletedCount}
+                  </span>
+                )}
+                <span>→</span>
+              </div>
+            </button>
+
             {/* 8 Features Grid */}
             <div className="grid grid-cols-2 gap-2.5">
               {moreFeatures.map((feat) => {
@@ -327,6 +375,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           setIsAuthModalOpen(false);
           setCurrentUser(authService.getCurrentUser());
         }}
+      />
+
+      {/* Private Garden Recycle Bin Modal */}
+      <GardenBinModal
+        isOpen={isBinOpen}
+        onClose={() => setIsBinOpen(false)}
+        currentUser={currentUser}
       />
     </>
   );

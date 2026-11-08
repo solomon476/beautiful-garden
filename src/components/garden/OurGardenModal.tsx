@@ -245,7 +245,10 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           </button>
 
           {/* Right Header Area: Balanced Notification Bell & Partner Avatar */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 pr-1">
+          <div
+            className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 pr-1"
+            style={{ display: 'flex', alignItems: 'center', alignSelf: 'center' }}
+          >
             {/* Quick Add Studio Launcher Button (Shown on Sanctuary Dashboard) */}
             {activeTab === 'garden' && (
               <button
