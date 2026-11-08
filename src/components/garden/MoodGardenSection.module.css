@@ -1,0 +1,765 @@
+/* ==========================================================================
+   PERFECT TIME — MOOD GARDEN MODULE (SCOPED STYLES)
+   Phase 4: CSS Isolation & Exact Visual Alignment with 9-Module Design
+   ========================================================================== */
+
+.moodSection {
+  --mood-bg: #140722;
+  --mood-surface: #240c3c;
+  --mood-surface-hover: #321152;
+  --mood-surface-card: rgba(38, 13, 62, 0.82);
+
+  --mood-purple: #8d35bd;
+  --mood-purple-dark: #19082c;
+  --mood-lavender: #c69ae8;
+  --mood-pink: #f044b5;
+  --mood-pink-light: #ff8acb;
+  --mood-rose: #f43f5e;
+
+  --mood-text: #fff5ff;
+  --mood-muted: #cbb5dd;
+  --mood-muted-dark: #9e85b5;
+
+  --mood-border: rgba(218, 160, 255, 0.22);
+  --mood-border-hover: rgba(240, 68, 181, 0.45);
+  --mood-border-active: rgba(240, 68, 181, 0.9);
+
+  --mood-glass: rgba(32, 11, 53, 0.82);
+  --mood-radius-sm: 12px;
+  --mood-radius: 20px;
+  --mood-radius-lg: 26px;
+  --mood-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  width: 100%;
+  color: var(--mood-text);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: moodFadeIn 0.35s ease-out;
+}
+
+@keyframes moodFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   1. HERO BANNER — Panoramic enchanted twilight header with romantic artwork
+   ========================================================================== */
+
+.heroBanner {
+  position: relative;
+  isolation: isolate;
+  min-height: 190px;
+  padding: 30px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-radius: var(--mood-radius-lg);
+  border: 1px solid var(--mood-border);
+  overflow: hidden;
+  box-shadow: var(--mood-shadow);
+  background:
+    linear-gradient(115deg, rgba(22, 7, 36, 0.9) 0%, rgba(42, 13, 68, 0.75) 55%, rgba(20, 6, 32, 0.88) 100%),
+    url('/assets/garden/mood_twilight_sunset_bg.jpg') center / cover no-repeat;
+}
+
+.heroAmbientGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(240, 68, 181, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 82% 50%, rgba(141, 53, 189, 0.25) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.heroTagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--mood-lavender);
+}
+
+.heroTagDot {
+  color: var(--mood-pink-light);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+.heroTitleHeart {
+  font-family: sans-serif;
+  color: var(--mood-pink-light);
+  font-size: 0.85em;
+  filter: drop-shadow(0 0 10px rgba(240, 68, 181, 0.8));
+}
+
+.heroVerbs {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mood-muted);
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  color: var(--mood-text);
+  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero Right 3D Artwork Frame */
+.heroArtworkContainer {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.heroArtworkContainer:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(240, 68, 181, 0.3);
+}
+
+.heroArtworkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroArtworkFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(circle, rgba(240, 68, 181, 0.3) 0%, rgba(20, 6, 32, 0.8) 100%);
+}
+
+.heroArtworkFallbackEmoji {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 12px rgba(240, 68, 181, 0.8));
+}
+
+/* ==========================================================================
+   2. MAIN INTERACTIVE PANEL — The Sanctuary Glass Card
+   ========================================================================== */
+
+.mainPanel {
+  position: relative;
+  background: var(--mood-glass);
+  border: 1px solid var(--mood-border);
+  border-radius: var(--mood-radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--mood-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.panelTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelTitleIcon {
+  font-size: 1.25rem;
+}
+
+.panelSubtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--mood-muted);
+}
+
+/* Right Header History & Privacy Action Pills */
+.panelHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.historyToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--mood-border);
+  color: var(--mood-text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.historyToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--mood-pink-light);
+  transform: translateY(-1px);
+}
+
+.privacyToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 15px;
+  border-radius: 999px;
+  background: rgba(240, 68, 181, 0.12);
+  border: 1px solid rgba(240, 68, 181, 0.35);
+  color: var(--mood-pink-light);
+  font-size: 11.5px;
+  font-family: ui-monospace, monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.privacyToggleBtn:hover {
+  background: rgba(240, 68, 181, 0.22);
+  border-color: var(--mood-pink);
+}
+
+/* ==========================================================================
+   3. 6 MOOD CARDS GRID (3 Columns x 2 Rows)
+   Matching the master visual: Happy, Calm, Loved, Thinking, Sad, Excited
+   ========================================================================== */
+
+.moodGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.moodCard {
+  position: relative;
+  border-radius: var(--mood-radius);
+  background: var(--mood-surface-card);
+  border: 1px solid var(--mood-border);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  user-select: none;
+  min-width: 0;
+  outline: none;
+}
+
+.moodCard:hover {
+  transform: translateY(-2px);
+  background: var(--mood-surface-hover);
+  border-color: var(--mood-border-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Selected state with vibrant romantic glow */
+.moodCardActive {
+  background: linear-gradient(135deg, rgba(240, 68, 181, 0.22) 0%, rgba(141, 53, 189, 0.28) 100%), var(--mood-surface-hover);
+  border-color: var(--mood-border-active);
+  box-shadow:
+    0 0 24px rgba(240, 68, 181, 0.32),
+    0 8px 25px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Icon / 3D Art Avatar */
+.moodCardArt {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px;
+  transition: transform 0.25s ease;
+}
+
+.moodCard:hover .moodCardArt {
+  transform: scale(1.08);
+}
+
+.moodCardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.moodCardEmoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* Text block */
+.moodCardBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.moodCardTitle {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.moodCardSubtitle {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--mood-muted);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selection radio or indicator */
+.moodCardIndicator {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(218, 160, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.moodCardActive .moodCardIndicator {
+  border-color: var(--mood-pink);
+  background: var(--mood-pink);
+  box-shadow: 0 0 10px rgba(240, 68, 181, 0.7);
+}
+
+.moodCardIndicatorInner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* ==========================================================================
+   4. BOTTOM INPUT & ACTION ROW
+   ========================================================================== */
+
+.actionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--mood-border);
+  padding-top: 20px;
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.noteInputWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.noteInputIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mood-lavender);
+  pointer-events: none;
+  font-size: 1rem;
+}
+
+.noteInput {
+  width: 100%;
+  height: 48px;
+  padding: 0 45px 0 44px;
+  border-radius: 999px;
+  background: rgba(18, 5, 31, 0.75);
+  border: 1px solid var(--mood-border);
+  color: var(--mood-text);
+  font-size: 0.92rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.noteInput::placeholder {
+  color: var(--mood-muted-dark);
+}
+
+.noteInput:focus {
+  border-color: var(--mood-pink);
+  box-shadow: 0 0 0 3px rgba(240, 68, 181, 0.18);
+}
+
+.charCount {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: var(--mood-muted-dark);
+  pointer-events: none;
+}
+
+.submitBtn {
+  height: 48px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(225, 49, 170, 0.32);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 28px rgba(225, 49, 170, 0.45);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Feedback banners */
+.feedbackBanner {
+  padding: 12px 18px;
+  border-radius: var(--mood-radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  animation: moodFadeIn 0.25s ease-out;
+}
+
+.feedbackSuccess {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #a7f3d0;
+}
+
+.feedbackError {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  color: #fecdd3;
+}
+
+/* ==========================================================================
+   5. MOOD HISTORY DRAWER (Deep Midnight Plum Glass)
+   ========================================================================== */
+
+.historyDrawer {
+  background: rgba(25, 8, 42, 0.92);
+  border: 1px solid var(--mood-border);
+  border-radius: var(--mood-radius);
+  padding: 22px 26px;
+  box-shadow: var(--mood-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: moodFadeIn 0.25s ease-out;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--mood-border);
+  padding-bottom: 14px;
+}
+
+.historyTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.historyTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.historySubtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--mood-muted);
+}
+
+.historyCloseBtn {
+  background: transparent;
+  border: 0;
+  color: var(--mood-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.historyCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(218, 160, 255, 0.12);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.historyItem:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(240, 68, 181, 0.3);
+}
+
+.historyItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.historyItemEmoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.historyItemLabel {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.historyItemDate {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: var(--mood-muted);
+}
+
+.historyItemNote {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--mood-pink-light);
+}
+
+.historyItemPrivacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.historyItemShared {
+  background: rgba(240, 68, 181, 0.15);
+  border: 1px solid rgba(240, 68, 181, 0.35);
+  color: var(--mood-pink-light);
+}
+
+.historyItemPrivate {
+  background: rgba(141, 53, 189, 0.15);
+  border: 1px solid rgba(141, 53, 189, 0.3);
+  color: var(--mood-lavender);
+}
+
+/* ==========================================================================
+   6. RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .moodGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .heroBanner {
+    padding: 24px 20px;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .heroContent {
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTitle {
+    justify-content: center;
+  }
+
+  .heroArtworkContainer {
+    width: 110px;
+    height: 110px;
+  }
+
+  .mainPanel {
+    padding: 20px 16px;
+  }
+
+  .panelHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .moodGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .inputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submitBtn {
+    width: 100%;
+  }
+
+  .historyItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
