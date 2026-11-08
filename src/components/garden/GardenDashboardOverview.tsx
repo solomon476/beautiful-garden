@@ -581,117 +581,107 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
       {/* ============================================================== */}
       {/* 4. BOTTOM ROW: The World Around Us + Our Mood Garden           */}
       {/* ============================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-        {/* Left: The World Around Us Banner (8 cols) */}
+      <div className={styles.bottomRow}>
+        {/* Left: The World Around Us Banner */}
         <div
           onClick={() => {
             soundEngine.playSparkle();
             onSelectTab('world');
           }}
-          className="lg:col-span-8 group relative p-5 sm:p-7 rounded-3xl sm:rounded-[2rem] bg-[#140b2b]/90 hover:bg-[#1a0f38]/95 border border-blue-400/25 hover:border-blue-400/50 shadow-xl backdrop-blur-xl cursor-pointer transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 overflow-hidden"
+          className={styles.worldCard}
         >
-          <div className="w-20 h-20 sm:w-32 sm:h-32 rounded-2xl overflow-hidden shrink-0 border border-blue-400/30 shadow-lg group-hover:scale-105 transition-transform">
+          <div className={styles.worldArtwork}>
             <img
               src="/assets/garden/card_world.jpg"
               alt="The World Around Us"
-              className="w-full h-full object-cover"
+              className={styles.worldArtworkImg}
               loading="lazy"
             />
           </div>
 
-          <div className="flex-1 space-y-2.5 text-left">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-200 text-[10px] font-mono uppercase tracking-widest">
-                <Globe className="w-3 h-3 text-blue-300" />
-                <span>A World Worth Caring About</span>
-              </div>
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-white group-hover:text-blue-200 transition-colors mt-1">
-                The World Around Us 🌍
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300/85 font-light leading-relaxed">
-                Thoughts, causes and conversations that matter to our shared future.
-              </p>
+          <div className={styles.worldContent}>
+            <div className={styles.worldTag}>
+              <Globe className="w-3 h-3 text-cyan-300" />
+              <span>A World Worth Caring About</span>
             </div>
 
+            <h3 className={styles.worldTitle}>
+              <span>The World Around Us</span>
+              <span>🌍</span>
+            </h3>
+
+            <p className={styles.worldSubtitle}>
+              Thoughts, causes and conversations that matter to our shared future.
+            </p>
+
             {/* Clickable Cause Tags */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <div className={styles.worldPills}>
               {worldPills.map((pill, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-blue-500/20 border border-white/10 hover:border-blue-400/40 text-slate-300 hover:text-blue-200 text-[10px] sm:text-[11px] font-medium transition-all"
-                >
+                <span key={i} className={styles.worldPillItem}>
                   {pill.label}
                 </span>
               ))}
             </div>
 
-            <div className="pt-1.5">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white text-xs font-semibold shadow-md shadow-blue-500/25 group-hover:scale-105 transition-transform border border-white/20"
-              >
-                <span>Explore Topics</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </button>
-            </div>
+            <button type="button" className={styles.worldBtn}>
+              <span>Explore Topics</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
-        {/* Right: Our Mood Garden Centerpiece (4 cols) — Matches Romantic Sanctuary Mockup */}
-        <div className="lg:col-span-4 p-6 sm:p-7 rounded-3xl sm:rounded-[2rem] bg-gradient-to-b from-[#220d3d]/90 via-[#18092c]/95 to-[#10051e]/98 border-2 border-pink-500/40 hover:border-pink-400 shadow-[0_12px_45px_rgba(0,0,0,0.6),0_0_35px_rgba(236,72,153,0.25)] backdrop-blur-xl flex flex-col justify-between items-center text-center space-y-4 relative overflow-hidden group">
-          {/* Subtle Ambient Glowing Glow behind Mood Face */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
-
+        {/* Right: Our Mood Garden Centerpiece */}
+        <div className={styles.moodCard}>
           {/* Header */}
-          <div className="space-y-1 relative z-10 w-full">
-            <div className="flex items-center justify-between w-full">
-              <span className="text-xs text-pink-300 font-sans opacity-0 select-none">♡</span>
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-wide flex items-center justify-center gap-1.5 drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
-                <span>Mood Garden</span>
-                <span className="text-pink-300 text-xl font-sans">♡</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  onSelectTab('moods');
-                }}
-                className="text-[11px] font-mono text-purple-300 hover:text-pink-200 transition-colors"
-                title="View past mood history"
-              >
-                History →
-              </button>
-            </div>
-            <p className="font-serif italic text-sm sm:text-base text-pink-200/90 font-light drop-shadow">
-              How do you feel today?
-            </p>
+          <div className={styles.moodHeader}>
+            <h3 className={styles.moodTitle}>
+              <span>Mood Garden</span>
+              <span className={styles.moodTitleHeart}>♡</span>
+            </h3>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                soundEngine.playSparkle();
+                onSelectTab('moods');
+              }}
+              className={styles.moodHistoryBtn}
+              title="View past mood history"
+            >
+              <span>History</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
           </div>
 
-          {/* Glowing Centerpiece Mood Face */}
+          <p className={styles.moodSubtitle}>
+            How do you feel today? ♡
+          </p>
+
+          {/* Centerpiece Mood Face */}
           <div
-            className="relative my-1 cursor-pointer group/face z-10"
+            className={styles.moodAvatar}
             onClick={() => {
               soundEngine.playSparkle();
               onSelectTab('moods');
             }}
             title="Click to open full mood journal"
           >
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-pink-400 via-rose-400 to-pink-500 border-2 border-pink-200 flex items-center justify-center text-4xl sm:text-5xl shadow-[0_0_35px_rgba(244,114,182,0.85)] group-hover/face:scale-110 transition-transform duration-300">
-              <span className="select-none filter drop-shadow">😊</span>
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-purple-900 border border-pink-300 flex items-center justify-center text-xs shadow-md">
-              🌸
-            </div>
+            <span>😊</span>
+            <span className={styles.moodAvatarBadge}>🌸</span>
           </div>
 
           {/* 1-Tap Quick Mood Selector Pills */}
-          <div className="flex items-center justify-center gap-1.5 flex-wrap relative z-10">
+          <div className={styles.moodPills}>
             {moodsList.map((m) => (
               <button
                 key={m.key}
                 type="button"
-                onClick={() => handleQuickMood(m.key, m.emoji, m.label)}
-                className="px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-pink-500/25 border border-purple-400/25 hover:border-pink-300/60 text-pink-100 text-[11px] font-medium flex items-center gap-1 active:scale-95 transition-all shadow-sm cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleQuickMood(m.key, m.emoji, m.label);
+                }}
+                className={styles.moodPillBtn}
                 title={`I'm feeling ${m.label}`}
               >
                 <span>{m.emoji}</span>
@@ -701,9 +691,17 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
           </div>
 
           {/* Feedback or Choose Mood CTA Button */}
-          <div className="relative z-10 w-full pt-1">
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             {selectedMoodMessage ? (
-              <div className="p-2.5 rounded-full bg-pink-500/25 border border-pink-400/50 text-center text-xs text-pink-100 font-semibold animate-fade-in shadow-md shadow-pink-500/20">
+              <div style={{
+                padding: '8px 18px',
+                borderRadius: '999px',
+                background: 'rgba(240, 68, 181, 0.25)',
+                border: '1px solid rgba(240, 68, 181, 0.5)',
+                color: '#fff',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>
                 {selectedMoodMessage}
               </div>
             ) : (
@@ -713,7 +711,7 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
                   soundEngine.playSparkle();
                   onSelectTab('moods');
                 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-600 hover:to-pink-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-purple-900/50 hover:shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-pink-400/40 cursor-pointer"
+                className={styles.moodBtn}
               >
                 <span>Choose Mood</span>
                 <ArrowRight className="w-3.5 h-3.5" />

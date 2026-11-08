@@ -211,3 +211,319 @@
     max-width: 360px;
   }
 }
+
+
+/* ==========================================================================
+   2. BOTTOM ROW (The World Around Us & Mood Garden Centerpiece)
+   Balanced Dimensions, Proportional Typography, Matching Heights
+   ========================================================================== */
+
+.bottomRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.2fr);
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 24px;
+}
+
+/* Left: The World Around Us Showcase Card */
+.worldCard {
+  background: rgba(22, 10, 40, 0.88);
+  border: 1px solid rgba(218, 160, 255, 0.22);
+  border-radius: 26px;
+  padding: 26px 28px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.worldCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 14px 40px rgba(56, 189, 248, 0.2);
+}
+
+.worldArtwork {
+  width: 108px;
+  height: 108px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.worldArtworkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+.worldCard:hover .worldArtworkImg {
+  transform: scale(1.08);
+}
+
+.worldContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.worldTag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+  font-size: 10.5px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.worldTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.4rem, 2.2vw, 1.7rem);
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+
+.worldSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  color: #cbb5dd;
+  line-height: 1.45;
+}
+
+.worldPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.worldPillItem {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(218, 160, 255, 0.15);
+  color: #e2d4f0;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.worldPillItem:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #ffffff;
+}
+
+.worldBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #3b82f6 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transition: transform 0.2s ease, filter 0.2s ease;
+  margin-top: 4px;
+}
+
+.worldBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+/* Right: Mood Garden Centerpiece Card */
+.moodCard {
+  background: rgba(34, 13, 58, 0.88);
+  border: 1px solid rgba(240, 68, 181, 0.35);
+  border-radius: 26px;
+  padding: 24px 26px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35), 0 0 28px rgba(240, 68, 181, 0.12);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  height: 100%;
+}
+
+.moodCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(240, 68, 181, 0.6);
+  box-shadow: 0 14px 40px rgba(240, 68, 181, 0.25);
+}
+
+.moodHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.moodTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.moodTitleHeart {
+  font-family: sans-serif;
+  color: #ff8acb;
+  font-size: 0.9em;
+  filter: drop-shadow(0 0 8px rgba(240, 68, 181, 0.8));
+}
+
+.moodHistoryBtn {
+  background: transparent;
+  border: 0;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: #c69ae8;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.moodHistoryBtn:hover {
+  color: #ffffff;
+}
+
+.moodSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #ff8acb;
+}
+
+.moodAvatar {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(240, 68, 181, 0.35) 0%, rgba(141, 53, 189, 0.45) 100%);
+  border: 2px solid #ff8acb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.1rem;
+  box-shadow: 0 0 22px rgba(240, 68, 181, 0.55);
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.moodAvatar:hover {
+  transform: scale(1.08);
+}
+
+.moodAvatarBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #240c3c;
+  border: 1.5px solid #ff8acb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.moodPills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  max-width: 280px;
+}
+
+.moodPillBtn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(218, 160, 255, 0.2);
+  color: #fff5ff;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.moodPillBtn:hover {
+  background: rgba(240, 68, 181, 0.22);
+  border-color: #ff8acb;
+}
+
+.moodBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 24px;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(225, 49, 170, 0.32);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.moodBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+@media (max-width: 960px) {
+  .bottomRow {
+    grid-template-columns: 1fr;
+  }
+}
