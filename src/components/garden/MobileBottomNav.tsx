@@ -25,6 +25,7 @@ import { ChangeProfilePhotoModal } from './ChangeProfilePhotoModal';
 import { ChangePasscodeModal } from './ChangePasscodeModal';
 import { AuthModal } from './AuthModal';
 import { GardenBinModal } from './GardenBinModal';
+import styles from './MoreGardenPanel.module.css';
 
 interface MobileBottomNavProps {
   currentView: 'home' | 'garden' | 'music' | 'archive' | 'more' | string;
@@ -127,73 +128,55 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 
   return (
     <>
-      {/* More Options Floating Bottom Sheet (when More is tapped) */}
+      {/* More Options Floating Full Panel (when More is tapped) */}
       {isMoreMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-md sm:hidden flex flex-col justify-end animate-fade-in"
-          style={{ zIndex: 9999 }}
+          className={styles.gardenPanelOverlay}
           onClick={() => setIsMoreMenuOpen(false)}
         >
           <div
-            className="w-full rounded-t-3xl border-t border-pink-400/40 p-5 shadow-2xl text-white space-y-4 max-h-[85vh] overflow-y-auto animate-slide-up"
-            style={{
-              zIndex: 10000,
-              background: 'linear-gradient(180deg, #1b0a33 0%, #100522 100%)',
-              backgroundColor: '#120726',
-              boxShadow: '0 -15px 50px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.15)',
-              paddingBottom: 'max(90px, calc(80px + env(safe-area-inset-bottom)))',
-            }}
+            className={styles.gardenPanel}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Sheet Handle */}
-            <div className="w-12 h-1 rounded-full bg-purple-300/40 mx-auto -mt-1 mb-2" />
-
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-purple-400/20">
-              <div className="flex items-center gap-2">
-                <Heart className="w-4 h-4 text-pink-400" />
-                <h3 className="font-serif text-base font-bold text-white">More Garden Spaces</h3>
+            {/* Panel Heading */}
+            <div className={styles.panelHeading}>
+              <div className={styles.panelHeadingTitle}>
+                <Heart className="w-5 h-5 text-pink-400 fill-pink-400/20" />
+                <span>More Garden Spaces</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen(false)}
-                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-purple-200 transition-colors"
-                aria-label="Close"
+                className={styles.closeButton}
+                aria-label="Close More Spaces"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Profile Avatar & Account Settings Card */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-pink-400/30 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    onClick={() => {
-                      soundEngine.playSparkle();
-                      setIsMoreMenuOpen(false);
-                      setIsChangePhotoOpen(true);
-                    }}
-                    className="relative rounded-full overflow-hidden border-2 border-pink-400/70 shadow-md shrink-0 cursor-pointer group"
-                    style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px' }}
-                    title="Change photo"
-                  >
+            {/* Profile Card */}
+            <div className={styles.profileCard}>
+              <div className={styles.profileTop}>
+                <div className={styles.profileInformation}>
+                  <div className={styles.profileAvatarWrapper}>
+                    <span className={styles.profileCrown} role="img" aria-label="crown">👑</span>
                     <img
                       src={currentUser.avatarUrl}
                       alt={currentUser.displayName}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      className={styles.profileImage}
+                      onClick={() => {
+                        soundEngine.playSparkle();
+                        setIsMoreMenuOpen(false);
+                        setIsChangePhotoOpen(true);
+                      }}
+                      title="Change photo"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="w-3.5 h-3.5 text-white" />
-                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <span className="font-serif text-sm font-bold text-white block truncate leading-tight">
-                      {currentUser.displayName}
-                    </span>
-                    <span className="text-[10px] text-pink-200/80 block truncate mt-0.5 leading-tight">
-                      Your Garden Profile
-                    </span>
+                  <div>
+                    <h3 className={styles.profileName}>
+                      <span>{currentUser.displayName}</span>
+                    </h3>
+                    <p className={styles.profileSubtitle}>Your Garden Profile</p>
                   </div>
                 </div>
 
@@ -204,15 +187,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsMoreMenuOpen(false);
                     setIsChangePhotoOpen(true);
                   }}
-                  className="px-3 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-[11px] font-semibold flex items-center gap-1.5 shrink-0 active:scale-95 transition-all cursor-pointer shadow-sm"
+                  className={styles.photoButton}
                 >
-                  <Camera className="w-3 h-3 text-pink-300" />
+                  <Camera className="w-3.5 h-3.5 text-pink-300" />
                   <span>Photo 📷</span>
                 </button>
               </div>
 
-              {/* Security & Account Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+              {/* Account Controls */}
+              <div className={styles.accountActions}>
                 <button
                   type="button"
                   onClick={() => {
@@ -220,9 +203,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsMoreMenuOpen(false);
                     setIsChangePasscodeOpen(true);
                   }}
-                  className="flex-1 py-2 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  className={styles.accountButton}
                 >
-                  <KeyRound className="w-3.5 h-3.5 text-pink-300" />
+                  <KeyRound className="w-4 h-4 text-pink-300" />
                   <span>Passcode 🔑</span>
                 </button>
 
@@ -233,93 +216,61 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     setIsMoreMenuOpen(false);
                     setIsAuthModalOpen(true);
                   }}
-                  className="flex-1 py-2 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  className={styles.accountButton}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+                  <ShieldCheck className="w-4 h-4 text-purple-300" />
                   <span>Switch Account</span>
                 </button>
               </div>
             </div>
 
-            {/* Private Garden Recycle Bin Button (Private on either side) */}
-            <button
-              type="button"
+            {/* Recycle Bin Card */}
+            <div
+              className={styles.recycleBin}
               onClick={() => {
                 soundEngine.playSparkle();
                 setIsMoreMenuOpen(false);
                 setIsBinOpen(true);
               }}
-              style={{
-                background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(168, 85, 247, 0.12) 50%, rgba(236, 72, 153, 0.1) 100%)',
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              }}
-              className="w-full p-3 px-3.5 rounded-2xl border border-pink-400/30 hover:border-pink-300/50 text-left flex items-center justify-between transition-all cursor-pointer active:scale-98 group shadow-sm"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform shrink-0">
-                  <Trash2 className="w-4 h-4" />
+              <div className={styles.recycleLeft}>
+                <div className={styles.recycleIcon}>
+                  <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-serif font-bold text-xs text-white flex items-center gap-2">
-                    <span>Garden Recycle Bin</span>
-                    <span
-                      style={{
-                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                        color: '#6ee7b7',
-                        border: '1px solid rgba(52, 211, 153, 0.35)',
-                      }}
-                      className="text-[9.5px] font-mono px-2 py-0.5 rounded-full shrink-0"
-                    >
-                      Private 🔒
-                    </span>
+                  <div className={styles.recycleTitleRow}>
+                    <span className={styles.recycleTitle}>Garden Recycle Bin</span>
+                    <span className={styles.privateLabel}>Private 🔒</span>
                   </div>
-                  <div className="text-[10.5px] text-pink-200/70 font-sans mt-0.5 leading-tight">
+                  <p className={styles.recycleDescription}>
                     {deletedCount > 0
                       ? `${deletedCount} deleted item${deletedCount > 1 ? 's' : ''} • Tap to view or restore`
                       : 'Restore or permanently delete photos'}
-                  </div>
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-pink-300 shrink-0">
-                {deletedCount > 0 && (
-                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold flex items-center justify-center shadow-sm">
-                    {deletedCount}
-                  </span>
-                )}
-                <span>→</span>
-              </div>
-            </button>
+              <span className={styles.recycleArrow}>›</span>
+            </div>
 
             {/* 8 Features Grid */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className={styles.gardenGrid}>
               {moreFeatures.map((feat) => {
                 const Icon = feat.icon;
-                const isSelected = currentView === feat.id;
                 return (
                   <button
                     key={feat.id}
                     type="button"
                     onClick={() => handleSelectMoreOption(feat.id)}
-                    className={`p-3 rounded-2xl text-left border transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:scale-95 ${
-                      isSelected
-                        ? 'bg-purple-800/80 border-pink-400 shadow-lg scale-[1.02]'
-                        : 'bg-white/[0.06] border-white/10 hover:border-pink-300/40'
-                    }`}
+                    className={styles.gardenFeature}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-300">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span className="text-xs text-purple-300">→</span>
+                    <div className={styles.featureIcon}>
+                      <Icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <span className="font-serif font-bold text-xs text-white block leading-tight">
-                        {feat.label}
-                      </span>
-                      <span className="text-[10px] text-purple-200/70 font-sans block leading-tight mt-0.5 truncate">
-                        {feat.desc}
-                      </span>
+                    <div className={styles.featureContent}>
+                      <h3>{feat.label}</h3>
+                      <p>{feat.desc}</p>
                     </div>
+                    <span className={styles.featureArrow}>›</span>
                   </button>
                 );
               })}
@@ -371,14 +322,20 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       {/* Change Profile Photo Modal for Mobile */}
       <ChangeProfilePhotoModal
         isOpen={isChangePhotoOpen}
-        onClose={() => setIsChangePhotoOpen(false)}
+        onClose={() => {
+          setIsChangePhotoOpen(false);
+          setIsMoreMenuOpen(true);
+        }}
         currentUser={currentUser}
       />
 
       {/* Change Passcode Modal for Mobile */}
       <ChangePasscodeModal
         isOpen={isChangePasscodeOpen}
-        onClose={() => setIsChangePasscodeOpen(false)}
+        onClose={() => {
+          setIsChangePasscodeOpen(false);
+          setIsMoreMenuOpen(true);
+        }}
         currentUser={currentUser}
       />
 
@@ -386,17 +343,24 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       <AuthModal
         isOpen={isAuthModalOpen}
         initialUser={currentUser.username === 'solomon' ? 'noella' : 'solomon'}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setIsMoreMenuOpen(true);
+        }}
         onSuccess={() => {
           setIsAuthModalOpen(false);
           setCurrentUser(authService.getCurrentUser());
+          setIsMoreMenuOpen(true);
         }}
       />
 
       {/* Private Garden Recycle Bin Modal */}
       <GardenBinModal
         isOpen={isBinOpen}
-        onClose={() => setIsBinOpen(false)}
+        onClose={() => {
+          setIsBinOpen(false);
+          setIsMoreMenuOpen(true);
+        }}
         currentUser={currentUser}
       />
     </>

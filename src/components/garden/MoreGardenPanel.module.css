@@ -1,0 +1,440 @@
+/* More Garden Spaces Panel CSS - World Class Design */
+.gardenPanelOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #10051e;
+  background-image:
+    radial-gradient(circle at 5% 5%, rgba(255, 69, 206, .22), transparent 32%),
+    radial-gradient(circle at 95% 35%, rgba(146, 50, 255, .22), transparent 35%),
+    radial-gradient(circle at 50% 100%, rgba(205, 61, 215, .15), transparent 40%),
+    linear-gradient(145deg, #10051e, #230a3b, #130623);
+  animation: fadeIn 0.25s ease-out;
+  padding: 16px 14px calc(95px + env(safe-area-inset-bottom));
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.gardenPanel {
+  position: relative;
+  width: min(1050px, 100%);
+  margin: 0 auto;
+  padding: 22px 18px;
+  border: 1px solid rgba(238, 137, 255, .42);
+  border-radius: 28px;
+  background: rgba(31, 10, 52, .92);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow:
+    0 15px 50px rgba(0, 0, 0, .5),
+    0 0 35px rgba(220, 60, 220, .14),
+    inset 0 1px rgba(255,255,255,.14);
+  overflow: hidden;
+  color: #fff7ff;
+}
+
+.gardenPanel::before {
+  content: "✿";
+  position: absolute;
+  top: 6px;
+  right: 14px;
+  color: rgba(255, 115, 220, .15);
+  font-size: 85px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.gardenPanel::after {
+  content: "✿";
+  position: absolute;
+  bottom: 6px;
+  left: 10px;
+  color: rgba(255, 115, 220, .12);
+  font-size: 80px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.panelHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(238, 137, 255, .3);
+}
+
+.panelHeadingTitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 700;
+  color: #fff7ff;
+}
+
+.closeButton {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(238, 137, 255, .42);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .08);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, .18);
+  transform: scale(1.05);
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* Profile Card */
+.profileCard {
+  padding: 16px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(238, 137, 255, .42);
+  border-radius: 22px;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 93, 208, .14),
+    rgba(130, 48, 200, .16)
+  );
+  box-shadow: 0 8px 25px rgba(0,0,0,.2);
+}
+
+.profileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+.profileInformation {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profileAvatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profileCrown {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 15px;
+  filter: drop-shadow(0 0 6px rgba(255, 105, 201, 0.8));
+  animation: floatCrown 3s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes floatCrown {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+.profileImage {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 2.5px solid #ff69c9;
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(255, 66, 218, .35);
+  cursor: pointer;
+  display: block;
+}
+
+.profileName {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profileSubtitle {
+  margin: 4px 0 0;
+  color: #d6b8e8;
+  font-size: 12px;
+}
+
+.photoButton {
+  padding: 11px 18px;
+  border: 1px solid #ff69c9;
+  border-radius: 50px;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 77, 190, .32),
+    rgba(155, 55, 230, .32)
+  );
+  color: white;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.photoButton:hover {
+  background: linear-gradient(120deg, #ed48b7, #9536dc);
+  box-shadow: 0 0 18px rgba(255, 66, 218, .4);
+  transform: translateY(-2px);
+}
+
+.photoButton:active {
+  transform: scale(0.97);
+}
+
+.accountActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(238, 137, 255, .25);
+}
+
+.accountButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 10px;
+  border: 1px solid rgba(238, 137, 255, .35);
+  border-radius: 15px;
+  background: rgba(255,255,255,.05);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.accountButton:hover {
+  background: rgba(255, 100, 215, .18);
+  border-color: #ff69c9;
+  transform: translateY(-2px);
+}
+
+.accountButton:active {
+  transform: scale(0.97);
+}
+
+/* Recycle Bin */
+.recycleBin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 15px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(238, 137, 255, .42);
+  border-radius: 18px;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 75, 190, .20),
+    rgba(137, 48, 200, .24)
+  );
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.recycleBin:hover {
+  border-color: #ffb2e8;
+  box-shadow: 0 0 20px rgba(255, 66, 218, .3);
+  transform: translateY(-2px);
+}
+
+.recycleBin:active {
+  transform: scale(0.98);
+}
+
+.recycleLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.recycleIcon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ff69c9;
+  border-radius: 13px;
+  background: rgba(255, 105, 201, 0.15);
+  color: #ff69c9;
+}
+
+.recycleTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.recycleTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.privateLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border: 1px solid rgba(80, 255, 220, .45);
+  border-radius: 30px;
+  background: rgba(30, 200, 170, .14);
+  color: #79e7d1;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
+
+.recycleDescription {
+  margin: 3px 0 0;
+  color: #d6b8e8;
+  font-size: 11px;
+}
+
+.recycleArrow {
+  color: #ffb2e8;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Feature Grid */
+.gardenGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gardenFeature {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 85px;
+  padding: 12px 10px;
+  border: 1px solid rgba(210, 120, 255, .25);
+  border-radius: 18px;
+  background: linear-gradient(
+    140deg,
+    rgba(255,255,255,.065),
+    rgba(143,50,210,.10)
+  );
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+}
+
+.gardenFeature:hover {
+  transform: translateY(-3px);
+  border-color: #ff69c9;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 90, 210, .2),
+    rgba(135, 60, 230, .2)
+  );
+  box-shadow: 0 8px 20px rgba(255, 66, 218, .25);
+}
+
+.gardenFeature:active {
+  transform: scale(0.97);
+}
+
+.featureIcon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 120, 220, .4);
+  border-radius: 13px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 90, 210, .25),
+    rgba(130, 50, 210, .32)
+  );
+  color: #ff69c9;
+  box-shadow: inset 0 0 10px rgba(255,255,255,.06);
+}
+
+.featureContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.featureContent h3 {
+  margin: 0 0 3px;
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.featureContent p {
+  margin: 0;
+  color: #d6b8e8;
+  font-size: 10px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.featureArrow {
+  margin-left: auto;
+  color: #d5a8ff;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.gardenFeature:hover .featureArrow {
+  transform: translateX(4px);
+  color: #ff69c9;
+}
+
+@media (max-width: 360px) {
+  .gardenGrid {
+    grid-template-columns: 1fr;
+  }
+}

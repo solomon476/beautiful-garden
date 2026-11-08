@@ -62,7 +62,11 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
 
     try {
       setIsLoading(true);
-      const res = await authService.updatePassword(newPassword.trim(), currentPassword.trim());
+      const res = await authService.updatePassword(
+        newPassword.trim(),
+        currentPassword.trim(),
+        currentUser?.username || 'solomon'
+      );
 
       if (!res.success) {
         setErrorMessage(res.error || 'Could not update passcode.');
@@ -83,15 +87,19 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
-      style={{ zIndex: 20000 }}
+      className="fixed inset-0 flex items-center justify-center p-4 backdrop-blur-xl animate-fade-in"
+      style={{ zIndex: 20000, backgroundColor: 'rgba(0, 0, 0, 0.90)' }}
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="change-passcode-title"
     >
       <div
-        className="relative w-full max-w-md rounded-3xl bg-[#140827] border border-pink-400/40 p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(244,114,182,0.2)] text-white space-y-5 animate-scale-up"
+        className="relative w-full max-w-md rounded-3xl border border-pink-400/40 p-6 sm:p-7 text-white space-y-5 animate-scale-up overflow-hidden"
+        style={{
+          backgroundColor: '#130728',
+          boxShadow: '0 25px 70px rgba(0,0,0,0.98), 0 0 45px rgba(244,114,182,0.25)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow backdrop */}
@@ -102,7 +110,7 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-purple-200 hover:text-white transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-2 rounded-full bg-white/[0.08] hover:bg-white/[0.18] text-purple-200 hover:text-white transition-colors cursor-pointer"
           aria-label="Close change passcode dialog"
         >
           <X className="w-4 h-4" />
@@ -127,7 +135,10 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
 
         {/* Success Banner */}
         {successMessage ? (
-          <div className="p-4 rounded-2xl bg-emerald-950/80 border border-emerald-400/50 text-emerald-200 text-xs flex items-center gap-3 animate-fade-in shadow-lg">
+          <div
+            className="p-4 rounded-2xl border border-emerald-400/50 text-emerald-200 text-xs flex items-center gap-3 animate-fade-in shadow-lg"
+            style={{ backgroundColor: 'rgba(6, 78, 59, 0.9)' }}
+          >
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <div className="space-y-0.5">
               <p className="font-semibold">{successMessage}</p>
@@ -153,7 +164,8 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
                   placeholder="Enter your existing passcode..."
                   required
                   autoFocus
-                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/40 border border-purple-400/30 text-white placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
+                  style={{ backgroundColor: '#0c0418', color: '#ffffff' }}
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-purple-400/30 placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
                 />
                 <button
                   type="button"
@@ -182,7 +194,8 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Choose at least 4 characters..."
                   required
-                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-black/40 border border-purple-400/30 text-white placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
+                  style={{ backgroundColor: '#0c0418', color: '#ffffff' }}
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-purple-400/30 placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
                 />
                 <button
                   type="button"
@@ -210,15 +223,19 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your new passcode..."
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-purple-400/30 text-white placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
+                style={{ backgroundColor: '#0c0418', color: '#ffffff' }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-purple-400/30 placeholder-purple-300/40 text-xs focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/25 transition-all"
               />
             </div>
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="p-3 rounded-2xl bg-rose-950/70 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2 animate-shake">
+              <div
+                className="p-3 rounded-2xl border border-rose-500/50 text-rose-200 text-xs flex items-center gap-2 animate-shake"
+                style={{ backgroundColor: 'rgba(88, 12, 32, 0.95)' }}
+              >
                 <span className="shrink-0 text-sm">⚠️</span>
-                <p className="flex-1">{errorMessage}</p>
+                <p className="flex-1 font-medium">{errorMessage}</p>
               </div>
             )}
 
@@ -235,7 +252,8 @@ export const ChangePasscodeModal: React.FC<ChangePasscodeModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-pink-500/30 border border-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                style={{ background: 'linear-gradient(to right, #ec4899, #f43f5e, #f59e0b)' }}
+                className="flex-1 py-2.5 px-4 rounded-xl text-white font-semibold text-xs shadow-lg shadow-pink-500/30 border border-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>{isLoading ? 'Updating Key...' : 'Save New Passcode'}</span>

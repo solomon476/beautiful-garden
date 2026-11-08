@@ -364,12 +364,11 @@ class AuthService {
 
   public async updatePassword(
     newPassword: string,
-    currentPassword?: string
+    currentPassword?: string,
+    targetUsername?: string
   ): Promise<{ success: boolean; error?: string }> {
-    if (!this.activeUser) {
-      return { success: false, error: 'Must be logged in to update passcode.' };
-    }
-    const canonicalKey = this.activeUser.username === 'solomon' ? 'solomon' : 'noella';
+    const user = this.activeUser || (targetUsername ? AUTHORIZED_PROFILES[targetUsername.toLowerCase()] : null) || AUTHORIZED_PROFILES.solomon;
+    const canonicalKey = user.username === 'solomon' ? 'solomon' : 'noella';
     const cfg = canonicalKey === 'solomon' ? AUTH_CONFIG.solomon : AUTH_CONFIG.noella;
 
     // Optional current password check
@@ -400,6 +399,16 @@ class AuthService {
     const newHash = await sha256Hex(salt + newPassword.trim());
 
     setAuthItem(STORAGE_KEY_CUSTOM_HASH + canonicalKey, newHash);
+
+    // Automatically establish active authenticated session
+    this.activeUser = AUTHORIZED_PROFILES[canonicalKey];
+    const session: AuthSession = {
+      token: 'pt_token_' + Date.now(),
+      user: this.activeUser,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    };
+    setAuthItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+    this.notifyListeners();
 
     if (isLiveSupabaseConfigured && supabase) {
       try {
