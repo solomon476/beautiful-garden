@@ -1,0 +1,213 @@
+/* ==========================================================================
+   PERFECT TIME — GARDEN DASHBOARD OVERVIEW (SCOPED HERO STYLES)
+   Professional Balanced Hero Banner (Symmetrical Left & Right Columns)
+   ========================================================================== */
+
+.heroBanner {
+  position: relative;
+  isolation: isolate;
+  min-height: 195px;
+  padding: 34px 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border-radius: 28px;
+  border: 1px solid rgba(218, 160, 255, 0.25);
+  overflow: hidden;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.38);
+  background:
+    linear-gradient(115deg, rgba(14, 7, 32, 0.9) 0%, rgba(34, 13, 58, 0.72) 55%, rgba(16, 7, 34, 0.88) 100%),
+    url('/assets/garden/hero_bench.jpg') center / cover no-repeat;
+}
+
+.heroAmbientGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 45%, rgba(240, 68, 181, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 82% 50%, rgba(141, 53, 189, 0.25) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* Left Column: Sanctuary Title & Emotional Tagline */
+.heroLeft {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heroTag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(240, 68, 181, 0.15);
+  border: 1px solid rgba(240, 68, 181, 0.35);
+  color: #ff8acb;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.heroTagIcon {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.3rem, 4.2vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+.heroTitleHeart {
+  font-family: sans-serif;
+  color: #ff8acb;
+  font-size: 0.85em;
+  font-weight: 300;
+  filter: drop-shadow(0 0 12px rgba(240, 68, 181, 0.85));
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.5;
+  color: #ebd7f5;
+  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  max-width: 540px;
+}
+
+/* Right Column: Balanced Symmetrical Keepsake Quote Box */
+.heroQuoteCard {
+  position: relative;
+  z-index: 1;
+  width: 330px;
+  max-width: 100%;
+  flex-shrink: 0;
+  padding: 22px 26px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.heroQuoteCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(240, 68, 181, 0.4);
+  box-shadow: 0 14px 40px rgba(240, 68, 181, 0.25);
+}
+
+.quoteMark {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: #ff8acb;
+  margin-bottom: -6px;
+  user-select: none;
+}
+
+.quoteText {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #ffffff;
+  line-height: 1.45;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.quoteFooter {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ff8acb;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.quoteHeart {
+  font-size: 14px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(240, 68, 181, 0.8));
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+
+@media (max-width: 960px) {
+  .heroBanner {
+    padding: 28px 30px;
+    gap: 20px;
+  }
+
+  .heroQuoteCard {
+    width: 270px;
+    padding: 18px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroBanner {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    padding: 24px 20px;
+  }
+
+  .heroLeft {
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTag {
+    align-self: center;
+  }
+
+  .heroTitle {
+    justify-content: center;
+  }
+
+  .heroQuoteCard {
+    width: 100%;
+    max-width: 360px;
+  }
+}

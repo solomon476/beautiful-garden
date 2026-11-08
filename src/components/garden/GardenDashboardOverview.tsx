@@ -18,6 +18,7 @@ import { moodGardenService } from '../../services/gardenService';
 import type { UserProfile } from '../../types/garden';
 import { UserSwitcher } from './UserSwitcher';
 import type { QuickAddType } from './QuickAddStudioModal';
+import styles from './GardenDashboardOverview.module.css';
 
 interface GardenDashboardOverviewProps {
   onSelectTab: (tab: any) => void;
@@ -446,54 +447,39 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
         {/* ============================================================== */}
         {/* 1. HERO GARDEN SHOWCASE                                        */}
         {/* ============================================================== */}
-        <div className="relative rounded-3xl sm:rounded-[2.5rem] overflow-hidden border border-purple-400/25 shadow-2xl bg-[#0e0720]">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-            style={{
-              backgroundImage: `url('/assets/garden/hero_bench.jpg')`,
-              filter: 'brightness(0.92) contrast(1.05)',
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(180deg, rgba(14, 7, 32, 0.45) 0%, rgba(14, 7, 32, 0.78) 60%, rgba(14, 7, 32, 0.95) 100%), radial-gradient(circle at 80% 30%, rgba(236, 72, 153, 0.25) 0%, transparent 60%)',
-            }}
-          />
+        <section className={styles.heroBanner}>
+          <div className={styles.heroAmbientGlow} />
 
-          {/* Hero Content */}
-          <div className="relative z-10 px-5 sm:px-10 lg:px-12 py-8 sm:py-12 md:py-16 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
-            <div className="max-w-2xl space-y-3 sm:space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-200 text-xs font-mono tracking-wider uppercase backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-pink-300 fill-pink-300" />
-                <span>A Private Garden for Us ♡</span>
-              </div>
-
-              <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight drop-shadow-lg">
-                Our Garden <span className="font-sans text-pink-300 font-light">♡</span>
-              </h1>
-
-              <p className="font-handwriting text-lg sm:text-2xl md:text-3xl text-pink-200/90 leading-relaxed drop-shadow">
-                A little corner for our thoughts, dreams and everything that matters... 💜
-              </p>
+          {/* Left Column: Title & Subtitle */}
+          <div className={styles.heroLeft}>
+            <div className={styles.heroTag}>
+              <Sparkles className={styles.heroTagIcon} />
+              <span>A Private Garden for Us ♡</span>
             </div>
 
-            {/* Keepsake Quote Box */}
-            <div className="relative md:max-w-xs shrink-0 self-start md:self-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/20 hover:border-pink-300/40 backdrop-blur-xl shadow-2xl transition-all group">
-              <span className="text-2xl sm:text-3xl text-pink-300 font-serif leading-none block select-none">“</span>
-              <p className="font-serif italic text-xs sm:text-base text-slate-100 leading-relaxed">
-                A beautiful moment... shared forever.
-              </p>
-              <div className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between">
-                <span className="text-pink-300 text-sm font-serif">♡</span>
-                <span className="text-[11px] font-mono text-pink-300 font-medium">
-                  — Perfect Time ♡
-                </span>
-              </div>
+            <h1 className={styles.heroTitle}>
+              <span>Our Garden</span>
+              <span className={styles.heroTitleHeart}>♡</span>
+            </h1>
+
+            <p className={styles.heroSubtitle}>
+              A little corner for our thoughts, dreams and everything that matters... ♡
+            </p>
+          </div>
+
+          {/* Right Column: Balanced Symmetrical Keepsake Quote Box */}
+          <div className={styles.heroQuoteCard}>
+            <span className={styles.quoteMark}>“</span>
+            <p className={styles.quoteText}>
+              A beautiful moment... shared forever.
+            </p>
+            <div className={styles.quoteFooter}>
+              <span className={styles.quoteHeart}>♡</span>
+              <span>Perfect Time</span>
+              <span className={styles.quoteHeart}>♡</span>
             </div>
           </div>
-        </div>
+        </section>
 
       {/* ============================================================== */}
       {/* 2. EIGHT MAIN KEEPSAKE FEATURE CARDS (4x2 Balanced Grid)       */}
