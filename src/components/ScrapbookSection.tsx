@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Calendar, Plus, RotateCw, ZoomIn } from 'lucide-react';
+import { Camera, Calendar, Plus, RotateCw, ZoomIn, LayoutGrid, Layers } from 'lucide-react';
 import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
 import { memoryArchiveService } from '../services/gardenService';
+import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
 
 const rotationClasses = [
   'sm:rotate-[-1.5deg] hover:rotate-0',
@@ -22,22 +23,26 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [archiveMemories, setArchiveMemories] = useState<MemoryItem[]>([]);
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
+  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('cards');
 
   const loadArchiveMemories = async () => {
     try {
       const items = await memoryArchiveService.getMemories();
       const mapped: MemoryItem[] = items
         .filter((m) => !m.id.startsWith('seed-') && Boolean(m.isShared))
-        .map((m) => ({
-          id: m.id,
-          title: m.title,
-          date: m.dateTaken || 'Keepsake Date',
-          caption: m.caption || m.description || 'Pinned in our garden album.',
-          tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned Memory',
-          accentColor: 'from-pink-500/20 to-purple-500/20',
-          photoUrl: m.photoUrl,
-          altText: m.title,
-        }));
+        .map((m) => {
+          const displayTitle = formatMemoryDisplayTitle(m.title, m.caption, m.dateTaken);
+          return {
+            id: m.id,
+            title: displayTitle,
+            date: m.dateTaken || 'Keepsake Date',
+            caption: m.caption || m.description || 'Pinned in our garden album.',
+            tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned Memory',
+            accentColor: 'from-pink-500/20 to-purple-500/20',
+            photoUrl: m.photoUrl,
+            altText: displayTitle,
+          };
+        });
       setArchiveMemories(mapped);
     } catch (e) {
       console.warn('Could not load user archive memories in scrapbook', e);
@@ -52,7 +57,6 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   }, []);
 
   const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories];
-  const isMultiColumn = allMemories.length >= 4;
 
   const handleOpenPhoto = (index: number) => {
     soundEngine.playChime(523.25, 1.2, 0.08);
@@ -79,7 +83,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   return (
     <section id="memories" className="relative py-16 px-4 z-10 max-w-5xl mx-auto">
       {/* Section Header */}
-      <div className="text-center mb-10">
+      <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-400/20 text-pink-300 text-xs font-medium uppercase tracking-wider mb-3">
           <Camera className="w-3.5 h-3.5" />
           <span>Our Scrapbook</span>
@@ -105,13 +109,48 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
         )}
       </div>
 
+      {/* Mobile View Mode Switcher (World-Class Format) */}
+      <div className="flex items-center justify-center gap-2 mb-6 sm:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            setViewMode('cards');
+          }}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            viewMode === 'cards'
+              ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/50 shadow-md scale-105'
+              : 'bg-white/5 text-slate-300 border border-white/10'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5 text-pink-300" />
+          <span>Keepsake Cards (Clear Notes)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            setViewMode('grid');
+          }}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+            viewMode === 'grid'
+              ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/50 shadow-md scale-105'
+              : 'bg-white/5 text-slate-300 border border-white/10'
+          }`}
+        >
+          <LayoutGrid className="w-3.5 h-3.5 text-purple-300" />
+          <span>Mini Grid</span>
+        </button>
+      </div>
+
       {/* Polaroid Grid */}
       <div
         className={`grid ${
-          isMultiColumn
-            ? 'grid-cols-2 gap-3 sm:gap-6'
-            : 'grid-cols-1 gap-8 sm:gap-6'
-        } sm:grid-cols-2 lg:grid-cols-3 px-2 sm:px-4`}
+          viewMode === 'grid'
+            ? 'scrapbook-grid-mode grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3'
+            : 'scrapbook-cards-mode grid-cols-1 mx-auto sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8'
+        } px-2 sm:px-4`}
       >
         {allMemories.map((memory, index) => {
           const rotationClass = rotationClasses[index % rotationClasses.length];
@@ -138,7 +177,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                 {/* ================= Front of Polaroid ================= */}
                 <div
                   className={`polaroid-card polaroid-face-front ${
-                    isMultiColumn ? 'polaroid-card-compact' : ''
+                    viewMode === 'grid' ? 'polaroid-card-compact' : ''
                   }`}
                 >
                   {/* Photo Frame with Ambient Blur & Balanced Proportions */}
@@ -203,21 +242,25 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                 </div>
 
                 {/* ================= Back of Polaroid (Romantic Note) ================= */}
-                <div className="polaroid-face-back select-none">
+                <div
+                  className={`polaroid-face-back select-none ${
+                    viewMode === 'grid' ? 'polaroid-back-compact' : ''
+                  }`}
+                >
                   {/* Decorative Washi Tape */}
                   <div className="polaroid-washi-tape" />
 
                   {/* Card Header */}
-                  <div className="pt-2 text-center">
+                  <div className="pt-2 text-center px-1">
                     <span className="text-[10px] font-mono uppercase tracking-widest text-pink-600 font-bold">
                       Keepsake Note 💌
                     </span>
-                    <h3 className="font-serif font-bold text-slate-900 text-sm mt-0.5 truncate">
+                    <h3 className="font-serif font-bold text-slate-900 text-sm mt-0.5 line-clamp-1">
                       {memory.title}
                     </h3>
                   </div>
 
-                  {/* Handwritten Romantic Note */}
+                  {/* Handwritten Romantic Note (Scrollable if long so never clipped) */}
                   <div className="polaroid-note-card">
                     <p className="polaroid-note-caption">
                       “{memory.caption}” ♡
@@ -225,23 +268,23 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                   </div>
 
                   {/* Footer Meta & Action Buttons */}
-                  <div className="space-y-2">
+                  <div className="shrink-0 space-y-1.5 pt-1.5">
                     <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1">
                       <span>📅 {memory.date}</span>
-                      <span className="text-pink-600">{memory.tag}</span>
+                      <span className="text-pink-600 font-medium">{memory.tag}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-200/80">
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-200">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenPhoto(index);
                         }}
-                        className="flex-1 py-1.5 px-2 rounded-full bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-medium flex items-center justify-center gap-1 transition-all shadow-sm active:scale-95 cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
                       >
                         <ZoomIn className="w-3.5 h-3.5" />
-                        <span>Fullscreen</span>
+                        <span>Fullscreen 🔍</span>
                       </button>
 
                       <button
@@ -250,11 +293,11 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                           e.stopPropagation();
                           handleCardTouch(memory.id);
                         }}
-                        className="py-1.5 px-3 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-700 text-[11px] font-medium flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer"
+                        className="py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-slate-200"
                         title="Flip back"
                       >
                         <RotateCw className="w-3.5 h-3.5" />
-                        <span>Flip</span>
+                        <span>Flip ↺</span>
                       </button>
                     </div>
                   </div>
