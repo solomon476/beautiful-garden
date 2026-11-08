@@ -1,0 +1,611 @@
+/* ==========================================================================
+   PERFECT TIME — LITTLE QUESTIONS MODULE (SCOPED STYLES)
+   Phase 4: CSS Isolation & Exact Visual Alignment with 9-Module Design
+   ========================================================================== */
+
+.questionsSection {
+  --qst-bg: #120923;
+  --qst-surface: #1f0f35;
+  --qst-surface-card: rgba(34, 15, 58, 0.78);
+  --qst-surface-hover: rgba(50, 20, 80, 0.88);
+
+  --qst-purple: #8d35bd;
+  --qst-lavender: #c69ae8;
+  --qst-pink: #f044b5;
+  --qst-pink-light: #ff8acb;
+  --qst-sky: #38bdf8;
+  --qst-sky-light: #7dd3fc;
+
+  --qst-text: #fff5ff;
+  --qst-muted: #cbb5dd;
+  --qst-muted-dark: #9e85b5;
+
+  --qst-border: rgba(218, 160, 255, 0.22);
+  --qst-border-hover: rgba(240, 68, 181, 0.45);
+  --qst-border-active: rgba(240, 68, 181, 0.9);
+
+  --qst-glass: rgba(28, 11, 48, 0.82);
+  --qst-radius-sm: 12px;
+  --qst-radius: 20px;
+  --qst-radius-lg: 26px;
+  --qst-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  width: 100%;
+  color: var(--qst-text);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: qstFadeIn 0.35s ease-out;
+}
+
+@keyframes qstFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   1. HERO BANNER — Panoramic cosmic header with 3D neon dialogue bubble
+   ========================================================================== */
+
+.heroBanner {
+  position: relative;
+  isolation: isolate;
+  min-height: 190px;
+  padding: 30px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-radius: var(--qst-radius-lg);
+  border: 1px solid var(--qst-border);
+  overflow: hidden;
+  box-shadow: var(--qst-shadow);
+  background:
+    linear-gradient(115deg, rgba(16, 7, 30, 0.92) 0%, rgba(32, 12, 56, 0.78) 55%, rgba(14, 6, 26, 0.9) 100%),
+    url('/assets/garden/card_questions.jpg') center / cover no-repeat;
+}
+
+.heroAmbientGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(240, 68, 181, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 82% 50%, rgba(56, 189, 248, 0.22) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.heroTagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--qst-lavender);
+}
+
+.heroTagDot {
+  color: var(--qst-pink-light);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+.heroTitleHeart {
+  font-family: sans-serif;
+  color: var(--qst-pink-light);
+  font-size: 0.85em;
+  filter: drop-shadow(0 0 10px rgba(240, 68, 181, 0.8));
+}
+
+.heroVerbs {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--qst-muted);
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  color: var(--qst-text);
+  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero Right 3D Artwork Frame */
+.heroArtworkContainer {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.heroArtworkContainer:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(240, 68, 181, 0.3);
+}
+
+.heroArtworkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   2. MAIN QUESTION CARD — Exactly matching Row 3, Col 1
+   ========================================================================== */
+
+.mainPanel {
+  position: relative;
+  background: var(--qst-glass);
+  border: 1px solid var(--qst-border);
+  border-radius: var(--qst-radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--qst-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.questionCard {
+  position: relative;
+  background: var(--qst-surface-card);
+  border: 1px solid var(--qst-border);
+  border-radius: var(--qst-radius);
+  padding: 22px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.questionCard:hover {
+  background: var(--qst-surface-hover);
+  border-color: var(--qst-border-hover);
+  transform: translateY(-2px);
+}
+
+.questionLeft {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Round ? Badge */
+.questionBadge {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(240, 68, 181, 0.25) 0%, rgba(141, 53, 189, 0.3) 100%);
+  border: 1.5px solid var(--qst-border-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--qst-pink-light);
+  box-shadow: 0 0 18px rgba(240, 68, 181, 0.3);
+}
+
+.questionBadgeIcon {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: 'Playfair Display', serif;
+  line-height: 1;
+}
+
+.questionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.questionTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.questionMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  color: var(--qst-muted);
+  flex-wrap: wrap;
+}
+
+.questionMetaDot {
+  color: var(--qst-pink-light);
+}
+
+.questionCategoryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--qst-sky-light);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* View Answers Button on right of card */
+.viewAnswersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--qst-border);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.viewAnswersBtn:hover {
+  background: rgba(240, 68, 181, 0.2);
+  border-color: var(--qst-pink-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(240, 68, 181, 0.25);
+}
+
+/* ==========================================================================
+   3. BOTTOM ACTION BAR — Ask a New Question ＋ & Next Prompt
+   ========================================================================== */
+
+.bottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+}
+
+.shuffleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--qst-border);
+  color: var(--qst-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shuffleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: var(--qst-lavender);
+}
+
+.askNewBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(225, 49, 170, 0.32);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.askNewBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 28px rgba(225, 49, 170, 0.45);
+}
+
+/* ==========================================================================
+   4. ANSWER SANCTUARY DRAWER & MODAL
+   ========================================================================== */
+
+.drawerPanel {
+  background: rgba(25, 9, 44, 0.94);
+  border: 1px solid var(--qst-border);
+  border-radius: var(--qst-radius);
+  padding: 24px 28px;
+  box-shadow: var(--qst-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: qstFadeIn 0.25s ease-out;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--qst-border);
+  padding-bottom: 14px;
+}
+
+.drawerTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.drawerCloseBtn {
+  background: transparent;
+  border: 0;
+  color: var(--qst-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.drawerCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.answerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.textareaField {
+  width: 100%;
+  min-height: 110px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(18, 5, 31, 0.75);
+  border: 1px solid var(--qst-border);
+  color: var(--qst-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.textareaField:focus {
+  border-color: var(--qst-pink);
+  box-shadow: 0 0 0 3px rgba(240, 68, 181, 0.18);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.saveAnswerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: 0 5px 20px rgba(225, 49, 170, 0.3);
+  transition: all 0.2s ease;
+}
+
+.saveAnswerBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Partner's whisper answer card */
+.partnerWhisperCard {
+  border-radius: 16px;
+  padding: 18px 22px;
+  background: rgba(240, 68, 181, 0.1);
+  border: 1px solid rgba(240, 68, 181, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: qstFadeIn 0.3s ease-out;
+}
+
+.partnerWhisperHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--qst-pink-light);
+  font-weight: 600;
+}
+
+.partnerWhisperText {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #ffffff;
+  line-height: 1.5;
+}
+
+/* Modal for Asking New Custom Question */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 4, 18, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: qstFadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(28, 11, 48, 0.96);
+  border: 1px solid var(--qst-border);
+  border-radius: var(--qst-radius-lg);
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalInput {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(18, 5, 31, 0.75);
+  border: 1px solid var(--qst-border);
+  color: var(--qst-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.modalInput:focus {
+  border-color: var(--qst-pink);
+  box-shadow: 0 0 0 3px rgba(240, 68, 181, 0.18);
+}
+
+/* ==========================================================================
+   5. RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .heroBanner {
+    padding: 24px 20px;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .heroContent {
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTitle {
+    justify-content: center;
+  }
+
+  .heroArtworkContainer {
+    width: 110px;
+    height: 110px;
+  }
+
+  .mainPanel {
+    padding: 20px 16px;
+  }
+
+  .questionCard {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .questionLeft {
+    width: 100%;
+  }
+
+  .viewAnswersBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bottomBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shuffleBtn,
+  .askNewBtn {
+    width: 100%;
+  }
+}

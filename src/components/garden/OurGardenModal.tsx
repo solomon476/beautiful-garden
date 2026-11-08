@@ -83,7 +83,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
 
   useEffect(() => {
     if (initialTab && isOpen) {
-      const normalized = (initialTab as string) === 'mood' ? 'moods' : initialTab;
+      let normalized = initialTab as string;
+      if (normalized === 'mood') normalized = 'moods';
+      if (normalized === 'question') normalized = 'questions';
       setActiveTab(normalized as TabKey);
     }
   }, [initialTab, isOpen]);
