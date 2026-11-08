@@ -8,13 +8,20 @@ import {
   X,
   UploadCloud,
   Mic,
-  FileText,
   Check,
-  Clock,
-  FileAudio,
-  Flower2,
   Lock,
   Users,
+  Sparkles,
+  PenLine,
+  MessageCircle,
+  Eye,
+  Send,
+  ChevronDown,
+  Flower2,
+  FileAudio,
+  FileText,
+  Clock,
+  Search,
 } from 'lucide-react';
 import {
   memoryArchiveService,
@@ -30,12 +37,11 @@ import { mediaStorage } from '../../utils/mediaStorage';
 import { compressImage } from '../../utils/imageCompressor';
 import {
   isSpotifyUrl,
-  openSpotifySearch,
-  SpotifyIcon,
   getCleanSpotifyUrl,
   fetchSpotifyOEmbed,
 } from '../../utils/spotify';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
+import styles from './QuickAddStudioModal.module.css';
 
 export type QuickAddType = 'photo' | 'date' | 'song' | 'book' | 'letter';
 
@@ -66,7 +72,9 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
     }
   }, [isOpen, initialType]);
 
-  // User state
+  // Dynamic user & partner state
+  // Solomon's side: partner.displayName is "Noella"
+  // Noella's side: partner.displayName is "Solomon"
   const currentUser = authService.getCurrentUser();
   const partner = authService.getPartner();
 
@@ -96,7 +104,6 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const [songAudioName, setSongAudioName] = useState<string | undefined>(undefined);
   const [isVoiceNote, setIsVoiceNote] = useState(false);
   const [showSongRecorder, setShowSongRecorder] = useState(false);
-  const [songSpotifyLoading, setSongSpotifyLoading] = useState(false);
   const [songSpotifyDetected, setSongSpotifyDetected] = useState<{
     title?: string;
     artist?: string;
@@ -152,11 +159,11 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const handleSavePhoto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!photoTitle.trim()) {
-      setErrorMsg('Please specify a title for the memory.');
+      setErrorMsg('Please specify a title for the moment.');
       return;
     }
     if (!photoDataUrl.trim()) {
-      setErrorMsg('Please select a photo from your phone or camera.');
+      setErrorMsg('Please select a photo from your device or gallery.');
       return;
     }
 
@@ -173,7 +180,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
       finishSuccess('photo');
     } catch (err: any) {
       setIsSaving(false);
-      setErrorMsg(err?.message || 'Could not save memory.');
+      setErrorMsg(err?.message || 'Could not save moment.');
     }
   };
 
@@ -230,7 +237,6 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const handleSongMusicUrlChange = async (val: string) => {
     setSongMusicUrl(val);
     if (isSpotifyUrl(val)) {
-      setSongSpotifyLoading(true);
       try {
         const clean = getCleanSpotifyUrl(val);
         const meta = await fetchSpotifyOEmbed(clean);
@@ -247,24 +253,9 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         }
       } catch (err) {
         console.warn('Spotify link notice:', err);
-      } finally {
-        setSongSpotifyLoading(false);
       }
     } else {
       setSongSpotifyDetected(null);
-    }
-  };
-
-  const handlePasteSongMusicUrl = async () => {
-    try {
-      if (navigator.clipboard?.readText) {
-        const text = await navigator.clipboard.readText();
-        if (text) {
-          handleSongMusicUrlChange(text);
-        }
-      }
-    } catch (err) {
-      console.warn('Clipboard read error', err);
     }
   };
 
@@ -384,425 +375,392 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-xl animate-fade-in font-body"
-      style={{ zIndex: 2000 }}
-      onClick={onClose}
-    >
+    <div className={styles.modalOverlay} onClick={onClose}>
       <div
-        className="max-w-xl sm:max-w-2xl w-full p-5 sm:p-7 rounded-3xl border-2 border-pink-400/65 relative space-y-4 sm:space-y-5 max-h-[92vh] overflow-y-auto"
-        style={{
-          backgroundColor: '#1b0a36',
-          backgroundImage: 'linear-gradient(165deg, #220d42 0%, #120526 100%)',
-          boxShadow: '0 0 35px rgba(236, 72, 153, 0.45), 0 25px 60px -15px rgba(0, 0, 0, 0.95)',
-        }}
+        className={styles.momentContainer}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Decorative Flower Embellishments on Corners */}
-        <div className="absolute bottom-2 left-3 pointer-events-none opacity-60 select-none text-base">🌸</div>
-        <div className="absolute bottom-2 right-3 pointer-events-none opacity-60 select-none text-base">🌸</div>
+        {/* Clean Frosted Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className={styles.closeButton}
+          aria-label="Close"
+          title="Close dialog"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-        {/* 1. Header Matching Sanctuary Mockup */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-purple-400/20">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-pink-500/30 border border-white/20 shrink-0">
-              <Flower2 className="w-5 h-5 fill-white text-white" />
-            </div>
-            <div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-1.5">
-                <span>Add to Our Garden</span>
-                <span className="text-pink-300 font-sans text-sm">♡</span>
-              </h3>
-              <p className="text-xs text-pink-200/80 font-serif italic">
-                Share a moment, a thought or a memory with {partner.displayName} ❤️
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/15 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* 2. Section 1: "🌸 What are you adding?" with Checkmark Badges */}
-        <div className="space-y-1.5">
-          <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-            <span>🌸</span>
-            <span>What are you adding?</span>
-          </div>
-
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-            {[
-              { type: 'photo', label: 'Photo', icon: Camera },
-              { type: 'date', label: 'Date', icon: CalendarDays },
-              { type: 'song', label: 'Music', icon: Music },
-              { type: 'book', label: 'Book/PDF', icon: BookOpen },
-              { type: 'letter', label: 'Letter', icon: Mail },
-            ].map((tab) => {
-              const isActive = activeType === tab.type;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.type}
-                  type="button"
-                  onClick={() => handleTypeSwitch(tab.type as QuickAddType)}
-                  className={`relative p-2.5 sm:p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-gradient-to-b from-purple-900/80 to-[#270d42] border-2 border-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.55)] scale-[1.02]'
-                      : 'bg-[#150a2b]/80 border border-purple-400/25 hover:border-purple-300/50 hover:bg-white/[0.06] text-slate-300'
-                  }`}
-                >
-                  {isActive && (
-                    <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 rounded-full bg-pink-500 border border-white flex items-center justify-center text-white shadow-sm">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                  )}
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-pink-200' : 'text-purple-300/80'}`} />
-                  <span className={`text-[10px] sm:text-[11px] font-semibold leading-tight ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Navigation Tabs — Exactly matching 2x2 grid from mockup */}
+        <div className={styles.momentTabs}>
+          {[
+            { type: 'photo', label: 'Photo Moments', icon: Camera },
+            { type: 'song', label: 'Music', icon: Music },
+            { type: 'book', label: 'Read/PDF', icon: BookOpen },
+            { type: 'date', label: 'Date', icon: CalendarDays },
+            { type: 'letter', label: 'Letter', icon: Mail },
+          ].map((tab, idx) => {
+            const isActive = activeType === tab.type;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.type}
+                type="button"
+                onClick={() => handleTypeSwitch(tab.type as QuickAddType)}
+                className={`${styles.momentTab} ${isActive ? styles.active : ''} ${
+                  idx === 4 ? styles.momentTabFull : ''
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${styles.tabIcon}`} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Success Banner */}
         {isSuccess && (
-          <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-center text-emerald-200 text-sm font-medium flex items-center justify-center gap-2 animate-scale-up">
-            <Check className="w-4 h-4 text-emerald-300" />
-            <span>Bloomed beautifully into Our Garden! ✨</span>
+          <div className={styles.successBanner}>
+            <div style={{ fontSize: '28px' }}>🌸✨</div>
+            <div>Bloomed beautifully into Our Garden!</div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* FORM 1: Photo / Keepsake Moment                                */}
+        {/* FORM 1: Photo / Keepsake Moment (Matching Image 2 Mockup)      */}
         {/* ============================================================== */}
         {activeType === 'photo' && !isSuccess && (
-          <form onSubmit={handleSavePhoto} className="space-y-4 animate-fade-in">
-            {/* Section 2: Your Moment */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Your Moment</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Moment Title *
-                  </label>
+          <form onSubmit={handleSavePhoto}>
+            {/* Section 1: ✨ Your Moment */}
+            <div className={styles.sectionTitle}>
+              <Sparkles className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Your Moment</span>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Moment Title *</label>
+                <div className={styles.inputWrapper}>
+                  <PenLine className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     required
                     value={photoTitle}
                     onChange={(e) => setPhotoTitle(e.target.value)}
                     placeholder="e.g. Our beautiful day..."
+                    className={styles.inputWithPrefix}
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Date or Season (Optional)
-                  </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Date or Season (Optional)</label>
+                <div className={styles.inputWrapper}>
+                  <CalendarDays className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     value={photoDate}
                     onChange={(e) => setPhotoDate(e.target.value)}
-                    placeholder="Select date or season 📅"
+                    placeholder="e.g. Nov 8, 2026 or Spring 🌸"
+                    className={`${styles.inputWithPrefix} ${styles.inputWithSuffix}`}
+                  />
+                  <ChevronDown className={`w-4 h-4 ${styles.inputSuffixIcon}`} />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: 💬 A Little Note */}
+            <div className={styles.sectionTitle}>
+              <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>A Little Note</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <div className={styles.textareaWrapper}>
+                <textarea
+                  rows={3}
+                  value={photoCaption}
+                  maxLength={300}
+                  onChange={(e) => setPhotoCaption(e.target.value)}
+                  placeholder="Add a caption, thought or message..."
+                />
+                <span className={styles.charCounter}>
+                  {photoCaption.length}/300 💖
+                </span>
+              </div>
+            </div>
+
+            {/* Section 3: 🌸 Add Your Content */}
+            <div className={styles.sectionTitle}>
+              <Flower2 className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Add Your Content</span>
+            </div>
+
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoFile}
+            />
+
+            <div
+              className={styles.uploadArea}
+              onClick={() => photoInputRef.current?.click()}
+            >
+              {photoDataUrl ? (
+                <>
+                  <div
+                    className={styles.imagePreview}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <img src={photoDataUrl} alt="Preview" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoDataUrl('')}
+                      className={styles.removeImage}
+                      title="Remove image"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className={styles.uploadDivider} />
+
+                  <div className={styles.uploadContentRight}>
+                    <div className={styles.uploadIcon}>
+                      <UploadCloud className="w-7 h-7" />
+                    </div>
+                    <div className={styles.uploadTitle}>
+                      Click to change image
+                    </div>
+                    <div className={styles.uploadSubtitle}>
+                      JPG, PNG or other files
+                    </div>
+                    <svg width="40" height="20" viewBox="0 0 50 25" fill="none" stroke="#ff78d2" strokeWidth="1.8" strokeLinecap="round">
+                      <path d="M5 18 C15 22, 25 22, 35 15 C38 12, 43 8, 41 4 C39 0, 34 3, 33 8 C32 13, 38 18, 47 16" />
+                    </svg>
+                  </div>
+                </>
+              ) : (
+                <div className={styles.uploadContentRight}>
+                  <div className={styles.uploadIcon}>
+                    <UploadCloud className="w-7 h-7" />
+                  </div>
+                  <div className={styles.uploadTitle}>
+                    Click to upload or drag and drop
+                  </div>
+                  <div className={styles.uploadSubtitle}>
+                    JPG, PNG or other files
+                  </div>
+                  <svg width="40" height="20" viewBox="0 0 50 25" fill="none" stroke="#ff78d2" strokeWidth="1.8" strokeLinecap="round">
+                    <path d="M5 18 C15 22, 25 22, 35 15 C38 12, 43 8, 41 4 C39 0, 34 3, 33 8 C32 13, 38 18, 47 16" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Voice Whisper Toggle Button */}
+            <div
+              className={styles.voiceButton}
+              onClick={() => setShowPhotoRecorder(!showPhotoRecorder)}
+            >
+              <Mic className="w-4 h-4 text-pink-300" />
+              <span>{photoVoiceNote ? 'Voice Whisper Attached 🎙️ (Click to re-record)' : '+ Add Voice Whisper'}</span>
+            </div>
+
+            {showPhotoRecorder && (
+              <div style={{ marginBottom: '22px' }}>
+                <VoiceNoteRecorder
+                  onRecorded={(audioDataUrl: string) => {
+                    setPhotoVoiceNote(audioDataUrl);
+                    setShowPhotoRecorder(false);
+                  }}
+                  onCancel={() => setShowPhotoRecorder(false)}
+                />
+              </div>
+            )}
+
+            {/* Section 4: 👁️ Visibility (Dynamic for Solomon & Noella) */}
+            <div className={styles.sectionTitle}>
+              <Eye className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Visibility</span>
+            </div>
+
+            <div className={styles.visibilityOptions}>
+              {/* Private Option */}
+              <div
+                className={`${styles.visibilityOption} ${!photoShared ? styles.selected : ''}`}
+                onClick={() => setPhotoShared(false)}
+              >
+                <div className={`${styles.radioCircle} ${!photoShared ? styles.radioCircleActive : ''}`}>
+                  {!photoShared && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                </div>
+                <div className={styles.visibilityIconBox}>
+                  <Lock className="w-4 h-4 text-pink-300" />
+                </div>
+                <div className={styles.visibilityText}>
+                  <div className={styles.visibilityTitle}>Private</div>
+                  <div className={styles.visibilitySubtitle}>Only you can see this</div>
+                </div>
+                <div className={styles.visibilityEndIcon}>👑</div>
+              </div>
+
+              {/* Share Option (Shows "Share with Noella" for Solomon, "Share with Solomon" for Noella) */}
+              <div
+                className={`${styles.visibilityOption} ${photoShared ? styles.selected : ''}`}
+                onClick={() => setPhotoShared(true)}
+              >
+                <div className={`${styles.radioCircle} ${photoShared ? styles.radioCircleActive : ''}`}>
+                  {photoShared && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                </div>
+                <div className={styles.visibilityIconBox}>
+                  <Users className="w-4 h-4 text-pink-300" />
+                </div>
+                <div className={styles.visibilityText}>
+                  <div className={styles.visibilityTitle}>Share</div>
+                  <div className={styles.visibilitySubtitle}>
+                    Share with {partner.displayName}
+                  </div>
+                </div>
+                <div className={styles.visibilityEndIcon}>🧑‍🤝‍🧑</div>
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div className={styles.errorMessage}>
+                <span>⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Section 5: Main Radiant Action Button */}
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={styles.postButton}
+            >
+              <Send className="w-5 h-5 text-white" />
+              <span>{isSaving ? 'Posting Moment...' : 'Post My Moment ✨'}</span>
+            </button>
+          </form>
+        )}
+
+        {/* ============================================================== */}
+        {/* FORM 2: Suggest a Date or Hangout                              */}
+        {/* ============================================================== */}
+        {activeType === 'date' && !isSuccess && (
+          <form onSubmit={handleSaveDate}>
+            <div className={styles.sectionTitle}>
+              <CalendarDays className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Hangout & Date Adventure</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Date Idea or Activity *</label>
+              <div className={styles.inputWrapper}>
+                <PenLine className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
+                <input
+                  type="text"
+                  required
+                  value={dateTitle}
+                  onChange={(e) => setDateTitle(e.target.value)}
+                  placeholder="e.g. Sunset picnic, Boba cafe date, or stargazing..."
+                  className={styles.inputWithPrefix}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Proposed Timing</label>
+                <div className={styles.inputWrapper}>
+                  <Clock className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
+                  <input
+                    type="text"
+                    value={dateProposed}
+                    onChange={(e) => setDateProposed(e.target.value)}
+                    placeholder="e.g. This Saturday 6:30 PM"
+                    className={styles.inputWithPrefix}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Location</label>
+                <div className={styles.inputWrapper}>
+                  <CalendarDays className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
+                  <input
+                    type="text"
+                    value={dateLocation}
+                    onChange={(e) => setDateLocation(e.target.value)}
+                    placeholder="e.g. Waterfront park or cozy cafe"
+                    className={styles.inputWithPrefix}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Section 3: A Little Note */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>A Little Note</span>
-              </div>
-              <div className="relative">
+            <div className={styles.sectionTitle}>
+              <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>A Little Note & Details</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <div className={styles.textareaWrapper}>
                 <textarea
-                  rows={2}
-                  value={photoCaption}
-                  maxLength={500}
-                  onChange={(e) => setPhotoCaption(e.target.value)}
-                  placeholder="Add a caption, thought or message..."
-                  className="w-full"
-                />
-                <span className="absolute bottom-2 right-3 text-[10px] font-mono text-pink-300/60 pointer-events-none">
-                  {photoCaption.length}/500
-                </span>
-              </div>
-            </div>
-
-            {/* Section 4: Add Your Content (Upload Dropzone) */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Add Your Content</span>
-              </div>
-
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoFile}
-              />
-
-              {photoDataUrl ? (
-                <div className="relative rounded-2xl overflow-hidden max-h-52 border-2 border-pink-400/50 shadow-lg">
-                  <img src={photoDataUrl} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setPhotoDataUrl('')}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-rose-500 text-white shadow-md transition-all cursor-pointer"
-                    title="Remove photo"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => photoInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onDrop={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) {
-                      const compressed = await compressImage(file, 1280, 1280, 0.82);
-                      setPhotoDataUrl(compressed);
-                      if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
-                    }
-                  }}
-                  className="p-5 sm:p-6 rounded-2xl border-2 border-dashed border-purple-400/40 hover:border-pink-400/80 bg-purple-950/25 hover:bg-purple-900/35 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group shadow-inner"
-                >
-                  <div className="w-10 h-10 rounded-full bg-pink-500/20 border border-pink-400/30 flex items-center justify-center text-pink-300 group-hover:scale-110 transition-transform">
-                    <UploadCloud className="w-5 h-5 text-pink-300" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-white">
-                      <span className="text-pink-300 underline font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-[10px] text-pink-200/60 mt-0.5">
-                      JPG, PNG or other files
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Voice Memo Attachment */}
-              <div className="flex justify-end pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => setShowPhotoRecorder(!showPhotoRecorder)}
-                  className="inline-flex items-center gap-1.5 text-xs text-pink-300 hover:text-pink-200 font-medium cursor-pointer"
-                >
-                  <Mic className="w-3.5 h-3.5 text-pink-400" />
-                  <span>{photoVoiceNote ? 'Voice memo recorded 🎙️' : '+ Add Voice Whisper'}</span>
-                </button>
-              </div>
-
-              {showPhotoRecorder && (
-                <VoiceNoteRecorder
-                  onRecorded={(url) => {
-                    setPhotoVoiceNote(url);
-                    setShowPhotoRecorder(false);
-                  }}
-                  onCancel={() => setShowPhotoRecorder(false)}
-                />
-              )}
-            </div>
-
-            {/* Section 5: Visibility Matching Mockup */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Visibility</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPhotoShared(false)}
-                  className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                    !photoShared
-                      ? 'bg-purple-900/60 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.35)] ring-1 ring-pink-400'
-                      : 'bg-[#150a2b]/80 border-purple-400/20 hover:border-purple-300/40 text-slate-300'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                    !photoShared ? 'border-pink-400 bg-pink-500' : 'border-white/40'
-                  }`}>
-                    {!photoShared && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                      <Lock className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Private</span>
-                    </div>
-                    <p className="text-[10px] text-pink-200/70 font-sans mt-0.5">Only you can see this</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPhotoShared(true)}
-                  className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                    photoShared
-                      ? 'bg-purple-900/60 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.35)] ring-1 ring-pink-400'
-                      : 'bg-[#150a2b]/80 border-purple-400/20 hover:border-purple-300/40 text-slate-300'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                    photoShared ? 'border-pink-400 bg-pink-500' : 'border-white/40'
-                  }`}>
-                    {photoShared && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                      <Users className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Share</span>
-                    </div>
-                    <p className="text-[10px] text-pink-200/70 font-sans mt-0.5">Both of us can see this</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {errorMsg && (
-              <p className="text-xs text-rose-300 p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
-            )}
-
-            {/* Action Buttons Matching Mockup */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-purple-400/20">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-full border border-purple-400/30 hover:border-pink-300/50 text-slate-300 hover:text-white text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.1] transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400 hover:from-pink-400 hover:to-amber-300 text-white text-xs font-bold shadow-[0_0_25px_rgba(236,72,153,0.6)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              >
-                <Flower2 className="w-4 h-4 fill-white" />
-                <span>{isSaving ? 'Blooming into Garden...' : 'Add to Our Garden ✨'}</span>
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ============================================================== */}
-        {/* FORM 2: Suggest a Date                                         */}
-        {/* ============================================================== */}
-        {activeType === 'date' && !isSuccess && (
-          <form onSubmit={handleSaveDate} className="space-y-4 animate-fade-in">
-            {/* Section 2: Your Date */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Date Idea or Activity *</span>
-              </div>
-              <input
-                type="text"
-                required
-                value={dateTitle}
-                onChange={(e) => setDateTitle(e.target.value)}
-                placeholder="e.g. Sunset picnic, Boba cafe date, or stargazing"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                  Proposed Timing
-                </label>
-                <input
-                  type="text"
-                  value={dateProposed}
-                  onChange={(e) => setDateProposed(e.target.value)}
-                  placeholder="e.g. This Saturday 6:30 PM"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={dateLocation}
-                  onChange={(e) => setDateLocation(e.target.value)}
-                  placeholder="e.g. Waterfront park or downtown cafe"
+                  rows={3}
+                  value={dateDescription}
+                  onChange={(e) => setDateDescription(e.target.value)}
+                  placeholder="Bring cozy blankets, warm tea, and good music..."
                 />
               </div>
             </div>
 
-            {/* Section 3: A Little Note */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>A Little Note & Details</span>
-              </div>
-              <textarea
-                rows={2}
-                value={dateDescription}
-                onChange={(e) => setDateDescription(e.target.value)}
-                placeholder="e.g. Bring cozy blankets, warm tea, and good music..."
-                className="w-full"
-              />
-            </div>
-
-            {/* Section 4: Countdown & Reminders */}
-            <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-400/25 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 18px',
+                borderRadius: '18px',
+                background: 'rgba(20, 184, 166, 0.12)',
+                border: '1px solid rgba(45, 212, 191, 0.3)',
+                marginBottom: '20px',
+                cursor: 'pointer',
+              }}
+              onClick={() => setDateReminder(!dateReminder)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Clock className="w-4 h-4 text-teal-300" />
-                <span className="text-xs text-teal-200 font-medium">Add to Our Time countdown & reminders</span>
+                <span style={{ fontSize: '13.5px', color: '#99f6e4', fontWeight: 600 }}>
+                  Add to Our Time countdown & alerts
+                </span>
               </div>
               <input
                 type="checkbox"
                 checked={dateReminder}
                 onChange={(e) => setDateReminder(e.target.checked)}
-                className="w-4 h-4 accent-teal-500 rounded cursor-pointer"
+                style={{ width: '18px', height: '18px', accentColor: '#14b8a6', cursor: 'pointer' }}
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
 
             {errorMsg && (
-              <p className="text-xs text-rose-300 p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
+              <div className={styles.errorMessage}>
+                <span>⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-purple-400/20">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-full border border-purple-400/30 hover:border-pink-300/50 text-slate-300 hover:text-white text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.1] transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-400 hover:from-teal-400 hover:to-amber-300 text-white text-xs font-bold shadow-[0_0_25px_rgba(20,184,166,0.6)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              >
-                <CalendarDays className="w-4 h-4" />
-                <span>{isSaving ? 'Planning Date...' : `Propose Date to ${partner.displayName} 📅`}</span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={styles.postButton}
+            >
+              <Send className="w-5 h-5 text-white" />
+              <span>{isSaving ? 'Planning Date...' : `Suggest Adventure to ${partner.displayName} 📅`}</span>
+            </button>
           </form>
         )}
 
@@ -810,221 +768,151 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         {/* FORM 3: Music or Voice Note                                    */}
         {/* ============================================================== */}
         {activeType === 'song' && !isSuccess && (
-          <form onSubmit={handleSaveSong} className="space-y-4 animate-fade-in">
-            {/* Section 2: Song Title & Artist */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Song or Voice Note</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Title *
-                  </label>
+          <form onSubmit={handleSaveSong}>
+            <div className={styles.sectionTitle}>
+              <Music className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Music & Audio Keepsake</span>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Song Title *</label>
+                <div className={styles.inputWrapper}>
+                  <Music className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     required
                     value={songTitle}
                     onChange={(e) => setSongTitle(e.target.value)}
-                    placeholder="e.g. Flying or For You"
+                    placeholder="e.g. Flying or Perfect"
+                    className={styles.inputWithPrefix}
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Artist / Creator
-                  </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Artist / Creator</label>
+                <div className={styles.inputWrapper}>
+                  <PenLine className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     value={songArtist}
                     onChange={(e) => setSongArtist(e.target.value)}
-                    placeholder={`e.g. Tom Odell or ${currentUser.displayName}`}
+                    placeholder={`e.g. Ed Sheeran or ${currentUser.displayName}`}
+                    className={styles.inputWithPrefix}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Section 3: A Little Note */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>A Little Note / Whisper</span>
+            <div className={styles.formGroup}>
+              <label>Spotify Track URL (Optional)</label>
+              <div className={styles.inputWrapper}>
+                <Search className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
+                <input
+                  type="url"
+                  value={songMusicUrl}
+                  onChange={(e) => handleSongMusicUrlChange(e.target.value)}
+                  placeholder="https://open.spotify.com/track/..."
+                  className={styles.inputWithPrefix}
+                />
               </div>
-              <input
-                type="text"
-                value={songMessage}
-                onChange={(e) => setSongMessage(e.target.value)}
-                placeholder="e.g. The song that reminds me of our long walks..."
-              />
             </div>
 
-            {/* Section 4: Add Audio Content */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Add Your Content</span>
+            <div className={styles.sectionTitle}>
+              <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>A Sweet Note / Message</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <div className={styles.textareaWrapper}>
+                <textarea
+                  rows={2}
+                  value={songMessage}
+                  onChange={(e) => setSongMessage(e.target.value)}
+                  placeholder="The song that reminds me of our unforgettable moments..."
+                />
               </div>
+            </div>
 
-              <input
-                ref={songInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={handleSongFile}
-              />
+            <div className={styles.sectionTitle}>
+              <Flower2 className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Add Audio Track / Voice Whisper</span>
+            </div>
 
+            <input
+              ref={songInputRef}
+              type="file"
+              accept="audio/*"
+              style={{ display: 'none' }}
+              onChange={handleSongFile}
+            />
+
+            <div
+              className={styles.uploadArea}
+              onClick={() => songInputRef.current?.click()}
+            >
               {songAudioUrl ? (
-                <div className="p-3.5 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-between text-xs text-purple-200">
-                  <span className="flex items-center gap-2">
-                    <FileAudio className="w-4 h-4 text-purple-300" />
-                    <span>{songAudioName || (isVoiceNote ? 'Voice Note' : 'Audio Track')}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSongAudioUrl(undefined);
-                      setSongAudioName(undefined);
-                      setIsVoiceNote(false);
-                    }}
-                    className="text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
-                  >
-                    Remove
-                  </button>
+                <div className={styles.uploadContentRight}>
+                  <div className={styles.uploadIcon}>
+                    <FileAudio className="w-7 h-7" />
+                  </div>
+                  <div className={styles.uploadTitle}>
+                    {songAudioName || (isVoiceNote ? 'Voice Note Attached' : 'Audio Track Attached')}
+                  </div>
+                  <div className={styles.uploadSubtitle}>
+                    Click to change or replace audio file
+                  </div>
                 </div>
               ) : (
-                <div
-                  onClick={() => songInputRef.current?.click()}
-                  className="p-5 rounded-2xl border-2 border-dashed border-purple-400/40 hover:border-purple-300/80 bg-purple-950/25 hover:bg-purple-900/35 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group shadow-inner"
-                >
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
-                    <UploadCloud className="w-5 h-5 text-purple-300" />
+                <div className={styles.uploadContentRight}>
+                  <div className={styles.uploadIcon}>
+                    <UploadCloud className="w-7 h-7" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-white">
-                      <span className="text-purple-300 underline font-semibold">Upload Audio File</span> or drag audio
-                    </p>
-                    <p className="text-[10px] text-purple-200/60 mt-0.5">
-                      MP3, M4A, WAV or record voice note
-                    </p>
+                  <div className={styles.uploadTitle}>
+                    Click to upload MP3, M4A or WAV
+                  </div>
+                  <div className={styles.uploadSubtitle}>
+                    Audio tracks, voice recordings or sound gems
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Record Voice Note Option */}
-              <div className="flex items-center justify-between pt-1 text-xs">
-                <span className="text-purple-200/70 font-mono text-[11px]">Or record directly:</span>
-                <button
-                  type="button"
-                  onClick={() => setShowSongRecorder(!showSongRecorder)}
-                  className="inline-flex items-center gap-1.5 text-xs text-pink-300 hover:text-pink-200 font-medium cursor-pointer"
-                >
-                  <Mic className="w-3.5 h-3.5 text-pink-400" />
-                  <span>{showSongRecorder ? 'Close Voice Recorder' : 'Record Voice Note 🎙️'}</span>
-                </button>
-              </div>
+            <div
+              className={styles.voiceButton}
+              onClick={() => setShowSongRecorder(!showSongRecorder)}
+            >
+              <Mic className="w-4 h-4 text-pink-300" />
+              <span>{isVoiceNote ? 'Re-record Voice Note 🎙️' : '+ Record Voice Note Directly'}</span>
+            </div>
 
-              {showSongRecorder && (
+            {showSongRecorder && (
+              <div style={{ marginBottom: '22px' }}>
                 <VoiceNoteRecorder
-                  onRecorded={handleSongVoiceRecorded}
+                  onRecorded={(audioDataUrl: string, dur: number, name: string) => {
+                    handleSongVoiceRecorded(audioDataUrl, dur, name || `Voice Note for ${partner.displayName}`);
+                  }}
                   onCancel={() => setShowSongRecorder(false)}
                 />
-              )}
-
-              {/* Optional Music Link with Direct Spotify Linking */}
-              <div className="pt-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-purple-200/80">
-                    Music Link (Spotify, YouTube, Apple Music):
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => openSpotifySearch(songTitle || songArtist || '')}
-                    className="btn-spotify-pill inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all active:scale-95 cursor-pointer"
-                    title="Find song on Spotify"
-                  >
-                    <SpotifyIcon className="w-3 h-3" style={{ fill: '#1db954' }} />
-                    <span>Search Spotify</span>
-                  </button>
-                </div>
-
-                <div className="relative flex items-center">
-                  <input
-                    type="url"
-                    value={songMusicUrl}
-                    onChange={(e) => handleSongMusicUrlChange(e.target.value)}
-                    placeholder="Paste Spotify link: https://open.spotify.com/track/..."
-                    className="w-full pr-16"
-                  />
-                  <button
-                    type="button"
-                    onClick={handlePasteSongMusicUrl}
-                    className="absolute right-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-[11px] font-mono transition-all"
-                  >
-                    Paste
-                  </button>
-                </div>
-
-                {songSpotifyLoading && (
-                  <p className="text-[11px] font-mono text-emerald-300 animate-pulse">
-                    Connecting to Spotify & fetching track info...
-                  </p>
-                )}
-
-                {songSpotifyDetected && (
-                  <div className="badge-spotify p-2.5 rounded-2xl flex items-center gap-2.5 shadow-md animate-fade-in">
-                    {songSpotifyDetected.thumbnail ? (
-                      <img
-                        src={songSpotifyDetected.thumbnail}
-                        alt="Album Cover"
-                        className="w-10 h-10 rounded-xl object-cover shadow border border-white/20 shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-spotify/20 flex items-center justify-center shrink-0">
-                        <SpotifyIcon className="w-4 h-4" style={{ fill: '#1db954' }} />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-xs text-white block truncate">
-                        {songSpotifyDetected.title || 'Spotify Track'}
-                      </span>
-                      <span className="text-[10px] text-spotify block truncate">
-                        {songSpotifyDetected.artist ? `by ${songSpotifyDetected.artist}` : 'Album artwork linked automatically'}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-emerald-400 font-bold font-mono shrink-0">
-                      Linked ✓
-                    </span>
-                  </div>
-                )}
               </div>
-            </div>
-
-            {errorMsg && (
-              <p className="text-xs text-rose-300 p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-purple-400/20">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-full border border-purple-400/30 hover:border-pink-300/50 text-slate-300 hover:text-white text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.1] transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
+            {errorMsg && (
+              <div className={styles.errorMessage}>
+                <span>⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 hover:from-purple-500 hover:to-rose-400 text-white text-xs font-bold shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              >
-                <Music className="w-4 h-4" />
-                <span>{isSaving ? 'Sharing Melody...' : 'Share Song into Sound Garden 🎵'}</span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={styles.postButton}
+            >
+              <Send className="w-5 h-5 text-white" />
+              <span>{isSaving ? 'Sending Song...' : `Send Track to ${partner.displayName} 🎵`}</span>
+            </button>
           </form>
         )}
 
@@ -1032,34 +920,35 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         {/* FORM 4: Book, PDF or Shelf Discovery                           */}
         {/* ============================================================== */}
         {activeType === 'book' && !isSuccess && (
-          <form onSubmit={handleSaveBook} className="space-y-4 animate-fade-in">
-            {/* Section 2: Book Title & Category */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Title & Category</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Title or Book Name *
-                  </label>
+          <form onSubmit={handleSaveBook}>
+            <div className={styles.sectionTitle}>
+              <BookOpen className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Exchange Shelf Discovery</span>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup}>
+                <label>Title or Name *</label>
+                <div className={styles.inputWrapper}>
+                  <BookOpen className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     required
                     value={bookTitle}
                     onChange={(e) => setBookTitle(e.target.value)}
                     placeholder="e.g. The Alchemist or About Time"
+                    className={styles.inputWithPrefix}
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-mono text-purple-200/80 block mb-1">
-                    Category
-                  </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Category</label>
+                <div className={styles.inputWrapper}>
                   <select
                     value={bookCategory}
                     onChange={(e) => setBookCategory(e.target.value as ShelfCategory)}
-                    className="garden-select w-full"
+                    className={styles.inputWithSuffix}
                   >
                     <option value="books">Books & Reads 📖</option>
                     <option value="films">Films & Series 🎬</option>
@@ -1067,133 +956,111 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                     <option value="places">Places to Visit 🗺️</option>
                     <option value="activities">Activities 🎨</option>
                   </select>
+                  <ChevronDown className={`w-4 h-4 ${styles.inputSuffixIcon}`} />
                 </div>
               </div>
             </div>
 
-            {/* Section 3: A Little Note */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Why You Recommend It</span>
-              </div>
-              <textarea
-                rows={2}
-                value={bookDesc}
-                onChange={(e) => setBookDesc(e.target.value)}
-                placeholder="e.g. Beautiful prose, we have to read it together..."
-                className="w-full"
-              />
-            </div>
-
-            {/* Section 4: Add Content (PDF Upload Dropzone) */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Add Your Content (PDF / Link)</span>
-              </div>
-
-              <input
-                ref={bookPdfInputRef}
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                onChange={handleBookPdfFile}
-              />
-              <input
-                ref={bookPhotoInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleBookPhotoFile}
-              />
-
-              {bookPdfUrl ? (
-                <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-between text-xs text-emerald-200">
-                  <span className="flex items-center gap-2 truncate">
-                    <FileText className="w-4 h-4 text-emerald-300 shrink-0" />
-                    <span className="truncate">{bookPdfName || 'Book PDF'}</span>
-                    {bookPdfSize && (
-                      <span className="text-[10px] text-emerald-300/70 font-mono">
-                        ({mediaStorage.formatBytes(bookPdfSize)})
-                      </span>
-                    )}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBookPdfUrl(undefined);
-                      setBookPdfName(undefined);
-                    }}
-                    className="text-slate-400 hover:text-rose-300 transition-colors cursor-pointer"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => bookPdfInputRef.current?.click()}
-                  className="p-5 rounded-2xl border-2 border-dashed border-purple-400/40 hover:border-amber-300/80 bg-purple-950/25 hover:bg-purple-900/35 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group shadow-inner"
-                >
-                  <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-                    <UploadCloud className="w-5 h-5 text-amber-300" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-white">
-                      <span className="text-amber-300 underline font-semibold">Upload Book PDF</span> or drag file
-                    </p>
-                    <p className="text-[10px] text-purple-200/60 mt-0.5">
-                      Read together anytime in the garden
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Cover Photo / Link Options */}
-              <div className="flex items-center justify-between pt-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => bookPhotoInputRef.current?.click()}
-                  className="text-amber-300 hover:text-amber-200 font-medium cursor-pointer"
-                >
-                  {bookPhotoUrl ? 'Cover image attached 📸' : '+ Add Book Cover Photo'}
-                </button>
+            <div className={styles.formGroup}>
+              <label>Reference Link (Optional)</label>
+              <div className={styles.inputWrapper}>
+                <Search className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                 <input
                   type="url"
                   value={bookLink}
                   onChange={(e) => setBookLink(e.target.value)}
-                  placeholder="Optional link: https://..."
-                  className="max-w-[200px]"
+                  placeholder="https://..."
+                  className={styles.inputWithPrefix}
                 />
               </div>
             </div>
 
+            <div className={styles.sectionTitle}>
+              <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Why You Recommend It</span>
+            </div>
+
+            <div className={styles.formGroup}>
+              <div className={styles.textareaWrapper}>
+                <textarea
+                  rows={3}
+                  value={bookDesc}
+                  onChange={(e) => setBookDesc(e.target.value)}
+                  placeholder="e.g. Beautiful prose and deep reflection, we must experience this together..."
+                />
+              </div>
+            </div>
+
+            <div className={styles.sectionTitle}>
+              <Flower2 className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Add PDF or Cover Photo</span>
+            </div>
+
+            <input
+              ref={bookPdfInputRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: 'none' }}
+              onChange={handleBookPdfFile}
+            />
+
+            <input
+              ref={bookPhotoInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleBookPhotoFile}
+            />
+
+            <div className={styles.uploadArea}>
+              <div
+                style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+                onClick={() => bookPdfInputRef.current?.click()}
+              >
+                <div className={styles.uploadIcon} style={{ margin: '0 auto 8px' }}>
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div className={styles.uploadTitle}>
+                  {bookPdfName ? bookPdfName : 'Upload PDF Document'}
+                </div>
+                <div className={styles.uploadSubtitle}>
+                  Books, essays, poems or articles
+                </div>
+              </div>
+
+              <div className={styles.uploadDivider} />
+
+              <div
+                style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
+                onClick={() => bookPhotoInputRef.current?.click()}
+              >
+                <div className={styles.uploadIcon} style={{ margin: '0 auto 8px' }}>
+                  <UploadCloud className="w-6 h-6" />
+                </div>
+                <div className={styles.uploadTitle}>
+                  {bookPhotoUrl ? 'Cover Photo Selected' : 'Upload Cover / Photo'}
+                </div>
+                <div className={styles.uploadSubtitle}>
+                  JPG, PNG image snapshot
+                </div>
+              </div>
+            </div>
+
             {errorMsg && (
-              <p className="text-xs text-rose-300 p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
+              <div className={styles.errorMessage}>
+                <span>⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-purple-400/20">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-full border border-purple-400/30 hover:border-pink-300/50 text-slate-300 hover:text-white text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.1] transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-white text-xs font-bold shadow-[0_0_25px_rgba(245,158,11,0.6)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>{isSaving ? 'Placing on Shelf...' : 'Place on Exchange Shelf 📚'}</span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={styles.postButton}
+            >
+              <Send className="w-5 h-5 text-white" />
+              <span>{isSaving ? 'Placing on Shelf...' : 'Place on Shelf ✨'}</span>
+            </button>
           </form>
         )}
 
@@ -1201,118 +1068,102 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         {/* FORM 5: Letter or Whisper Note                                 */}
         {/* ============================================================== */}
         {activeType === 'letter' && !isSuccess && (
-          <form onSubmit={handleSaveLetter} className="space-y-4 animate-fade-in">
-            {/* Section 2: Letter Title */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Letter Title (Optional)</span>
-              </div>
-              <input
-                type="text"
-                value={letterTitle}
-                onChange={(e) => setLetterTitle(e.target.value)}
-                placeholder="e.g. Thinking of our quiet evenings..."
-              />
+          <form onSubmit={handleSaveLetter}>
+            <div className={styles.sectionTitle}>
+              <Mail className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Letter in the Garden</span>
             </div>
 
-            {/* Section 3: Letter Body */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Words from the Heart *</span>
+            <div className={styles.formGroup}>
+              <label>Letter Title (Optional)</label>
+              <div className={styles.inputWrapper}>
+                <PenLine className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
+                <input
+                  type="text"
+                  value={letterTitle}
+                  onChange={(e) => setLetterTitle(e.target.value)}
+                  placeholder="e.g. Thinking of our quiet evenings..."
+                  className={styles.inputWithPrefix}
+                />
               </div>
-              <textarea
-                required
-                rows={4}
-                value={letterBody}
-                onChange={(e) => setLetterBody(e.target.value)}
-                placeholder="Pour what's in your heart onto parchment..."
-                className="w-full"
-              />
             </div>
 
-            {/* Section 5: Visibility Matching Mockup */}
-            <div className="space-y-1.5">
-              <div className="text-xs font-semibold text-pink-200 flex items-center gap-1.5 font-sans">
-                <span>🌸</span>
-                <span>Visibility</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setLetterShared(false)}
-                  className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                    !letterShared
-                      ? 'bg-purple-900/60 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.35)] ring-1 ring-pink-400'
-                      : 'bg-[#150a2b]/80 border-purple-400/20 hover:border-purple-300/40 text-slate-300'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                    !letterShared ? 'border-pink-400 bg-pink-500' : 'border-white/40'
-                  }`}>
-                    {!letterShared && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                      <Lock className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Private</span>
-                    </div>
-                    <p className="text-[10px] text-pink-200/70 font-sans mt-0.5">Only you can see this</p>
-                  </div>
-                </button>
+            <div className={styles.sectionTitle}>
+              <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Words from the Heart *</span>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => setLetterShared(true)}
-                  className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
-                    letterShared
-                      ? 'bg-purple-900/60 border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.35)] ring-1 ring-pink-400'
-                      : 'bg-[#150a2b]/80 border-purple-400/20 hover:border-purple-300/40 text-slate-300'
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                    letterShared ? 'border-pink-400 bg-pink-500' : 'border-white/40'
-                  }`}>
-                    {letterShared && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            <div className={styles.formGroup}>
+              <div className={styles.textareaWrapper}>
+                <textarea
+                  required
+                  rows={4}
+                  value={letterBody}
+                  onChange={(e) => setLetterBody(e.target.value)}
+                  placeholder="Pour what's in your heart onto parchment..."
+                />
+              </div>
+            </div>
+
+            {/* Visibility Option */}
+            <div className={styles.sectionTitle}>
+              <Eye className={`w-4 h-4 ${styles.sectionIcon}`} />
+              <span>Visibility</span>
+            </div>
+
+            <div className={styles.visibilityOptions}>
+              <div
+                className={`${styles.visibilityOption} ${!letterShared ? styles.selected : ''}`}
+                onClick={() => setLetterShared(false)}
+              >
+                <div className={`${styles.radioCircle} ${!letterShared ? styles.radioCircleActive : ''}`}>
+                  {!letterShared && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                </div>
+                <div className={styles.visibilityIconBox}>
+                  <Lock className="w-4 h-4 text-pink-300" />
+                </div>
+                <div className={styles.visibilityText}>
+                  <div className={styles.visibilityTitle}>Private</div>
+                  <div className={styles.visibilitySubtitle}>Only you can see this</div>
+                </div>
+                <div className={styles.visibilityEndIcon}>👑</div>
+              </div>
+
+              <div
+                className={`${styles.visibilityOption} ${letterShared ? styles.selected : ''}`}
+                onClick={() => setLetterShared(true)}
+              >
+                <div className={`${styles.radioCircle} ${letterShared ? styles.radioCircleActive : ''}`}>
+                  {letterShared && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                </div>
+                <div className={styles.visibilityIconBox}>
+                  <Users className="w-4 h-4 text-pink-300" />
+                </div>
+                <div className={styles.visibilityText}>
+                  <div className={styles.visibilityTitle}>Share</div>
+                  <div className={styles.visibilitySubtitle}>
+                    Share with {partner.displayName}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                      <Users className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Share</span>
-                    </div>
-                    <p className="text-[10px] text-pink-200/70 font-sans mt-0.5">Both of us can see this</p>
-                  </div>
-                </button>
+                </div>
+                <div className={styles.visibilityEndIcon}>🧑‍🤝‍🧑</div>
               </div>
             </div>
 
             {errorMsg && (
-              <p className="text-xs text-rose-300 p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
+              <div className={styles.errorMessage}>
+                <span>⚠️</span>
+                <span>{errorMsg}</span>
+              </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-purple-400/20">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-full border border-purple-400/30 hover:border-pink-300/50 text-slate-300 hover:text-white text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.1] transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Cancel</span>
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white text-xs font-bold shadow-[0_0_25px_rgba(236,72,153,0.6)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 border border-white/20 cursor-pointer"
-              >
-                <Mail className="w-4 h-4" />
-                <span>{isSaving ? 'Sealing Letter...' : 'Save Letter into Sanctuary 💌'}</span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className={styles.postButton}
+            >
+              <Send className="w-5 h-5 text-white" />
+              <span>{isSaving ? 'Sealing Letter...' : `Send Letter to ${partner.displayName} ✉️`}</span>
+            </button>
           </form>
         )}
       </div>
