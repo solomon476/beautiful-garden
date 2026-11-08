@@ -2,14 +2,28 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Music,
   ExternalLink,
-  Plus,
   Trash2,
   X,
   Play,
+  Pause,
   Sparkles,
   Upload,
+  UploadCloud,
   Mic,
   FileAudio,
+  Heart,
+  Shuffle,
+  Repeat,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  ListMusic,
+  MoreVertical,
+  RefreshCw,
+  Send,
+  Search,
+  MessageSquare,
 } from 'lucide-react';
 import { soundGardenService, authService } from '../../services/gardenService';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
@@ -24,14 +38,27 @@ import {
 } from '../../utils/spotify';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
+import styles from './SoundGardenSection.module.css';
 
 export const SoundGardenSection: React.FC = () => {
   const [songs, setSongs] = useState<SongEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
-  // Filter state
-  const [activeFilter] = useState<'all' | SongStatus>('all');
+  // Filter & Sub-Nav state
+  type SubTab = 'discover' | 'my_tracks' | 'received' | 'playlists' | 'shared';
+  type StudioTab = 'song' | 'voice' | 'both' | 'message';
+
+  const [subTab, setSubTab] = useState<SubTab>('discover');
+  const [studioTab, setStudioTab] = useState<StudioTab>('song');
+  const [isChangingSong, setIsChangingSong] = useState<boolean>(false);
+  const [nowPlayingIndex, setNowPlayingIndex] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isShuffle, setIsShuffle] = useState<boolean>(false);
+  const [isRepeat, setIsRepeat] = useState<boolean>(false);
+  const [volume, setVolume] = useState<number>(80);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const audioStickyRef = useRef<HTMLAudioElement | null>(null);
 
   // Modal states
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -272,6 +299,119 @@ export const SoundGardenSection: React.FC = () => {
     }
   };
 
+  const currentNowPlaying = songs[nowPlayingIndex] || songs[0] || null;
+
+  const handlePlayTrack = (index: number) => {
+    soundEngine.playSparkle();
+    setNowPlayingIndex(index);
+    const target = songs[index];
+    if (target?.audioUrl) {
+      setIsPlaying(true);
+      if (audioStickyRef.current) {
+        audioStickyRef.current.src = target.audioUrl;
+        audioStickyRef.current.play().catch(() => {});
+      }
+    } else if (isSpotifyUrl(target?.musicUrl)) {
+      setIsPlaying(true);
+      window.open(target.musicUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTogglePlay = () => {
+    if (!currentNowPlaying) return;
+    if (isPlaying) {
+      setIsPlaying(false);
+      audioStickyRef.current?.pause();
+    } else {
+      setIsPlaying(true);
+      if (currentNowPlaying.audioUrl && audioStickyRef.current) {
+        audioStickyRef.current.play().catch(() => {});
+      } else if (isSpotifyUrl(currentNowPlaying.musicUrl)) {
+        window.open(currentNowPlaying.musicUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
+  const handleNextTrack = () => {
+    if (songs.length === 0) return;
+    const nextIdx = isShuffle
+      ? Math.floor(Math.random() * songs.length)
+      : (nowPlayingIndex + 1) % songs.length;
+    handlePlayTrack(nextIdx);
+  };
+
+  const handlePrevTrack = () => {
+    if (songs.length === 0) return;
+    const prevIdx = (nowPlayingIndex - 1 + songs.length) % songs.length;
+    handlePlayTrack(prevIdx);
+  };
+
+  const handleVolumeChange = (newVol: number) => {
+    setVolume(newVol);
+    setIsMuted(newVol === 0);
+    if (audioStickyRef.current) {
+      audioStickyRef.current.volume = newVol / 100;
+    }
+  };
+
+  const handleToggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      if (audioStickyRef.current) audioStickyRef.current.volume = volume / 100;
+    } else {
+      setIsMuted(true);
+      if (audioStickyRef.current) audioStickyRef.current.volume = 0;
+    }
+  };
+
+  const handleSendStudio = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    soundEngine.playSparkle();
+
+    const resolvedTitle =
+      title.trim() ||
+      spotifyDetected?.title?.trim() ||
+      (studioTab === 'voice'
+        ? `Voice Note for ${partner.displayName}`
+        : currentNowPlaying?.title || 'Our Romantic Track');
+
+    const resolvedArtist =
+      artist.trim() ||
+      spotifyDetected?.artist?.trim() ||
+      (studioTab === 'voice'
+        ? currentUser.displayName
+        : currentNowPlaying?.artist || 'Spotify Track');
+
+    try {
+      await soundGardenService.addSong({
+        title: resolvedTitle,
+        artist: resolvedArtist,
+        musicUrl: musicUrl.trim() || currentNowPlaying?.musicUrl || undefined,
+        audioUrl,
+        audioFileName,
+        isVoiceNote: studioTab === 'voice' || studioTab === 'both' || isVoiceNote,
+        message: message.trim() || undefined,
+        status: 'want_to_listen',
+        coverUrl: spotifyDetected?.thumbnail || currentNowPlaying?.coverUrl || undefined,
+      });
+
+      soundEngine.playChime(523.25, 1.2, 0.08);
+      setMessage('');
+      setTitle('');
+      setMusicUrl('');
+      setIsVoiceNote(false);
+      setAudioUrl(undefined);
+      setSpotifyDetected(null);
+      setIsChangingSong(false);
+      setIsAdding(false);
+      await loadSongs();
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Could not send song.');
+    }
+  };
+
   const getStatusBadge = (s: SongStatus) => {
     switch (s) {
       case 'listened':
@@ -301,138 +441,486 @@ export const SoundGardenSection: React.FC = () => {
     }
   };
 
-  const filteredSongs = songs.filter((s) => {
-    if (activeFilter === 'all') return true;
-    return s.status === activeFilter;
+  const displayedSongs = songs.filter((s) => {
+    if (subTab === 'discover') return true;
+    if (subTab === 'my_tracks') return s.addedBy === currentUser.id;
+    if (subTab === 'received') return s.addedBy !== currentUser.id;
+    if (subTab === 'playlists') return true;
+    if (subTab === 'shared') return Boolean(s.reaction);
+    return true;
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-10">
-      {/* 1. Panoramic Themed Hero Banner */}
-      <section
-        className="relative rounded-3xl overflow-hidden border border-purple-400/30 shadow-2xl p-5 sm:p-8 lg:p-10"
-        style={{
-          background: 'linear-gradient(135deg, rgba(29, 14, 53, 0.94) 0%, rgba(15, 7, 30, 0.98) 100%)',
-        }}
-      >
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-screen pointer-events-none"
-          style={{ backgroundImage: `url('/assets/garden/hero_sound.jpg')` }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at 15% 50%, rgba(168, 85, 247, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%)',
-          }}
-        />
+    <div className={styles.soundGarden}>
+      {/* 1. Panoramic Themed Hero Banner matching target visual */}
+      <section className={styles.sgHero}>
+        <div className={styles.heroLeftArtwork}>
+          <img src="/assets/garden/hero_sound.jpg" alt="Sound Garden Headphones" />
+        </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 w-full">
-          {/* Left Decorative Artwork & Details */}
-          <div className="flex items-center gap-4 sm:gap-6 flex-1 w-full lg:w-auto">
-            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-purple-300/40 shadow-xl shrink-0 group">
-              <img
-                src="/assets/garden/hero_sound.jpg"
-                alt="Sound Garden Headphones"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-purple-950/70 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Music className="w-6 h-6 sm:w-8 sm:h-8 text-pink-300 drop-shadow-md animate-pulse" />
+        <div className={styles.heroCenterBlock}>
+          <h2 className={styles.heroScriptTitle}>
+            <span>Sound Garden</span>
+            <span className="text-pink-400 font-sans text-2xl sm:text-3xl">♫</span>
+          </h2>
+          <p className={styles.heroSubtitleText}>
+            Listen, share and keep the music close...
+          </p>
+          <div className={styles.heroSwirl}>
+            <span>〰️</span>
+            <span>♡</span>
+            <span>〰️</span>
+          </div>
+        </div>
+
+        <div className={styles.heroQuoteCard}>
+          <p className={styles.heroQuoteText}>
+            “Music makes our moments even more special.”
+          </p>
+          <span className={styles.heroQuoteHeart}>♡</span>
+        </div>
+      </section>
+
+      {/* 2. Horizontal Sub-Navigation Bar */}
+      <nav className={styles.sgSubNav} aria-label="Sound Garden Views">
+        <button
+          type="button"
+          onClick={() => setSubTab('discover')}
+          className={`${styles.sgSubNavPill} ${subTab === 'discover' ? styles.sgSubNavPillActive : ''}`}
+        >
+          <Search className="w-3.5 h-3.5" />
+          <span>Discover & Send</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('my_tracks')}
+          className={`${styles.sgSubNavPill} ${subTab === 'my_tracks' ? styles.sgSubNavPillActive : ''}`}
+        >
+          <Heart className="w-3.5 h-3.5" />
+          <span>My Tracks ({songs.filter((s) => s.addedBy === currentUser.id).length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('received')}
+          className={`${styles.sgSubNavPill} ${subTab === 'received' ? styles.sgSubNavPillActive : ''}`}
+        >
+          <Send className="w-3.5 h-3.5" />
+          <span>Received Songs ({songs.filter((s) => s.addedBy !== currentUser.id).length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('playlists')}
+          className={`${styles.sgSubNavPill} ${subTab === 'playlists' ? styles.sgSubNavPillActive : ''}`}
+        >
+          <ListMusic className="w-3.5 h-3.5" />
+          <span>Playlists</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSubTab('shared')}
+          className={`${styles.sgSubNavPill} ${subTab === 'shared' ? styles.sgSubNavPillActive : ''}`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Shared Vibes</span>
+        </button>
+      </nav>
+
+      {/* 3. Main Studio Workspace Layout */}
+      {loading ? (
+        <div className="py-16 text-center text-purple-300/60 text-xs font-mono animate-pulse">
+          Tuning the Sound Garden frequencies...
+        </div>
+      ) : subTab === 'discover' ? (
+        <div className={styles.sgStudioLayout}>
+          {/* Left Column: Spotify Connect, Quick Actions & Quote */}
+          <aside className={styles.sgLeftCol}>
+            <div className={styles.sgConnectCard}>
+              <div className={styles.spotifyBadgeRow}>
+                <div className={styles.spotifyIconLg}>
+                  <SpotifyIcon className="w-5 h-5" style={{ fill: '#000000' }} />
+                </div>
+                <div>
+                  <h4 className={styles.spotifyCardMetaTitle}>Connect with Spotify</h4>
+                  <p className={styles.spotifyCardMetaSub}>Search and share songs directly from Spotify.</p>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-[10px] font-mono uppercase tracking-widest">
-                <span>〰️ The Sound Garden</span>
-                <span className="text-pink-300">✦</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  openSpotifyApp(title || artist || '');
+                  setIsChangingSong(true);
+                }}
+                className={styles.connectSpotifyBtn}
+              >
+                <span>Connect Spotify ↗</span>
+              </button>
 
-              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span>Sound Garden</span>
-                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
-              </h2>
+              <div className={styles.orDivider}>— or —</div>
 
-              <p className="font-serif italic text-xs sm:text-base text-purple-200/90 max-w-xl leading-relaxed">
-                Songs, voice notes, and quiet tracks that bring us back to each other.
-              </p>
-
-              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-purple-300/70 pt-0.5">
-                Upload • Record • Listen • Feel
-              </div>
-
-              {/* Direct Left Column Add Trigger Buttons */}
-              <div className="pt-2.5 flex flex-wrap items-center gap-2.5">
+              <div className={styles.sgActionList}>
                 <button
                   type="button"
-                  onClick={handleOpenAddSpotify}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-spotify hover:brightness-110 text-black font-bold text-xs sm:text-sm shadow-xl shadow-emerald-950/40 hover:scale-105 active:scale-95 transition-all border border-emerald-400/50 cursor-pointer"
+                  onClick={() => setIsChangingSong(true)}
+                  className={styles.sgActionItem}
                 >
-                  <SpotifyIcon className="w-4 h-4" style={{ fill: '#000000' }} />
-                  <span>Choose from Spotify 🎧</span>
+                  <Search className="w-4 h-4 text-pink-300 shrink-0" />
+                  <span>Search Songs</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleOpenAddVoiceNote}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-purple-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 cursor-pointer"
+                  className={styles.sgActionItem}
                 >
-                  <Mic className="w-4 h-4 text-white" />
-                  <span>Record Voice Note 🎙️</span>
+                  <Mic className="w-4 h-4 text-purple-300 shrink-0" />
+                  <span>Send Voice Note</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOpenAddSpotify}
+                  className={styles.sgActionItem}
+                >
+                  <Send className="w-4 h-4 text-pink-400 shrink-0" />
+                  <span>Share a Song</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
-                    handleOpenAdd();
-                    setAddMode('upload');
+                    soundEngine.playSparkle();
+                    setStudioTab('message');
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.16] text-purple-200 hover:text-white font-medium text-xs sm:text-sm shadow-md border border-white/15 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  className={styles.sgActionItem}
                 >
-                  <Upload className="w-4 h-4 text-purple-300" />
-                  <span>Upload Audio 📁</span>
+                  <MessageSquare className="w-4 h-4 text-indigo-300 shrink-0" />
+                  <span>Send a Message</span>
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Right Action / Romantic Stats Chips */}
-          <div className="shrink-0 flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] border border-purple-400/25 text-xs font-mono text-purple-200 shadow-sm backdrop-blur-md whitespace-nowrap">
-              <span className="text-pink-400">🎵</span>
-              <span>{songs.length} Tracks</span>
+            <div className={styles.sgMiniQuoteCard}>
+              <img src="/assets/garden/hero_sound.jpg" alt="Headphones mini" />
+              <p className={styles.sgMiniQuoteText}>
+                Good music... <br />better together ♡
+              </p>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/15 border border-pink-400/30 text-xs font-mono text-pink-200 shadow-sm backdrop-blur-md whitespace-nowrap">
-              <span className="text-pink-300">🎙️</span>
-              <span>{songs.filter((s) => s.isVoiceNote).length} Voice Notes</span>
-            </div>
-          </div>
-        </div>
-      </section>
+          </aside>
 
-      {/* 2. Songs Grid — Responsive Cards */}
-      {loading ? (
-        <div className="py-16 text-center text-purple-300/60 text-xs font-mono animate-pulse">
-          Tuning the Sound Garden frequencies...
-        </div>
-      ) : filteredSongs.length === 0 ? (
-        <div className="glass-midnight-card p-8 sm:p-10 rounded-3xl text-center space-y-4 border border-purple-400/25">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-center text-purple-300 shadow-inner">
-            <Music className="w-6 h-6 animate-pulse" />
-          </div>
-          <h4 className="font-serif text-xl sm:text-2xl text-white">No tracks in this view yet</h4>
-          <p className="text-xs sm:text-sm text-purple-200/80 max-w-md mx-auto font-light leading-relaxed">
-            {activeFilter === 'all'
-              ? 'Share a song or record a heartfelt voice note to start our shared soundtrack.'
-              : `No tracks currently marked as "${activeFilter.replace(/_/g, ' ')}".`}
-          </p>
-          <button onClick={handleOpenAdd} className="btn-glow-romantic text-xs mx-auto">
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add a Song or Voice Note 🎵</span>
-          </button>
+          {/* Center Column: Studio Creator ("Send a Song or Voice Note") */}
+          <main className={styles.sgCenterCol}>
+            <div className={styles.studioCard}>
+              <div className={styles.studioHeader}>
+                <h3 className={styles.studioTitle}>
+                  <Sparkles className="w-4 h-4 text-pink-400" />
+                  <span>Send a Song or Voice Note</span>
+                </h3>
+                <p className={styles.studioSubtitle}>
+                  Share a song, voice message or both with {partner.displayName} ♡
+                </p>
+              </div>
+
+              {/* 4 Mode Selector Tabs */}
+              <div className={styles.studioTabs}>
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.playSparkle(); setStudioTab('song'); }}
+                  className={`${styles.studioTabBtn} ${studioTab === 'song' ? styles.studioTabBtnActive : ''}`}
+                >
+                  <span>Song ♫</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.playSparkle(); setStudioTab('voice'); }}
+                  className={`${styles.studioTabBtn} ${studioTab === 'voice' ? styles.studioTabBtnActive : ''}`}
+                >
+                  <span>Voice Note 🎙️</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.playSparkle(); setStudioTab('both'); }}
+                  className={`${styles.studioTabBtn} ${studioTab === 'both' ? styles.studioTabBtnActive : ''}`}
+                >
+                  <span>Song + Voice</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { soundEngine.playSparkle(); setStudioTab('message'); }}
+                  className={`${styles.studioTabBtn} ${studioTab === 'message' ? styles.studioTabBtnActive : ''}`}
+                >
+                  <span>Message ✉️</span>
+                </button>
+              </div>
+
+              {/* Studio Upper Grid */}
+              <div className={styles.studioUpperGrid}>
+                {/* Left: Selected Song Panel */}
+                <div className={styles.selectedSongPanel}>
+                  <div className={styles.selectedSongContent}>
+                    <img
+                      src={
+                        spotifyDetected?.thumbnail ||
+                        currentNowPlaying?.coverUrl ||
+                        '/assets/garden/cover_flying.jpg'
+                      }
+                      alt="Selected song cover"
+                      className={styles.selectedSongCover}
+                    />
+                    <div className={styles.selectedSongMeta}>
+                      <h4 className={styles.selectedSongTitle}>
+                        {spotifyDetected?.title || title || currentNowPlaying?.title || 'Perfect'}
+                      </h4>
+                      <p className={styles.selectedSongArtist}>
+                        {spotifyDetected?.artist || artist || currentNowPlaying?.artist || 'Ed Sheeran'}
+                      </p>
+                      <div className={styles.selectedSongBadgeRow}>
+                        <span className={styles.spotifyBadgePill}>
+                          <SpotifyIcon className="w-3 h-3" style={{ fill: '#1db954' }} />
+                          <span>Spotify</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (currentNowPlaying) {
+                          handleTogglePlay();
+                        } else if (songs.length > 0) {
+                          handlePlayTrack(0);
+                        }
+                      }}
+                      className={styles.selectedSongPlayCircle}
+                      title={isPlaying ? "Pause preview" : "Play preview"}
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-4 h-4 fill-white text-white" />
+                      ) : (
+                        <Play className="w-4 h-4 ml-0.5 fill-white text-white" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className={styles.selectedSongActionRow}>
+                    {isChangingSong ? (
+                      <div className="space-y-2 pt-2 border-t border-purple-400/20 w-full">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="url"
+                            value={musicUrl}
+                            onChange={(e) => handleMusicUrlChange(e.target.value)}
+                            placeholder="Paste Spotify link..."
+                            className="w-full text-xs font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={handlePasteMusicUrl}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-500 text-black font-bold text-xs shrink-0 cursor-pointer"
+                          >
+                            Paste
+                          </button>
+                        </div>
+                        {spotifyLoading && (
+                          <p className="text-[11px] font-mono text-emerald-300 animate-pulse">
+                            Fetching Spotify song details...
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsChangingSong(true)}
+                        className={styles.changeSongBtn}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Change Song 🔄</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right: Sweet Message Panel */}
+                <div className={styles.sweetMessagePanel}>
+                  <label className={styles.sweetMessageLabel}>
+                    <Heart className="w-3.5 h-3.5 fill-pink-400 text-pink-400" />
+                    <span>Add a sweet message (optional)</span>
+                  </label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value.slice(0, 200))}
+                    placeholder="This song made me think of you ♡..."
+                    className={styles.sweetMessageTextarea}
+                  />
+                  <div className={styles.sweetMessageCounter}>
+                    {message.length}/200
+                  </div>
+                </div>
+              </div>
+
+              {/* Attach Voice Note (optional) Box */}
+              {(studioTab === 'voice' || studioTab === 'both') ? (
+                <div className="space-y-2">
+                  <VoiceNoteRecorder
+                    onRecorded={handleVoiceNoteRecorded}
+                    onReset={() => {
+                      setAudioUrl(undefined);
+                      setAudioFileName(undefined);
+                      setIsVoiceNote(false);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className={styles.attachVoiceSection}>
+                  <label className={styles.attachVoiceSectionLabel}>
+                    <Mic className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Attach a Voice Note (optional)</span>
+                  </label>
+                  <div
+                    className={styles.attachVoicePanel}
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setStudioTab('both');
+                    }}
+                  >
+                    <div className={styles.attachVoiceLeft}>
+                      <div className={styles.attachVoiceCloudIcon}>
+                        <UploadCloud className="w-5 h-5 text-purple-300" />
+                      </div>
+                      <div>
+                        <h4 className={styles.attachVoiceTitle}>
+                          {audioFileName || 'Click to record or upload your voice note'}
+                        </h4>
+                        <p className={styles.attachVoiceHint}>
+                          MP3, M4A, or WAV · Max 10MB
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundEngine.playSparkle();
+                        setStudioTab('both');
+                      }}
+                      className={styles.attachVoiceActionBtn}
+                      title="Record voice note"
+                    >
+                      <Mic className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Master CTA Button */}
+              <button
+                type="button"
+                onClick={handleSendStudio}
+                className={styles.sendMasterCtaBtn}
+              >
+                <Send className="w-4 h-4" />
+                <span>Send to {partner.displayName} ♡</span>
+              </button>
+            </div>
+          </main>
+
+          {/* Right Column: Your Sound Garden Track Shelf */}
+          <aside className={styles.sgRightCol}>
+            <div className={styles.shelfCard}>
+              <div className={styles.shelfHeader}>
+                <div className={styles.shelfTitleBlock}>
+                  <h3 className={styles.shelfTitle}>
+                    <span className="text-pink-400">🌸</span>
+                    <span>Your Sound Garden</span>
+                    <span className="text-pink-300 font-sans">♡</span>
+                  </h3>
+                  <p className={styles.shelfSubtitle}>Your favourite music and messages...</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSubTab('my_tracks')}
+                  className={styles.viewAllPillBtn}
+                >
+                  <span>View All →</span>
+                </button>
+              </div>
+
+              <div className={styles.shelfTrackList}>
+                {songs.slice(0, 6).map((song, idx) => {
+                  const coverImage =
+                    song.coverUrl ||
+                    (song.title.toLowerCase().includes('flying')
+                      ? '/assets/garden/cover_flying.jpg'
+                      : song.title.toLowerCase().includes('golden')
+                      ? '/assets/garden/cover_golden_hour.jpg'
+                      : '/assets/garden/card_sound.jpg');
+
+                  const isPlayingThis = isPlaying && nowPlayingIndex === idx;
+
+                  return (
+                    <div key={song.id} className={styles.shelfTrackItem}>
+                      <div className={styles.shelfTrackCover}>
+                        <img src={coverImage} alt={song.title} />
+                      </div>
+
+                      <div className={styles.shelfTrackMeta}>
+                        <h4
+                          onClick={() => setSelectedSong(song)}
+                          className={styles.shelfTrackTitle}
+                        >
+                          {song.title}
+                        </h4>
+                        <p className={styles.shelfTrackArtist}>{song.artist}</p>
+                        <span className={styles.shelfTrackBadge}>
+                          {song.isVoiceNote ? 'Voice' : 'Song'} •{' '}
+                          {new Date(song.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+
+                      <div className={styles.shelfTrackActions}>
+                        <button
+                          type="button"
+                          onClick={() => handlePlayTrack(idx)}
+                          className={styles.shelfPlayBtn}
+                          title={isPlayingThis ? 'Pause' : 'Play'}
+                        >
+                          {isPlayingThis ? (
+                            <Pause className="w-3.5 h-3.5 fill-white text-white" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5 ml-0.5 fill-white text-white" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSong(song)}
+                          className={styles.shelfMenuBtn}
+                          title="Track options"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-          {filteredSongs.map((song) => {
+        /* Grid View for other sub-tabs */
+        <div className={styles.cardsGrid}>
+          {displayedSongs.map((song, idx) => {
             const isAddedByMe = song.addedBy === currentUser.id;
             const badge = getStatusBadge(song.status);
             const coverImage =
@@ -444,31 +932,21 @@ export const SoundGardenSection: React.FC = () => {
                 : '/assets/garden/card_sound.jpg');
 
             return (
-              <div
-                key={song.id}
-                className="group relative rounded-3xl p-4 sm:p-6 transition-all duration-300 flex flex-col justify-between space-y-4 hover:border-pink-400/40"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(38, 20, 68, 0.65) 0%, rgba(20, 10, 40, 0.8) 100%)',
-                  border: '1px solid rgba(244, 114, 182, 0.25)',
-                  boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(16px)',
-                }}
-              >
-                {/* Upper Section: Artwork & Song Info */}
-                <div className="flex items-start gap-3.5 sm:gap-5">
+              <div key={song.id} className={styles.sgTrackCard}>
+                <div className={styles.cardTop}>
                   <div
-                    onClick={() => setSelectedSong(song)}
-                    className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-lg group/cover cursor-pointer block"
-                    title={`Click to view ${song.title}`}
+                    onClick={() => handlePlayTrack(idx)}
+                    className={styles.cardCover}
+                    title={`Click to play ${song.title}`}
                   >
                     <img
                       src={coverImage}
                       alt={song.title}
-                      className="w-full h-full object-cover group-hover/cover:scale-110 transition-transform duration-500"
+                      className={styles.cardCoverImg}
                     />
-                    <div className="absolute inset-0 bg-black/25" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-pink-500/80 text-white flex items-center justify-center shadow-lg group-hover/cover:scale-110 transition-all">
+                    <div className={styles.cardCoverOverlay} />
+                    <div className={styles.cardPlayBtn}>
+                      <div className={styles.cardPlayCircle}>
                         {song.isVoiceNote ? (
                           <Mic className="w-4 h-4 text-white" />
                         ) : (
@@ -478,43 +956,38 @@ export const SoundGardenSection: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <div className={styles.cardInfo}>
+                    <div className={styles.cardTitleRow}>
                       <h3
                         onClick={() => setSelectedSong(song)}
-                        className="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-pink-200 transition-colors cursor-pointer break-words line-clamp-1"
+                        className={styles.cardTitle}
                       >
                         {song.title}
                       </h3>
 
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shadow-sm ${badge.badgeClass}`}
-                      >
+                      <span className={`${styles.cardBadge} ${badge.badgeClass}`}>
                         <span>{badge.icon}</span>
                         <span>{badge.label}</span>
                       </span>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-purple-200/90 font-medium truncate">
-                      {song.artist}
-                    </p>
+                    <p className={styles.cardArtist}>{song.artist}</p>
 
                     {song.isVoiceNote && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-pink-300 bg-pink-500/15 px-2 py-0.5 rounded-full border border-pink-400/30">
+                      <span className={styles.cardVoiceTag}>
                         <Mic className="w-3 h-3 text-pink-300" />
                         <span>Voice Note Attachment</span>
                       </span>
                     )}
 
                     {song.message && (
-                      <p className="text-xs text-pink-100/90 font-serif italic line-clamp-2 leading-relaxed pt-0.5">
+                      <p className={styles.cardMessage}>
                         “{song.message}” <span className="font-sans not-italic text-pink-300">♡</span>
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Embedded Audio Player if uploaded audio / voice note exists, or direct Spotify Player */}
                 {song.audioUrl ? (
                   <div className="pt-1">
                     <GardenAudioPlayer
@@ -525,93 +998,49 @@ export const SoundGardenSection: React.FC = () => {
                     />
                   </div>
                 ) : song.isVoiceNote ? (
-                  <div className="pt-1">
-                    <div className="p-3 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center gap-2.5 text-xs text-pink-200">
-                      <div className="w-7 h-7 rounded-full bg-pink-500/20 flex items-center justify-center shrink-0">
-                        <Mic className="w-3.5 h-3.5 text-pink-300" />
-                      </div>
-                      <span className="font-mono text-[11px] text-pink-200/90">
-                        Heartfelt voice note memo
-                      </span>
+                  <div className={styles.voiceMemoCardBanner}>
+                    <div className="w-7 h-7 rounded-full bg-pink-500/20 flex items-center justify-center shrink-0">
+                      <Mic className="w-3.5 h-3.5 text-pink-300" />
                     </div>
-                  </div>
-                ) : isSpotifyUrl(song.musicUrl) ? (
-                  <div className="pt-1">
-                    <div className="p-2.5 sm:p-3 rounded-2xl bg-[#0e0e14]/90 border border-emerald-500/30 flex items-center justify-between gap-3 shadow-md">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-spotify text-black flex items-center justify-center shrink-0 shadow-md">
-                          <SpotifyIcon className="w-4 h-4" style={{ fill: '#000000' }} />
-                        </div>
-                        <div className="min-w-0">
-                          <span className="text-xs font-semibold text-white block truncate">
-                            Spotify Track
-                          </span>
-                          <span className="text-[10px] text-spotify block font-mono">
-                            Tap to play full song in Spotify
-                          </span>
-                        </div>
-                      </div>
-
-                      <a
-                        href={song.musicUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-spotify inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs active:scale-95 transition-all shrink-0 cursor-pointer"
-                        title="Play in Spotify App"
-                      >
-                        <Play className="w-3.5 h-3.5" style={{ fill: '#000000', color: '#000000' }} />
-                        <span>Play Track ↗</span>
-                      </a>
-                    </div>
+                    <span className="font-mono text-[11px] text-pink-200/90">
+                      Heartfelt voice note memo
+                    </span>
                   </div>
                 ) : null}
 
-                {/* Footer Row: Contributor + Reaction + Action Button */}
-                <div className="pt-3 border-t border-purple-400/20 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-[10px] text-purple-300 shrink-0">
-                      👤
-                    </span>
-                    <span className="font-mono text-[11px] text-purple-200/90 truncate">
+                <div className={styles.cardFooter}>
+                  <div className={styles.cardAuthor}>
+                    <span className={styles.authorAvatar}>👤</span>
+                    <span className={styles.authorName}>
                       By: {isAddedByMe ? 'You' : song.addedByName || partner.displayName}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className={styles.cardActions}>
                     <button
                       onClick={() => handleToggleReaction(song)}
-                      className="px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 text-[10px] sm:text-[11px] text-pink-200 hover:text-white transition-all flex items-center gap-1 active:scale-95"
+                      className={styles.reactionBtn}
                       title="Click to cycle reaction"
                     >
                       <span>{song.reaction || 'Love it! 💖'}</span>
                     </button>
 
-                    {isSpotifyUrl(song.musicUrl) ? (
+                    {isSpotifyUrl(song.musicUrl) && (
                       <a
                         href={song.musicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn-spotify-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] transition-all active:scale-95 cursor-pointer shadow-sm"
+                        className={styles.spotifyPillBtn}
                         title="Open in Spotify App"
                       >
                         <SpotifyIcon className="w-3.5 h-3.5" style={{ fill: '#1db954' }} />
                         <span>Spotify ↗</span>
                       </a>
-                    ) : song.musicUrl ? (
-                      <a
-                        href={song.musicUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-full bg-white/[0.06] hover:bg-purple-500/30 border border-white/10 text-purple-200 hover:text-white transition-all"
-                        title="Open external music link"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    ) : null}
+                    )}
 
                     <button
                       onClick={() => setSelectedSong(song)}
-                      className="btn-glow-romantic text-[11px] py-1 px-3 shadow-sm"
+                      className={styles.detailsBtn}
                     >
                       <span>Details</span>
                     </button>
@@ -623,24 +1052,141 @@ export const SoundGardenSection: React.FC = () => {
         </div>
       )}
 
+      {/* 4. Sticky Bottom Player Bar */}
+      {currentNowPlaying && (
+        <div className={styles.stickyPlayerBar}>
+          <audio ref={audioStickyRef} onEnded={handleNextTrack} />
+
+          {/* Left: Track Meta */}
+          <div className={styles.playerTrackSide}>
+            <img
+              src={
+                currentNowPlaying.coverUrl ||
+                (currentNowPlaying.title.toLowerCase().includes('flying')
+                  ? '/assets/garden/cover_flying.jpg'
+                  : currentNowPlaying.title.toLowerCase().includes('golden')
+                  ? '/assets/garden/cover_golden_hour.jpg'
+                  : '/assets/garden/card_sound.jpg')
+              }
+              alt={currentNowPlaying.title}
+              className={styles.playerTrackThumb}
+            />
+            <div className={styles.playerTrackMeta}>
+              <h4 className={styles.playerTrackTitle}>{currentNowPlaying.title}</h4>
+              <p className={styles.playerTrackArtist}>{currentNowPlaying.artist}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleToggleReaction(currentNowPlaying)}
+              className={styles.playerHeartBtn}
+              title="Heart reaction"
+            >
+              <Heart className={`w-4 h-4 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
+            </button>
+          </div>
+
+          {/* Center: Playback Controls */}
+          <div className={styles.playerControlsCenter}>
+            <button
+              type="button"
+              onClick={() => setIsShuffle(!isShuffle)}
+              className={`${styles.playerControlIconBtn} ${isShuffle ? 'text-pink-300' : ''}`}
+              title="Shuffle"
+            >
+              <Shuffle className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrevTrack}
+              className={styles.playerControlIconBtn}
+              title="Previous"
+            >
+              <SkipBack className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleTogglePlay}
+              className={styles.playerMasterPlayBtn}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? (
+                <Pause className="w-5 h-5 fill-white text-white" />
+              ) : (
+                <Play className="w-5 h-5 ml-0.5 fill-white text-white" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNextTrack}
+              className={styles.playerControlIconBtn}
+              title="Next"
+            >
+              <SkipForward className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRepeat(!isRepeat)}
+              className={`${styles.playerControlIconBtn} ${isRepeat ? 'text-pink-300' : ''}`}
+              title="Repeat"
+            >
+              <Repeat className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Right: Volume & Queue */}
+          <div className={styles.playerRightControls}>
+            <div className={styles.volumeBarContainer}>
+              <button
+                type="button"
+                onClick={handleToggleMute}
+                className={styles.playerControlIconBtn}
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-rose-300" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                className={styles.volumeRangeInput}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubTab('playlists')}
+              className={styles.playerControlIconBtn}
+              title="Playlist Queue"
+            >
+              <ListMusic className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 3. Details Modal */}
       {selectedSong && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className={styles.modalOverlay}
           onClick={() => setSelectedSong(null)}
         >
           <div
-            className="glass-midnight-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-5"
+            className={`${styles.modalCard} ${styles.modalCardDetails}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-purple-400/20">
+            <div className={styles.modalHeader}>
               <div className="flex items-center gap-2 text-xs font-mono text-purple-300/80 uppercase tracking-wider">
                 <Music className="w-4 h-4 text-pink-300" />
                 <span>Track Details</span>
               </div>
               <button
                 onClick={() => setSelectedSong(null)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className={styles.modalCloseBtn}
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -748,7 +1294,8 @@ export const SoundGardenSection: React.FC = () => {
                     href={selectedSong.musicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-spotify inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs shadow-lg transition-all active:scale-95 cursor-pointer"
+                    className={styles.btnSpotify}
+                    title="Play on Spotify"
                   >
                     <SpotifyIcon className="w-3.5 h-3.5" style={{ fill: '#000000' }} />
                     <span>Play on Spotify ↗</span>
@@ -780,14 +1327,14 @@ export const SoundGardenSection: React.FC = () => {
       {/* 4. Add Song or Voice Note Modal Form */}
       {isAdding && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          className={styles.modalOverlay}
           onClick={() => setIsAdding(false)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-6 sm:p-8 rounded-3xl border border-pink-400/40 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto"
+            className={`${styles.modalCard} ${styles.modalCardAdd}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-purple-400/20">
+            <div className={styles.modalHeader}>
               <div className="flex items-center gap-2.5">
                 <span className="p-2 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-300">
                   <Music className="w-4 h-4 text-pink-300" />
@@ -803,7 +1350,7 @@ export const SoundGardenSection: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsAdding(false)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className={styles.modalCloseBtn}
                 aria-label="Cancel"
               >
                 <X className="w-4 h-4" />
@@ -811,15 +1358,12 @@ export const SoundGardenSection: React.FC = () => {
             </div>
 
             {/* 3 Input Methods: Spotify Track, Record Voice Note, Upload Audio File */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className={styles.sgSharingOptions}>
               <button
                 type="button"
                 onClick={() => setAddMode('spotify')}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-xs font-medium flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  addMode === 'spotify'
-                    ? 'btn-spotify-pill border-emerald-400 text-white shadow-lg'
-                    : 'bg-white/[0.04] border-white/10 text-emerald-300/80 hover:bg-white/10'
-                }`}
+                aria-pressed={addMode === 'spotify'}
+                className={styles.sgOption}
               >
                 <SpotifyIcon className="w-4 h-4 shrink-0" style={{ fill: '#1db954' }} />
                 <span>Spotify</span>
@@ -831,11 +1375,8 @@ export const SoundGardenSection: React.FC = () => {
                   setAddMode('record');
                   if (!title) setTitle(`Voice Note for ${partner.displayName}`);
                 }}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-xs font-medium flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  addMode === 'record'
-                    ? 'bg-pink-500/25 border-pink-400/60 text-white shadow-lg'
-                    : 'bg-white/[0.04] border-white/10 text-pink-200 hover:bg-white/10'
-                }`}
+                aria-pressed={addMode === 'record'}
+                className={styles.sgOption}
               >
                 <Mic className="w-4 h-4 text-pink-300 shrink-0" />
                 <span>Voice Note</span>
@@ -847,11 +1388,8 @@ export const SoundGardenSection: React.FC = () => {
                   setAddMode('upload');
                   fileInputRef.current?.click();
                 }}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-xs font-medium flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  addMode === 'upload'
-                    ? 'bg-purple-500/25 border-purple-400/60 text-white shadow-lg'
-                    : 'bg-white/[0.04] border-white/10 text-purple-200 hover:bg-white/10'
-                }`}
+                aria-pressed={addMode === 'upload'}
+                className={styles.sgOption}
               >
                 <Upload className="w-4 h-4 text-purple-300 shrink-0" />
                 <span>Upload</span>
@@ -863,9 +1401,9 @@ export const SoundGardenSection: React.FC = () => {
             {/* ============================================================== */}
             {addMode === 'spotify' && (
               <form onSubmit={handleSaveSong} className="space-y-4 animate-fade-in">
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#0d1610] border border-emerald-500/35 space-y-4 shadow-xl">
+                <div className={styles.spotifyPanel}>
                   {/* Spotify Header Row */}
-                  <div className="flex items-center justify-between gap-3">
+                  <div className={styles.spotifyPanelHeader}>
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <span className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
                         <SpotifyIcon className="w-5 h-5" style={{ fill: '#1db954' }} />
@@ -883,7 +1421,7 @@ export const SoundGardenSection: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => openSpotifyApp(title || artist || '')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full btn-spotify-pill text-[10px] sm:text-[11px] font-mono cursor-pointer shrink-0"
+                      className={styles.spotifyPillBtn}
                       title="Open Spotify to search & copy track"
                     >
                       <span>Open Spotify ↗</span>
@@ -892,23 +1430,23 @@ export const SoundGardenSection: React.FC = () => {
 
                   {/* Paste / URL Input Row */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
+                    <div className={styles.spotifyInputRow}>
                       <input
                         type="url"
                         value={musicUrl}
                         onChange={(e) => handleMusicUrlChange(e.target.value)}
                         placeholder="Paste link: https://open.spotify.com/track/..."
-                        className="w-full text-xs font-mono"
+                        className={styles.spotifyInput}
                       />
                       <button
                         type="button"
                         onClick={handlePasteMusicUrl}
-                        className="btn-spotify px-4 py-2.5 rounded-xl text-xs font-semibold shrink-0 cursor-pointer shadow-md active:scale-95"
+                        className={styles.spotifyPasteBtn}
                       >
                         Paste
                       </button>
                     </div>
-                    <p className="text-[11px] text-emerald-300/80 font-mono">
+                    <p className={styles.spotifyHint}>
                       💡 In Spotify, tap Share (•••) → "Copy Link", then tap Paste here!
                     </p>
                   </div>
@@ -924,29 +1462,29 @@ export const SoundGardenSection: React.FC = () => {
                   {/* Detected Track Preview Card */}
                   {spotifyDetected && (
                     <div className="space-y-3 pt-1 animate-fade-in">
-                      <div className="badge-spotify p-3.5 rounded-2xl flex items-center gap-3.5 shadow-md border border-emerald-500/40">
+                      <div className={styles.spotifyDetectedCard}>
                         {spotifyDetected.thumbnail ? (
                           <img
                             src={spotifyDetected.thumbnail}
                             alt="Album Cover"
-                            className="w-14 h-14 rounded-xl object-cover shadow border border-white/20 shrink-0"
+                            className={styles.spotifyDetectedImg}
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-xl bg-spotify/20 flex items-center justify-center shrink-0">
+                          <div className={styles.spotifyDetectedPlaceholder}>
                             <SpotifyIcon className="w-7 h-7" style={{ fill: '#1db954' }} />
                           </div>
                         )}
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <div className="font-semibold text-sm text-white truncate">
+                        <div className={styles.spotifyDetectedDetails}>
+                          <div className={styles.spotifyDetectedTitle}>
                             {spotifyDetected.title || 'Spotify Track'}
                           </div>
-                          <div className="text-xs text-emerald-300 truncate font-medium">
+                          <div className={styles.spotifyDetectedArtist}>
                             {artist && artist !== currentUser.displayName
                               ? `by ${artist}`
                               : 'Album cover synced automatically'}
                           </div>
                         </div>
-                        <span className="text-xs text-emerald-300 font-bold font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 shrink-0">
+                        <span className={styles.spotifyLinkedBadge}>
                           Linked ✓
                         </span>
                       </div>
@@ -1029,7 +1567,8 @@ export const SoundGardenSection: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!title.trim() && !spotifyDetected?.title}
-                    className="btn-spotify px-6 py-2.5 rounded-full text-xs sm:text-sm font-bold flex items-center gap-2 cursor-pointer shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`${styles.btnSpotify} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    style={{ padding: '0.625rem 1.5rem' }}
                   >
                     <Sparkles className="w-4 h-4 fill-black text-black" />
                     <span>
