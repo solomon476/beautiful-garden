@@ -22,6 +22,7 @@ import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
+import styles from './ExchangeShelfSection.module.css';
 
 const CATEGORY_MAP: Record<ShelfCategory, { label: string; icon: any; color: string; badge: string }> = {
   films: {
@@ -232,65 +233,50 @@ export const ExchangeShelfSection: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-10">
+    <div className={styles.shelfSection}>
       {/* 1. Panoramic Themed Hero Banner */}
-      <section
-        className="relative rounded-3xl overflow-hidden border border-amber-400/30 shadow-2xl p-5 sm:p-8 lg:p-10"
-        style={{
-          background: 'linear-gradient(135deg, rgba(38, 24, 18, 0.94) 0%, rgba(20, 12, 10, 0.98) 100%)',
-        }}
-      >
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
-          style={{ backgroundImage: `url('/assets/garden/card_shelf.jpg')` }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at 15% 50%, rgba(251, 191, 36, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%)',
-          }}
-        />
+      <section className={styles.heroBanner}>
+        <div className={styles.heroAmbientBg} />
+        <div className={styles.heroRadialGlow} />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
+        <div className={styles.heroContent}>
           {/* Left Decorative Artwork & Subtitles */}
-          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-amber-300/40 shadow-xl shrink-0 group">
+          <div className={styles.heroLeft}>
+            <div className={styles.heroArtwork}>
               <img
                 src="/assets/garden/card_shelf.jpg"
                 alt="The Exchange Shelf"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/70 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Book className="w-6 h-6 sm:w-8 sm:h-8 text-amber-300 drop-shadow-md animate-pulse" />
+              <div className={styles.heroArtworkOverlay}>
+                <Book className="w-7 h-7 sm:w-8 sm:h-8" />
               </div>
             </div>
 
-            <div className="space-y-1 sm:space-y-1.5 min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-[10px] font-mono uppercase tracking-widest">
+            <div className={styles.heroText}>
+              <div className={styles.heroTag}>
                 <span>〰️ The Exchange Shelf</span>
-                <span className="text-amber-300">✦</span>
+                <span>✦</span>
               </div>
 
-              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className={styles.heroTitle}>
                 <span>The Exchange Shelf</span>
-                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
+                <span className={styles.heroTitleHeart}>♡</span>
               </h2>
 
-              <p className="font-serif italic text-xs sm:text-base text-amber-200/90 max-w-xl leading-relaxed">
+              <p className={styles.heroSubtitle}>
                 Books, PDF reads, films, dishes, and places to discover together.
               </p>
 
-              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-amber-300/70 pt-0.5">
+              <div className={styles.heroSubmeta}>
                 PDF Uploads • Photos • Recommendations
               </div>
 
               {/* Direct Left Column Add Trigger Button */}
-              <div className="pt-2">
+              <div>
                 <button
                   type="button"
                   onClick={() => handleOpenAdd('books')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 hover:from-amber-400 hover:to-orange-400 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-amber-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20"
+                  className={styles.heroTriggerBtn}
                 >
                   <Plus className="w-4 h-4 text-white" />
                   <span>Upload Book / PDF 📚</span>
@@ -300,10 +286,11 @@ export const ExchangeShelfSection: React.FC = () => {
           </div>
 
           {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 w-full sm:w-auto flex justify-end">
+          <div className={styles.heroRightBtnWrapper}>
             <button
+              type="button"
               onClick={() => handleOpenAdd()}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
+              className={styles.heroRightActionBtn}
             >
               <Plus className="w-4 h-4 text-white" />
               <span>Add Book, PDF or Gem 📚</span>
@@ -318,23 +305,39 @@ export const ExchangeShelfSection: React.FC = () => {
           Opening the exchange cabinet...
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="glass-midnight-card p-8 sm:p-10 rounded-3xl text-center space-y-4 border border-amber-400/25">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-inner">
+        <div className={styles.emptyStateCard}>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '20px',
+            background: 'rgba(251, 191, 36, 0.16)',
+            border: '1px solid var(--shf-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--shf-amber-light)',
+          }}>
             <Book className="w-6 h-6 animate-pulse" />
           </div>
-          <h4 className="font-serif text-xl sm:text-2xl text-white">No recommendations on this shelf yet</h4>
-          <p className="text-xs sm:text-sm text-amber-200/80 max-w-md mx-auto font-light leading-relaxed">
+          <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.5rem', color: '#ffffff', margin: 0 }}>
+            No recommendations on this shelf yet
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--shf-muted)', margin: 0, maxWidth: '440px', lineHeight: 1.6 }}>
             {selectedCategory === 'all'
               ? 'Share a book, PDF, film, restaurant or hobby you want to experience together.'
               : `No items currently under "${CATEGORY_MAP[selectedCategory]?.label || selectedCategory}".`}
           </p>
-          <button onClick={() => handleOpenAdd(selectedCategory === 'all' ? undefined : selectedCategory)} className="btn-glow-romantic text-xs mx-auto">
+          <button
+            type="button"
+            onClick={() => handleOpenAdd(selectedCategory === 'all' ? undefined : selectedCategory)}
+            className={styles.heroTriggerBtn}
+          >
             <Plus className="w-3.5 h-3.5" />
             <span>Add First Item 📚</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <div className={styles.itemsGrid}>
           {filteredItems.map((item) => {
             const isAddedByMe = item.contributorId === currentUser.id;
             const cat = CATEGORY_MAP[item.category] || CATEGORY_MAP.books;
@@ -342,48 +345,35 @@ export const ExchangeShelfSection: React.FC = () => {
             const displayPhoto = item.photoUrl || '/assets/garden/card_shelf.jpg';
 
             return (
-              <div
-                key={item.id}
-                className="group relative rounded-3xl p-4 sm:p-6 transition-all duration-300 flex flex-col justify-between space-y-4 hover:border-amber-400/40"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(38, 24, 18, 0.65) 0%, rgba(20, 12, 10, 0.8) 100%)',
-                  border: '1px solid rgba(251, 191, 36, 0.25)',
-                  boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(16px)',
-                }}
-              >
+              <div key={item.id} className={styles.itemCard}>
                 {/* Upper Section: Artwork on Left + Info on Right */}
-                <div className="flex items-start gap-3.5 sm:gap-5">
+                <div className={styles.itemUpper}>
                   <div
                     onClick={() => setSelectedItem(item)}
-                    className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-lg group/cover cursor-pointer block"
+                    className={styles.itemCover}
                     title="Click to view details"
                   >
                     <img
                       src={displayPhoto}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover/cover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-black/30" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-amber-500/80 text-white flex items-center justify-center shadow-lg group-hover/cover:scale-110 transition-all">
+                    <div className={styles.itemCoverOverlay}>
+                      <div className={styles.itemCoverBadge}>
                         <Icon className="w-4 h-4 text-white" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                  <div className={styles.itemMeta}>
+                    <div className={styles.itemHeaderRow}>
                       <h3
                         onClick={() => setSelectedItem(item)}
-                        className="font-serif text-lg sm:text-xl font-bold text-white group-hover:text-amber-200 transition-colors cursor-pointer break-words line-clamp-1"
+                        className={styles.itemTitle}
                       >
                         {item.title}
                       </h3>
 
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shadow-sm ${cat.badge}`}
-                      >
+                      <span className={`${styles.categoryBadge} ${cat.badge}`}>
                         <Icon className="w-3 h-3" />
                         <span>{cat.label}</span>
                       </span>
@@ -391,11 +381,11 @@ export const ExchangeShelfSection: React.FC = () => {
 
                     {/* PDF Badge if attached */}
                     {item.pdfUrl && (
-                      <div className="pt-0.5">
+                      <div>
                         <button
                           type="button"
                           onClick={() => openPdf(item.pdfUrl!, item.pdfFileName)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-[10px] font-mono text-emerald-200 transition-all active:scale-95 shadow-sm"
+                          className={styles.readPdfBtn}
                         >
                           <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
                           <span>Read PDF: {item.pdfFileName || 'Book Attachment'}</span>
@@ -404,11 +394,11 @@ export const ExchangeShelfSection: React.FC = () => {
                     )}
 
                     {item.description ? (
-                      <p className="text-xs text-amber-100/90 font-serif italic line-clamp-2 leading-relaxed pt-0.5">
+                      <p className={styles.itemDesc}>
                         “{item.description}” <span className="font-sans not-italic text-pink-300">♡</span>
                       </p>
                     ) : (
-                      <p className="text-xs text-amber-300/60 font-serif italic line-clamp-1 pt-0.5">
+                      <p className={styles.itemDesc} style={{ opacity: 0.6 }}>
                         Recommended for our shared journey...
                       </p>
                     )}
@@ -417,7 +407,7 @@ export const ExchangeShelfSection: React.FC = () => {
 
                 {/* Voice Note if attached */}
                 {item.voiceNoteUrl && (
-                  <div className="pt-1">
+                  <div style={{ paddingTop: '4px' }}>
                     <GardenAudioPlayer
                       src={item.voiceNoteUrl}
                       title={`Voice Note: ${item.title}`}
@@ -428,20 +418,21 @@ export const ExchangeShelfSection: React.FC = () => {
                 )}
 
                 {/* Footer Row: Author + Reaction + Details */}
-                <div className="pt-3 border-t border-amber-400/20 flex flex-wrap items-center justify-between gap-2.5 text-xs">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-[10px] text-amber-300 shrink-0">
+                <div className={styles.itemFooter}>
+                  <div className={styles.authorRow}>
+                    <span className={styles.authorAvatar}>
                       👤
                     </span>
-                    <span className="font-mono text-[11px] text-amber-200/90 truncate">
+                    <span className={styles.authorName}>
                       By: {isAddedByMe ? 'You' : item.contributorName || partner.displayName}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className={styles.cardActionBtns}>
                     <button
+                      type="button"
                       onClick={() => handleToggleReaction(item)}
-                      className="px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-amber-400/30 text-[10px] sm:text-[11px] text-amber-200 hover:text-white transition-all flex items-center gap-1 active:scale-95"
+                      className={styles.reactionBtn}
                       title="Click to cycle reaction"
                     >
                       <span>{(item as any).reaction || 'Must try! 💖'}</span>
@@ -452,7 +443,7 @@ export const ExchangeShelfSection: React.FC = () => {
                         href={item.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 rounded-full bg-white/[0.06] hover:bg-amber-500/30 border border-white/10 text-amber-200 hover:text-white transition-all"
+                        className={styles.linkIconBtn}
                         title="Open external link"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -460,8 +451,9 @@ export const ExchangeShelfSection: React.FC = () => {
                     )}
 
                     <button
+                      type="button"
                       onClick={() => setSelectedItem(item)}
-                      className="btn-glow-romantic text-[11px] py-1 px-3 shadow-sm"
+                      className={styles.detailsBtn}
                     >
                       <span>Details</span>
                     </button>
@@ -474,36 +466,29 @@ export const ExchangeShelfSection: React.FC = () => {
       )}
 
       {/* 3. Bottom Filter & Action Row */}
-      <section className="flex flex-col lg:flex-row gap-5 sm:gap-6 pt-2 w-full">
-        <div
-          className="rounded-3xl p-5 sm:p-7 relative overflow-hidden flex flex-col sm:flex-row items-center gap-4 sm:gap-5 justify-between border border-amber-400/30 shadow-xl"
-          style={{
-            flex: '1.35 1 0%',
-            background: 'linear-gradient(135deg, rgba(34, 20, 14, 0.7) 0%, rgba(18, 10, 8, 0.85) 100%)',
-            backdropFilter: 'blur(16px)',
-          }}
-        >
-          <div className="flex items-center gap-3.5 sm:gap-5 w-full sm:w-auto">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-amber-400/30 shrink-0 shadow-lg">
+      <section className={styles.bottomActionSection}>
+        <div className={styles.addItemCard}>
+          <div className={styles.addItemLeft}>
+            <div className={styles.addItemThumb}>
               <img
                 src="/assets/garden/card_shelf.jpg"
                 alt="Exchange Cabinet"
-                className="w-full h-full object-cover"
               />
             </div>
-            <div className="space-y-0.5">
-              <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+            <div className={styles.addItemMeta}>
+              <h4 className={styles.addItemTitle}>
                 Add a Book, PDF or Discovery
               </h4>
-              <p className="text-xs text-amber-200/80 font-light leading-relaxed">
+              <p className={styles.addItemSubtitle}>
                 Upload a book PDF from your phone, photo, or cozy idea.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => handleOpenAdd()}
-            className="btn-glow-romantic text-xs py-2.5 px-5 shrink-0 w-full sm:w-auto justify-center"
+            className={styles.addItemBtn}
           >
             <Book className="w-3.5 h-3.5" />
             <span>Add to Shelf →</span>
@@ -511,30 +496,22 @@ export const ExchangeShelfSection: React.FC = () => {
         </div>
 
         {/* Quick Filter Pill Card */}
-        <div
-          className="rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between space-y-3.5 border border-amber-400/30 shadow-xl"
-          style={{
-            flex: '1 1 0%',
-            background: 'linear-gradient(135deg, rgba(28, 16, 12, 0.7) 0%, rgba(16, 8, 6, 0.85) 100%)',
-            backdropFilter: 'blur(16px)',
-          }}
-        >
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2 text-xs font-mono text-amber-300/80 uppercase tracking-wider">
+        <div className={styles.categoryFilterCard}>
+          <div>
+            <div className={styles.categoryFilterHeader}>
               <Filter className="w-3.5 h-3.5 text-amber-300" />
               <span>Category Filter</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <div className={styles.categoryPillsGroup} style={{ marginTop: '10px' }}>
               <button
+                type="button"
                 onClick={() => {
                   soundEngine.playSparkle();
                   setSelectedCategory('all');
                 }}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === 'all'
-                    ? 'bg-amber-500/30 border border-amber-400/50 text-white shadow-md'
-                    : 'bg-white/[0.05] border border-white/10 text-amber-200/70 hover:text-white hover:bg-white/10'
+                className={`${styles.categoryPill} ${
+                  selectedCategory === 'all' ? styles.categoryPillActive : ''
                 }`}
               >
                 📚 All
@@ -545,14 +522,13 @@ export const ExchangeShelfSection: React.FC = () => {
                 return (
                   <button
                     key={catKey}
+                    type="button"
                     onClick={() => {
                       soundEngine.playSparkle();
                       setSelectedCategory(catKey);
                     }}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                      selectedCategory === catKey
-                        ? 'bg-amber-500/30 border border-amber-400/50 text-white shadow-md'
-                        : 'bg-white/[0.05] border border-white/10 text-amber-200/70 hover:text-white hover:bg-white/10'
+                    className={`${styles.categoryPill} ${
+                      selectedCategory === catKey ? styles.categoryPillActive : ''
                     }`}
                   >
                     {cat.label}
@@ -567,32 +543,37 @@ export const ExchangeShelfSection: React.FC = () => {
       {/* 4. Details Modal */}
       {selectedItem && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+          className={styles.modalBackdrop}
           onClick={() => setSelectedItem(null)}
         >
           <div
-            className="glass-midnight-card max-w-lg w-full p-6 sm:p-8 rounded-3xl border border-amber-400/40 shadow-2xl relative space-y-5"
+            className={styles.modalCard}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-amber-400/20">
-              <div className="flex items-center gap-2 text-xs font-mono text-amber-300/80 uppercase tracking-wider">
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderLeft}>
                 <Book className="w-4 h-4 text-amber-300" />
-                <span>Recommendation Details</span>
+                <span style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', color: 'var(--shf-amber-light)' }}>
+                  Recommendation Details
+                </span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedItem(null)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className={styles.modalCloseBtn}
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-white truncate">{selectedItem.title}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <h3 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.4rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                  {selectedItem.title}
+                </h3>
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border shadow-sm ${
+                  className={`${styles.categoryBadge} ${
                     CATEGORY_MAP[selectedItem.category]?.badge || ''
                   }`}
                 >
@@ -601,31 +582,46 @@ export const ExchangeShelfSection: React.FC = () => {
               </div>
 
               {selectedItem.photoUrl && (
-                <div className="rounded-2xl overflow-hidden max-h-56 border border-white/10 shadow-md">
-                  <img src={selectedItem.photoUrl} alt={selectedItem.title} className="w-full h-full object-cover" />
+                <div style={{ borderRadius: '16px', overflow: 'hidden', maxHeight: '220px', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
+                  <img src={selectedItem.photoUrl} alt={selectedItem.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               )}
 
               {selectedItem.description && (
-                <div className="quote-whisper-bubble space-y-1">
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-amber-300/80">
+                <div style={{
+                  padding: '14px 16px',
+                  borderRadius: '16px',
+                  background: 'rgba(251, 191, 36, 0.12)',
+                  border: '1px solid var(--shf-border)',
+                }}>
+                  <div style={{ fontSize: '10px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', color: 'var(--shf-amber-light)', opacity: 0.8, marginBottom: '4px' }}>
                     Why It's Recommended
                   </div>
-                  <p className="font-serif italic text-sm text-amber-100/95 leading-relaxed">
+                  <p style={{ fontFamily: '"Playfair Display", Georgia, serif', fontStyle: 'italic', fontSize: '0.95rem', color: '#fffdf5', margin: 0, lineHeight: 1.6 }}>
                     “{selectedItem.description}” ♡
                   </p>
                 </div>
               )}
 
               {selectedItem.pdfUrl && (
-                <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs text-emerald-100 truncate">
-                    <FileText className="w-4 h-4 text-emerald-300 shrink-0" />
-                    <span className="truncate">{selectedItem.pdfFileName || 'Book PDF Attached'}</span>
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: '16px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#a7f3d0' }}>
+                    <FileText className="w-4 h-4 text-emerald-300" />
+                    <span>{selectedItem.pdfFileName || 'Book PDF Attached'}</span>
                   </div>
                   <button
+                    type="button"
                     onClick={() => openPdf(selectedItem.pdfUrl!, selectedItem.pdfFileName)}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold shrink-0 shadow-md flex items-center gap-1 active:scale-95"
+                    className={styles.readPdfBtn}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
                     <span>Read PDF</span>
@@ -643,12 +639,20 @@ export const ExchangeShelfSection: React.FC = () => {
               )}
 
               {selectedItem.link && (
-                <div className="pt-1">
+                <div>
                   <a
                     href={selectedItem.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 underline font-mono"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      fontFamily: 'ui-monospace, monospace',
+                      color: 'var(--shf-amber-light)',
+                      textDecoration: 'underline',
+                    }}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>Open External Reference / Link</span>
@@ -657,24 +661,45 @@ export const ExchangeShelfSection: React.FC = () => {
               )}
             </div>
 
-            <div className="pt-4 border-t border-amber-400/20 flex items-center justify-between gap-3">
+            <div style={{
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(251, 191, 36, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+            }}>
               {selectedItem.contributorId === currentUser.id ? (
                 <button
+                  type="button"
                   onClick={() => handleDelete(selectedItem)}
-                  className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-medium transition-all flex items-center gap-1.5"
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(244, 63, 94, 0.18)',
+                    border: '1px solid rgba(244, 63, 94, 0.4)',
+                    color: '#fda4af',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Remove Item</span>
                 </button>
               ) : (
-                <span className="text-xs font-mono text-amber-300/60">
+                <span style={{ fontSize: '12px', fontFamily: 'ui-monospace, monospace', color: 'var(--shf-muted)' }}>
                   Recommended by {selectedItem.contributorName || partner.displayName}
                 </span>
               )}
 
               <button
+                type="button"
                 onClick={() => setSelectedItem(null)}
-                className="btn-glow-romantic text-xs py-2 px-5"
+                className={styles.cancelBtn}
               >
                 <span>Done</span>
               </button>
@@ -686,30 +711,38 @@ export const ExchangeShelfSection: React.FC = () => {
       {/* 5. Add Modal Form with Upload Support */}
       {isAdding && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+          className={styles.modalBackdrop}
           onClick={() => setIsAdding(false)}
         >
           <div
-            className="glass-midnight-card max-w-xl w-full p-6 sm:p-8 rounded-3xl border border-amber-400/40 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto"
+            className={styles.modalCard}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-amber-400/20">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
-                  <Book className="w-4 h-4 text-amber-300" />
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderLeft}>
+                <span style={{
+                  padding: '8px',
+                  borderRadius: '12px',
+                  background: 'rgba(251, 191, 36, 0.2)',
+                  border: '1px solid var(--shf-border)',
+                  color: 'var(--shf-amber-light)',
+                  display: 'flex',
+                }}>
+                  <Book className="w-4 h-4" />
                 </span>
                 <div>
-                  <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
+                  <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
                     Add Recommendation to Shelf
                   </h4>
-                  <p className="text-[11px] text-amber-200/70 font-mono uppercase tracking-wider">
+                  <p style={{ fontSize: '11px', fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase', color: 'var(--shf-amber-light)', opacity: 0.8, margin: '2px 0 0 0' }}>
                     Upload book PDF, photo, or share an adventure
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsAdding(false)}
-                className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
+                className={styles.modalCloseBtn}
                 aria-label="Cancel"
               >
                 <X className="w-4 h-4" />
@@ -717,14 +750,12 @@ export const ExchangeShelfSection: React.FC = () => {
             </div>
 
             {/* Upload Buttons: PDF of Book, Photo, Voice Note */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className={styles.uploadChoiceGrid}>
               <button
                 type="button"
                 onClick={() => pdfInputRef.current?.click()}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1.5 transition-all ${
-                  pdfUrl
-                    ? 'bg-emerald-500/25 border-emerald-400/60 text-white'
-                    : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/10'
+                className={`${styles.uploadChoiceBtn} ${
+                  pdfUrl ? styles.uploadChoiceActive : ''
                 }`}
               >
                 <FileText className="w-4 h-4 text-emerald-300" />
@@ -734,10 +765,8 @@ export const ExchangeShelfSection: React.FC = () => {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1.5 transition-all ${
-                  photoUrl
-                    ? 'bg-amber-500/25 border-amber-400/60 text-white'
-                    : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/10'
+                className={`${styles.uploadChoiceBtn} ${
+                  photoUrl ? styles.uploadChoiceActive : ''
                 }`}
               >
                 <ImageIcon className="w-4 h-4 text-amber-300" />
@@ -747,10 +776,8 @@ export const ExchangeShelfSection: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowRecorder(!showRecorder)}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex flex-col items-center justify-center gap-1.5 transition-all ${
-                  showRecorder || voiceNoteUrl
-                    ? 'bg-pink-500/25 border-pink-400/60 text-white'
-                    : 'bg-white/[0.04] border-white/10 text-slate-300 hover:bg-white/10'
+                className={`${styles.uploadChoiceBtn} ${
+                  showRecorder || voiceNoteUrl ? styles.uploadChoiceActive : ''
                 }`}
               >
                 <Mic className="w-4 h-4 text-pink-300" />
@@ -783,12 +810,24 @@ export const ExchangeShelfSection: React.FC = () => {
 
             {/* Previews */}
             {pdfUrl && (
-              <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200">
-                <span className="flex items-center gap-2 truncate">
+              <div style={{
+                padding: '12px 16px',
+                borderRadius: '14px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '12px',
+                color: '#a7f3d0',
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                   <FileText className="w-4 h-4 text-emerald-300 shrink-0" />
-                  <span className="truncate">{pdfFileName || 'PDF Book'}</span>
+                  <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    {pdfFileName || 'PDF Book'}
+                  </span>
                   {pdfFileSize && (
-                    <span className="text-[10px] text-emerald-300/70 font-mono">
+                    <span style={{ fontSize: '10px', opacity: 0.75, fontFamily: 'monospace' }}>
                       ({mediaStorage.formatBytes(pdfFileSize)})
                     </span>
                   )}
@@ -800,7 +839,7 @@ export const ExchangeShelfSection: React.FC = () => {
                     setPdfFileName(undefined);
                     setPdfFileSize(undefined);
                   }}
-                  className="text-slate-400 hover:text-rose-300 ml-2"
+                  style={{ color: '#fda4af', background: 'transparent', border: 0, cursor: 'pointer', marginLeft: '8px' }}
                 >
                   Remove
                 </button>
@@ -808,12 +847,22 @@ export const ExchangeShelfSection: React.FC = () => {
             )}
 
             {photoUrl && (
-              <div className="relative rounded-2xl overflow-hidden max-h-40 border border-white/20">
-                <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+              <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', maxHeight: '160px', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
+                <img src={photoUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button
                   type="button"
                   onClick={() => setPhotoUrl(undefined)}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    padding: '6px',
+                    borderRadius: '9999px',
+                    background: 'rgba(0, 0, 0, 0.65)',
+                    color: '#ffffff',
+                    border: 0,
+                    cursor: 'pointer',
+                  }}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -821,27 +870,37 @@ export const ExchangeShelfSection: React.FC = () => {
             )}
 
             {voiceNoteUrl && (
-              <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-400/30 flex items-center justify-between">
-                <span className="text-xs text-pink-200 flex items-center gap-1.5">
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '14px',
+                background: 'rgba(244, 114, 182, 0.15)',
+                border: '1px solid rgba(244, 114, 182, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '12px',
+                color: 'var(--shf-text)',
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mic className="w-3.5 h-3.5 text-pink-400" />
                   <span>Voice Note Attached</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setVoiceNoteUrl(undefined)}
-                  className="text-xs text-slate-400 hover:text-rose-300"
+                  style={{ color: '#fda4af', background: 'transparent', border: 0, cursor: 'pointer' }}
                 >
                   Remove
                 </button>
               </div>
             )}
 
-            <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="form-field-label">
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
                   <span>Category *</span>
                 </label>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                <div className={styles.catChoiceGrid}>
                   {(Object.keys(CATEGORY_MAP) as ShelfCategory[]).map((catKey) => {
                     const c = CATEGORY_MAP[catKey];
                     return (
@@ -849,10 +908,8 @@ export const ExchangeShelfSection: React.FC = () => {
                         key={catKey}
                         type="button"
                         onClick={() => setCategory(catKey)}
-                        className={`p-2 rounded-xl border text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
-                          category === catKey
-                            ? 'bg-amber-500/30 border-amber-400/70 text-white shadow-md'
-                            : 'bg-white/[0.04] border-white/10 text-slate-300 hover:text-white'
+                        className={`${styles.catChoiceBtn} ${
+                          category === catKey ? styles.catChoiceActive : ''
                         }`}
                       >
                         <span>{c.label.split(' ')[0]}</span>
@@ -862,8 +919,8 @@ export const ExchangeShelfSection: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="form-field-label">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
                   <span>Title / Name *</span>
                 </label>
                 <input
@@ -872,11 +929,12 @@ export const ExchangeShelfSection: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. The Alchemist, About Time, or Boba Place"
+                  className={styles.formInput}
                 />
               </div>
 
-              <div>
-                <label className="form-field-label">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
                   <span>Why You Recommend It</span>
                 </label>
                 <input
@@ -884,11 +942,12 @@ export const ExchangeShelfSection: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Super cozy vibe, we have to read/watch it together"
+                  className={styles.formInput}
                 />
               </div>
 
-              <div>
-                <label className="form-field-label">
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
                   <span>Link (Optional)</span>
                 </label>
                 <input
@@ -896,24 +955,33 @@ export const ExchangeShelfSection: React.FC = () => {
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="Optional reference: https://... (leave empty if none)"
+                  className={styles.formInput}
                 />
               </div>
 
               {errorMsg && (
-                <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
+                <p style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: 'rgba(159, 18, 57, 0.4)',
+                  border: '1px solid rgba(244, 63, 94, 0.4)',
+                  color: '#fda4af',
+                  fontSize: '12px',
+                  margin: 0,
+                }}>
                   {errorMsg}
                 </p>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-amber-400/20">
+              <div className={styles.formFooter}>
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}
-                  className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
+                  className={styles.cancelBtn}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-glow-romantic">
+                <button type="submit" className={styles.submitBtn}>
                   <Sparkles className="w-4 h-4" />
                   <span>Place on Shelf ✨</span>
                 </button>
