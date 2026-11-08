@@ -26,7 +26,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
     try {
       const items = await memoryArchiveService.getMemories();
       const mapped: MemoryItem[] = items
-        .filter((m) => !m.id.startsWith('seed-'))
+        .filter((m) => !m.id.startsWith('seed-') && Boolean(m.isShared))
         .map((m) => ({
           id: m.id,
           title: m.title,
@@ -51,6 +51,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   }, []);
 
   const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories];
+  const isMultiColumn = allMemories.length >= 4;
 
   const handleOpenPhoto = (index: number) => {
     soundEngine.playChime(523.25, 1.2, 0.08);
@@ -99,7 +100,13 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
       </div>
 
       {/* Polaroid Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-6 lg:gap-8 px-2 sm:px-4">
+      <div
+        className={`grid ${
+          isMultiColumn
+            ? 'grid-cols-2 gap-3 sm:gap-6'
+            : 'grid-cols-1 gap-8 sm:gap-6'
+        } sm:grid-cols-2 lg:grid-cols-3 px-2 sm:px-4`}
+      >
         {allMemories.map((memory, index) => {
           const rotationClass = rotationClasses[index % rotationClasses.length];
 
@@ -107,7 +114,9 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             <div
               key={memory.id}
               onClick={() => handleOpenPhoto(index)}
-              className={`polaroid-card group transform transition-all duration-300 ${rotationClass}`}
+              className={`polaroid-card ${
+                isMultiColumn ? 'polaroid-card-compact' : ''
+              } group transform transition-all duration-300 ${rotationClass}`}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
@@ -132,7 +141,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                 />
 
                 {/* Tag Badge */}
-                <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-[10px] text-pink-200 border border-white/20">
+                <div className="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] text-pink-200 border border-white/20">
                   {memory.tag}
                 </div>
               </div>
@@ -142,7 +151,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                 {memory.title}
               </div>
 
-              <div className="flex items-center justify-center gap-1 text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1">
+              <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1">
                 <Calendar className="w-3 h-3 text-pink-500/70" />
                 <span>{memory.date}</span>
               </div>

@@ -1199,6 +1199,19 @@ button:hover { opacity: 0.95; }
   .polaroid-caption {
     font-size: 1.3rem;
   }
+  .polaroid-card-compact {
+    padding: 8px 8px 12px !important;
+    border-radius: 6px !important;
+    transform: none !important;
+  }
+  .polaroid-card-compact .polaroid-image-wrapper {
+    aspect-ratio: 1 / 1 !important;
+  }
+  .polaroid-card-compact .polaroid-caption {
+    font-size: 0.95rem !important;
+    margin-top: 6px !important;
+    line-height: 1.2 !important;
+  }
 }
 
 /* ==========================================================================

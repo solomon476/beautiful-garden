@@ -521,7 +521,7 @@ export const notesService = {
     const isAuthed = authService.isAuthenticated();
 
     if (isLiveSupabaseConfigured && supabase) {
-      await syncLocalDraftsToCloud();
+      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
       const { data, error } = await supabase
         .from('notes')
         .select('*')
@@ -933,6 +933,15 @@ export const shelfService = {
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
 export const memoryArchiveService = {
+  getCachedMemories(): MemoryEntry[] {
+    const user = authService.getCurrentUser();
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
+    const isAuthed = authService.isAuthenticated();
+    return localAll.filter((m) =>
+      isAuthed ? m.contributorId === user.id || m.isShared : m.isShared
+    );
+  },
+
   async getMemories(): Promise<MemoryEntry[]> {
     const user = authService.getCurrentUser();
 
@@ -944,7 +953,7 @@ export const memoryArchiveService = {
     );
 
     if (isLiveSupabaseConfigured && supabase) {
-      await syncLocalDraftsToCloud();
+      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
       const { data, error } = await supabase
         .from('garden_memories')
         .select('*')
@@ -1081,7 +1090,7 @@ export const petalNotesService = {
     });
 
     if (isLiveSupabaseConfigured && supabase) {
-      await syncLocalDraftsToCloud();
+      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
       const { data, error } = await supabase
         .from('petal_notes')
         .select('*')
@@ -1182,7 +1191,7 @@ export const hangoutService = {
   async getHangouts(): Promise<HangoutEntry[]> {
     const local = loadLocal<HangoutEntry[]>(STORAGE_KEYS.HANGOUTS, DEFAULT_INITIAL_HANGOUTS);
     if (isLiveSupabaseConfigured && supabase) {
-      await syncLocalDraftsToCloud();
+      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
       const { data, error } = await supabase
         .from('hangout_suggestions')
         .select('*')
@@ -1538,7 +1547,7 @@ export const moodGardenService = {
     const isAuthed = authService.isAuthenticated();
 
     if (isLiveSupabaseConfigured && supabase) {
-      await syncLocalDraftsToCloud();
+      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
       const { data, error } = await supabase
         .from('mood_entries')
         .select('*')

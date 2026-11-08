@@ -23,8 +23,10 @@ import { GardenAudioPlayer } from './GardenAudioPlayer';
 import styles from './LittleArchiveSection.module.css';
 
 export const LittleArchiveSection: React.FC = () => {
-  const [memories, setMemories] = useState<MemoryEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [memories, setMemories] = useState<MemoryEntry[]>(() =>
+    memoryArchiveService.getCachedMemories()
+  );
+  const [loading, setLoading] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
   // Filter state
@@ -51,7 +53,7 @@ export const LittleArchiveSection: React.FC = () => {
 
   const loadMemories = async () => {
     try {
-      setLoading(true);
+      if (memories.length === 0) setLoading(true);
       const list = await memoryArchiveService.getMemories();
       setMemories(list);
     } catch (err) {
@@ -326,7 +328,11 @@ export const LittleArchiveSection: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className={styles.memoriesGrid}>
+        <div
+          className={`${styles.memoriesGrid} ${
+            filteredMemories.length >= 4 ? styles.memoriesGridMulti : styles.memoriesGridSingle
+          }`}
+        >
           {filteredMemories.map((mem) => {
             const isAddedByMe = mem.contributorId === currentUser.id;
 
@@ -345,6 +351,7 @@ export const LittleArchiveSection: React.FC = () => {
                     alt={mem.title}
                     className={styles.cardThumbImage}
                     loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
                     }}

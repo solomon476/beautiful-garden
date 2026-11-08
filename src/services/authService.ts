@@ -44,8 +44,13 @@ const AUTH_CONFIG = {
 
 const STORAGE_KEY_SESSION = 'PT_AUTH_SESSION_V2';
 const STORAGE_KEY_CUSTOM_HASH = 'PT_AUTH_CUSTOM_HASH_';
+const STORAGE_KEY_CUSTOM_AVATAR = 'PT_CUSTOM_AVATAR_';
 
 const authMemoryStore: Record<string, string> = {};
+
+function getStoredAvatar(username: string): string | null {
+  return getAuthItem(`${STORAGE_KEY_CUSTOM_AVATAR}${username.toLowerCase()}`);
+}
 
 function getAuthItem(key: string): string | null {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -161,11 +166,18 @@ class AuthService {
 
   public getCurrentUser(): UserProfile {
     // Return active authenticated user, or default to Solomon for read-only initial page view
-    return this.activeUser || AUTHORIZED_PROFILES.solomon;
+    const base = this.activeUser || AUTHORIZED_PROFILES.solomon;
+    const customAvatar = getStoredAvatar(base.username);
+    if (customAvatar) {
+      return { ...base, avatarUrl: customAvatar };
+    }
+    return base;
   }
 
   public getAuthenticatedUser(): UserProfile | null {
-    return this.activeUser;
+    if (!this.activeUser) return null;
+    const customAvatar = getStoredAvatar(this.activeUser.username);
+    return customAvatar ? { ...this.activeUser, avatarUrl: customAvatar } : this.activeUser;
   }
 
   public isAuthenticated(): boolean {
@@ -178,7 +190,39 @@ class AuthService {
 
   public getPartner(): UserProfile {
     const cur = this.getCurrentUser();
-    return cur.username === 'solomon' ? AUTHORIZED_PROFILES.noella : AUTHORIZED_PROFILES.solomon;
+    const partnerKey = cur.username === 'solomon' ? 'noella' : 'solomon';
+    const base = AUTHORIZED_PROFILES[partnerKey];
+    const customAvatar = getStoredAvatar(base.username);
+    if (customAvatar) {
+      return { ...base, avatarUrl: customAvatar };
+    }
+    return base;
+  }
+
+  public async updateAvatar(avatarUrl: string, username?: string): Promise<void> {
+    const targetKey = (username || this.getCurrentUser().username).toLowerCase();
+    setAuthItem(`${STORAGE_KEY_CUSTOM_AVATAR}${targetKey}`, avatarUrl);
+    
+    if (AUTHORIZED_PROFILES[targetKey]) {
+      AUTHORIZED_PROFILES[targetKey] = {
+        ...AUTHORIZED_PROFILES[targetKey],
+        avatarUrl,
+      };
+    }
+    if (this.activeUser && this.activeUser.username.toLowerCase() === targetKey) {
+      this.activeUser = {
+        ...this.activeUser,
+        avatarUrl,
+      };
+    }
+    this.notifyListeners();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('garden-profile-updated', {
+          detail: { username: targetKey, avatarUrl },
+        })
+      );
+    }
   }
 
   public subscribeUser(listener: (user: UserProfile) => void): () => void {
