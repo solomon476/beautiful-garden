@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  X,
   Sparkles,
   PenLine,
   Headphones,
@@ -187,10 +186,6 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
     onClose();
   };
 
-  const handleClose = () => {
-    handleGoHome();
-  };
-
   const handleRunSecurityAudit = async () => {
     setTestingAudit(true);
     soundEngine.playChime(587.33, 1.2, 0.08);
@@ -249,8 +244,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
             </div>
           </button>
 
-          {/* Right Header Area: Dual Pictures of Noella & Solomon + Notification Bell + Quick Add + Close */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Right Header Area: Balanced Notification Bell & Partner Avatar */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 pr-1">
             {/* Quick Add Studio Launcher Button (Shown on Sanctuary Dashboard) */}
             {activeTab === 'garden' && (
               <button
@@ -264,24 +259,14 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
               </button>
             )}
 
-            {/* Visual Dual Photo Avatar Switcher */}
-            <UserSwitcher currentUser={currentUser} compact={true} />
-
             {/* Notification Bell Dropdown */}
             <GardenNotificationBell
               currentUser={currentUser}
               onSelectTab={(tab) => handleSelectTab(tab)}
             />
 
-            {/* Clean Frosted Close Button */}
-            <button
-              onClick={handleClose}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/10 hover:border-pink-300/30 text-slate-300 hover:text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm focus-visible:ring-2 focus-visible:ring-pink-400/50 outline-none"
-              aria-label="Close Our Garden"
-              title="Close Sanctuary"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {/* Partner Avatar (Displays her photo for Solomon, his photo for Noella) */}
+            <UserSwitcher currentUser={currentUser} compact={true} />
           </div>
         </header>
 

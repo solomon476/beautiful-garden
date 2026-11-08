@@ -411,7 +411,7 @@ export const LittleArchiveSection: React.FC = () => {
                       <img
                         src={mem.photoUrl}
                         alt={displayTitle}
-                        className={styles.cardThumbImage}
+                        className={`${styles.cardThumbImage} ${isFlipped ? styles.cardThumbImageDimmed : ''}`}
                         loading="lazy"
                         decoding="async"
                         onError={(e) => {
@@ -447,83 +447,104 @@ export const LittleArchiveSection: React.FC = () => {
                       )}
 
                       {/* Touch To See Note Badge */}
-                      <span className={styles.cardTapHint}>
-                        <span>✍️ Touch for note</span>
-                      </span>
-                    </div>
-
-                    {/* Back of Photo (Interactive Keepsake Note) */}
-                    <div
-                      className={styles.thumbBack}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {/* Top Header */}
-                      <div className={styles.thumbBackHeader}>
-                        <span className="text-[10px] font-mono text-pink-300 font-bold uppercase tracking-wider flex items-center gap-1">
-                          <span>Keepsake Note 💌</span>
+                      {!isFlipped && (
+                        <span className={styles.cardTapHint}>
+                          <span>✍️ Touch for note</span>
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleTouchCard(mem.id)}
-                          className="p-1 rounded-full text-pink-300/80 hover:text-white transition-colors cursor-pointer"
-                          title="Flip back to photo"
-                        >
-                          <RotateCw className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Clean Display Title */}
-                      <h4 className={styles.thumbBackTitle} title={displayTitle}>
-                        {displayTitle}
-                      </h4>
-
-                      {/* Handwritten Romantic Note */}
-                      <div className={styles.thumbBackNoteCard}>
-                        <p className={styles.thumbBackCaption}>
-                          “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
-                        </p>
-                      </div>
-
-                      {/* Submeta */}
-                      <div className={styles.thumbBackMeta}>
-                        <span>📅 {mem.dateTaken || 'Special Day'}</span>
-                        <span className="text-pink-300">By {isAddedByMe ? 'You' : mem.contributorName || partner.displayName}</span>
-                      </div>
-
-                      {/* Action Buttons on Note */}
-                      <div className={styles.thumbBackActions}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundEngine.playSparkle();
-                            setLightboxMemory(mem);
-                          }}
-                          className="flex-1 py-1 px-2 rounded-lg bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
-                        >
-                          <ZoomIn className="w-3 h-3" />
-                          <span>Fullscreen</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(mem)}
-                          className="py-1 px-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/30 text-rose-300 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
-                          title="Delete memory"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span>Delete</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleTouchCard(mem.id)}
-                          className="py-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
-                        >
-                          <RotateCw className="w-3 h-3" />
-                          <span>Flip</span>
-                        </button>
-                      </div>
+                      )}
                     </div>
+
+                    {/* Luminous Keepsake Note Glass Overlay (Dim & Glow without Flipping) */}
+                    {isFlipped && (
+                      <div
+                        className={styles.thumbBack}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTouchCard(mem.id);
+                        }}
+                      >
+                        {/* Top Header */}
+                        <div className={styles.thumbBackHeader}>
+                          <span className="text-[10px] font-mono text-pink-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <span>Keepsake Note 💌</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTouchCard(mem.id);
+                            }}
+                            className="p-1 rounded-full text-pink-300/80 hover:text-white transition-colors cursor-pointer"
+                            title="Brighten photo"
+                          >
+                            <RotateCw className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Clean Display Title */}
+                        <h4 className={styles.thumbBackTitle} title={displayTitle}>
+                          {displayTitle}
+                        </h4>
+
+                        {/* Handwritten Romantic Note */}
+                        <div
+                          className={styles.thumbBackNoteCard}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <p className={styles.thumbBackCaption}>
+                            “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
+                          </p>
+                        </div>
+
+                        {/* Submeta */}
+                        <div className={styles.thumbBackMeta}>
+                          <span>📅 {mem.dateTaken || 'Special Day'}</span>
+                          <span className="text-pink-300">By {isAddedByMe ? 'You' : mem.contributorName || partner.displayName}</span>
+                        </div>
+
+                        {/* Action Buttons on Note */}
+                        <div className={styles.thumbBackActions}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundEngine.playSparkle();
+                              setLightboxMemory(mem);
+                            }}
+                            className="flex-1 py-1 px-2 rounded-lg bg-pink-500 hover:bg-pink-600 text-white text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                          >
+                            <ZoomIn className="w-3 h-3" />
+                            <span>Fullscreen</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(mem);
+                            }}
+                            className="py-1 px-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/30 text-rose-300 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                            title="Delete memory"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTouchCard(mem.id);
+                            }}
+                            className="py-1 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
+                            title="Brighten photo"
+                          >
+                            <RotateCw className="w-3 h-3" />
+                            <span>Brighten ☀️</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

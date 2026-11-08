@@ -14,10 +14,14 @@ import {
   Gift,
   Clock,
   Camera,
+  KeyRound,
+  ShieldCheck,
 } from 'lucide-react';
 import { soundEngine } from '../../utils/audio';
 import { authService } from '../../services/authService';
 import { ChangeProfilePhotoModal } from './ChangeProfilePhotoModal';
+import { ChangePasscodeModal } from './ChangePasscodeModal';
+import { AuthModal } from './AuthModal';
 
 interface MobileBottomNavProps {
   currentView: 'home' | 'garden' | 'music' | 'archive' | 'more' | string;
@@ -32,6 +36,8 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
 }) => {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isChangePhotoOpen, setIsChangePhotoOpen] = useState(false);
+  const [isChangePasscodeOpen, setIsChangePasscodeOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
 
   useEffect(() => {
@@ -147,47 +153,77 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               </button>
             </div>
 
-            {/* Profile Avatar & Change Photo Shortcut */}
-            <div className="p-3 rounded-2xl bg-white/[0.05] border border-pink-400/30 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div
+            {/* Profile Avatar & Account Settings Card */}
+            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-pink-400/30 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setIsChangePhotoOpen(true);
+                    }}
+                    className="relative rounded-full overflow-hidden border-2 border-pink-400/70 shadow-md shrink-0 cursor-pointer group"
+                    style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px' }}
+                    title="Change photo"
+                  >
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.displayName}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-serif text-sm font-bold text-white block truncate">
+                      {currentUser.displayName}
+                    </span>
+                    <span className="text-[10px] text-pink-200/70 block truncate">
+                      Your Garden Profile
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
                   onClick={() => {
                     soundEngine.playSparkle();
                     setIsChangePhotoOpen(true);
                   }}
-                  className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-pink-400/70 shadow-md shrink-0 cursor-pointer group"
-                  title="Change photo"
+                  className="px-3 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-[11px] font-semibold flex items-center gap-1.5 shrink-0 active:scale-95 transition-all cursor-pointer shadow-sm"
                 >
-                  <img
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.displayName}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-3.5 h-3.5 text-white" />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <span className="font-serif text-xs font-bold text-white block truncate">
-                    {currentUser.displayName}
-                  </span>
-                  <span className="text-[10px] text-pink-200/70 block truncate">
-                    Tap to customize profile photo
-                  </span>
-                </div>
+                  <Camera className="w-3 h-3 text-pink-300" />
+                  <span>Photo 📷</span>
+                </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playSparkle();
-                  setIsChangePhotoOpen(true);
-                }}
-                className="px-3 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-[11px] font-medium flex items-center gap-1.5 shrink-0 active:scale-95 transition-all"
-              >
-                <Camera className="w-3 h-3 text-pink-300" />
-                <span>Change Photo</span>
-              </button>
+              {/* Security & Account Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setIsChangePasscodeOpen(true);
+                  }}
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-pink-300" />
+                  <span>Passcode 🔑</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+                  <span>Switch Account</span>
+                </button>
+              </div>
             </div>
 
             {/* 8 Features Grid */}
@@ -273,6 +309,24 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         isOpen={isChangePhotoOpen}
         onClose={() => setIsChangePhotoOpen(false)}
         currentUser={currentUser}
+      />
+
+      {/* Change Passcode Modal for Mobile */}
+      <ChangePasscodeModal
+        isOpen={isChangePasscodeOpen}
+        onClose={() => setIsChangePasscodeOpen(false)}
+        currentUser={currentUser}
+      />
+
+      {/* Switch Account Modal for Mobile */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialUser={currentUser.username === 'solomon' ? 'noella' : 'solomon'}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          setCurrentUser(authService.getCurrentUser());
+        }}
       />
     </>
   );

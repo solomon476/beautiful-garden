@@ -154,15 +154,15 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
       >
         {allMemories.map((memory, index) => {
           const rotationClass = rotationClasses[index % rotationClasses.length];
-          const isFlipped = Boolean(flippedCards[memory.id]);
+          const isNoteOpen = Boolean(flippedCards[memory.id]);
 
           return (
             <div
               key={memory.id}
-              className={`polaroid-flip-stage ${rotationClass} transform transition-all duration-300`}
+              className={`polaroid-container ${rotationClass} transform transition-all duration-300`}
             >
               <div
-                className={`polaroid-flipper ${isFlipped ? 'is-flipped' : ''}`}
+                className={`polaroid-card ${viewMode === 'grid' ? 'polaroid-card-compact' : ''}`}
                 onClick={() => handleCardTouch(memory.id)}
                 role="button"
                 tabIndex={0}
@@ -172,135 +172,138 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     handleCardTouch(memory.id);
                   }
                 }}
-                aria-label={`Keepsake: ${memory.title}. Touch to flip`}
+                aria-label={`Keepsake: ${memory.title}. Touch to view romantic note`}
               >
-                {/* ================= Front of Polaroid ================= */}
-                <div
-                  className={`polaroid-card polaroid-face-front ${
-                    viewMode === 'grid' ? 'polaroid-card-compact' : ''
-                  }`}
-                >
-                  {/* Photo Frame with Ambient Blur & Balanced Proportions */}
-                  <div className="polaroid-image-wrapper relative">
-                    {/* Ambient Glow Backdrop (Eliminates harsh black bars) */}
-                    <img
-                      src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
-                      alt=""
-                      aria-hidden="true"
-                      className="polaroid-ambient-blur"
-                      loading="lazy"
-                    />
+                {/* Photo Frame with Ambient Blur & Balanced Proportions */}
+                <div className="polaroid-image-wrapper relative">
+                  {/* Ambient Glow Backdrop (Eliminates harsh black bars) */}
+                  <img
+                    src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
+                    alt=""
+                    aria-hidden="true"
+                    className="polaroid-ambient-blur"
+                    loading="lazy"
+                  />
 
-                    {/* Main Photo (Heads and smiles preserved with center 18%) */}
-                    <img
-                      src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
-                      alt={memory.altText || memory.title}
-                      className="polaroid-image"
-                      style={{ objectPosition: memory.objectPosition || 'center 18%' }}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
-                      }}
-                    />
+                  {/* Main Photo (Dims gracefully when note is open so you still see the photo!) */}
+                  <img
+                    src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
+                    alt={memory.altText || memory.title}
+                    className={`polaroid-image ${isNoteOpen ? 'polaroid-image-dimmed' : ''}`}
+                    style={{ objectPosition: memory.objectPosition || 'center 18%' }}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+                    }}
+                  />
 
-                    {/* Tag Badge */}
-                    <div className="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] text-pink-200 border border-white/20 z-10">
-                      {memory.tag}
-                    </div>
+                  {/* Tag Badge */}
+                  <div className="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] text-pink-200 border border-white/20 z-10">
+                    {memory.tag}
+                  </div>
 
-                    {/* Touch To See Note Badge */}
+                  {/* Touch To See Note Badge (Only visible when note is resting) */}
+                  {!isNoteOpen && (
                     <div className="absolute bottom-2 right-2 z-10">
                       <span className="polaroid-tap-hint">
                         <span>✍️ Touch for note</span>
                       </span>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Caption & Date */}
-                  <div className="polaroid-caption truncate px-1 mt-2 font-bold text-slate-900 tracking-tight">
-                    {memory.title}
-                  </div>
-
-                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1 px-1">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-pink-500/70" />
-                      <span>{memory.date}</span>
-                    </span>
-                    <button
-                      type="button"
+                  {/* ================= Luminous Keepsake Note Glass Overlay ================= */}
+                  {/* Emerges over the dimmed photo so you read the note while seeing the picture! */}
+                  {isNoteOpen && (
+                    <div
+                      className="polaroid-note-overlay"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenPhoto(index);
+                        handleCardTouch(memory.id);
                       }}
-                      className="p-1 rounded-full text-slate-400 hover:text-pink-600 transition-colors"
-                      title="View fullscreen"
                     >
-                      <ZoomIn className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                      {/* Decorative Washi Tape */}
+                      <div className="polaroid-washi-tape" />
+
+                      {/* Card Header */}
+                      <div className="pt-1.5 text-center px-1 shrink-0">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-pink-300 font-bold drop-shadow">
+                          Keepsake Note 💌
+                        </span>
+                        <h3 className="font-serif font-bold text-white text-sm mt-0.5 line-clamp-1 drop-shadow-sm">
+                          {memory.title}
+                        </h3>
+                      </div>
+
+                      {/* Handwritten Romantic Note Box */}
+                      <div
+                        className="polaroid-note-overlay-card"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p className="polaroid-note-overlay-caption">
+                          “{memory.caption}” ♡
+                        </p>
+                      </div>
+
+                      {/* Footer Meta & Action Buttons */}
+                      <div className="shrink-0 space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-pink-200/90 px-1">
+                          <span>📅 {memory.date}</span>
+                          <span className="text-pink-300 font-medium">{memory.tag}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 border-t border-white/20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenPhoto(index);
+                            }}
+                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+                          >
+                            <ZoomIn className="w-3.5 h-3.5" />
+                            <span>Fullscreen 🔍</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCardTouch(memory.id);
+                            }}
+                            className="py-1.5 px-3 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-white/25 backdrop-blur-sm"
+                            title="Brighten photo"
+                          >
+                            <RotateCw className="w-3.5 h-3.5" />
+                            <span>Brighten ☀️</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* ================= Back of Polaroid (Romantic Note) ================= */}
-                <div
-                  className={`polaroid-face-back select-none ${
-                    viewMode === 'grid' ? 'polaroid-back-compact' : ''
-                  }`}
-                >
-                  {/* Decorative Washi Tape */}
-                  <div className="polaroid-washi-tape" />
+                {/* Caption & Date */}
+                <div className="polaroid-caption truncate px-1 mt-2 font-bold text-slate-900 tracking-tight">
+                  {memory.title}
+                </div>
 
-                  {/* Card Header */}
-                  <div className="pt-2 text-center px-1">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-pink-600 font-bold">
-                      Keepsake Note 💌
-                    </span>
-                    <h3 className="font-serif font-bold text-slate-900 text-sm mt-0.5 line-clamp-1">
-                      {memory.title}
-                    </h3>
-                  </div>
-
-                  {/* Handwritten Romantic Note (Scrollable if long so never clipped) */}
-                  <div className="polaroid-note-card">
-                    <p className="polaroid-note-caption">
-                      “{memory.caption}” ♡
-                    </p>
-                  </div>
-
-                  {/* Footer Meta & Action Buttons */}
-                  <div className="shrink-0 space-y-1.5 pt-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1">
-                      <span>📅 {memory.date}</span>
-                      <span className="text-pink-600 font-medium">{memory.tag}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-200">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenPhoto(index);
-                        }}
-                        className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                      >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                        <span>Fullscreen 🔍</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCardTouch(memory.id);
-                        }}
-                        className="py-2 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-slate-200"
-                        title="Flip back"
-                      >
-                        <RotateCw className="w-3.5 h-3.5" />
-                        <span>Flip ↺</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1 px-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-pink-500/70" />
+                    <span>{memory.date}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenPhoto(index);
+                    }}
+                    className="p-1 rounded-full text-slate-400 hover:text-pink-600 transition-colors"
+                    title="View fullscreen"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>

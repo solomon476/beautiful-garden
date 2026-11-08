@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserAccountMenu } from './UserAccountMenu';
+import { PartnerHeaderAvatar } from './PartnerHeaderAvatar';
 import type { UserProfile } from '../../types/garden';
 
 interface UserSwitcherProps {
@@ -8,10 +8,9 @@ interface UserSwitcherProps {
 }
 
 /**
- * UserAccountMenu replaces the insecure instant identity switcher.
- * Displays "Solomon — My Garden" or "Noella — My Garden" derived from the authenticated identity,
- * with secure logout and passcode-protected account switching.
+ * UserSwitcher — Renders the partner's avatar in the header without text clutter.
+ * Solomon sees Noella's photo; Noella sees Solomon's photo.
  */
-export const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser, compact = false }) => {
-  return <UserAccountMenu currentUser={currentUser} compact={compact} />;
+export const UserSwitcher: React.FC<UserSwitcherProps> = ({ currentUser }) => {
+  return <PartnerHeaderAvatar currentUser={currentUser} />;
 };
