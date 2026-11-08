@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Hourglass,
   Lock,
   Unlock,
-  Plus,
-  Trash2,
-  Calendar,
   Sparkles,
+  Calendar,
   X,
+  Trash2,
+  Globe2,
 } from 'lucide-react';
 import { timeCapsuleService, authService } from '../../services/gardenService';
 import type { TimeCapsuleEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
+import styles from './TimeCapsuleSection.module.css';
 
 export const TimeCapsuleSection: React.FC = () => {
   const [capsules, setCapsules] = useState<TimeCapsuleEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [, setLoading] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
-  // Form
+  // Form State
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [title, setTitle] = useState<string>('');
   const [body, setBody] = useState<string>('');
@@ -57,8 +56,8 @@ export const TimeCapsuleSection: React.FC = () => {
     soundEngine.playSparkle();
     setTitle('');
     setBody('');
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    setReleaseDate(nextWeek.toISOString().slice(0, 10));
+    const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    setReleaseDate(nextMonth.toISOString().slice(0, 10));
     setIsShared(true);
     setErrorMsg(null);
     setIsCreating(true);
@@ -67,7 +66,7 @@ export const TimeCapsuleSection: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !body.trim() || !releaseDate) {
-      setErrorMsg('Please fill in title, message, and choose an opening date.');
+      setErrorMsg('Please fill in a title, secret message, and choose an unlock date.');
       return;
     }
 
@@ -101,355 +100,350 @@ export const TimeCapsuleSection: React.FC = () => {
   const now = new Date();
 
   return (
-    <div className="space-y-6">
-      {/* 1. Panoramic Themed Hero Banner — Matching Mockup Format */}
-      <section
-        className="relative rounded-3xl overflow-hidden border border-amber-400/30 shadow-2xl p-6 sm:p-10 lg:p-12"
-        style={{
-          background: 'linear-gradient(135deg, rgba(38, 28, 14, 0.94) 0%, rgba(20, 14, 8, 0.98) 100%)',
-        }}
-      >
-        {/* Ambient Hero Background Art */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
-          style={{ backgroundImage: `url('/assets/garden/card_capsule.jpg')` }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at 15% 50%, rgba(245, 158, 11, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(251, 191, 36, 0.25) 0%, transparent 60%)',
-          }}
-        />
+    <div className={styles.capsuleSection}>
+      {/* 1. Panoramic Themed Hero Banner */}
+      <section className={styles.heroBanner}>
+        <div className={styles.heroAmbientGlow} />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
-          {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-amber-300/40 shadow-xl shrink-0 group">
-              <img
-                src="/assets/garden/card_capsule.jpg"
-                alt="Time Capsule"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-amber-950/70 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Hourglass className="w-6 h-6 sm:w-8 sm:h-8 text-amber-300 drop-shadow-md animate-pulse" />
-              </div>
-            </div>
-
-            {/* Title & Romantic Subtitles */}
-            <div className="space-y-1 sm:space-y-1.5 min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-200 text-[10px] font-mono uppercase tracking-widest">
-                <span>〰️ The Time Capsule</span>
-                <span className="text-amber-300">✦</span>
-              </div>
-
-              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span>Time Capsule</span>
-                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
-              </h2>
-
-              <p className="font-serif italic text-xs sm:text-base text-amber-200/90 max-w-xl leading-relaxed">
-                Future letters and sealed envelopes locked away until a special day in our future.
-              </p>
-
-              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-amber-300/70 pt-0.5">
-                Seal • Preserve • Await • Open Together
-              </div>
-            </div>
+        <div className={styles.heroContent}>
+          <div className={styles.heroTagline}>
+            <span>Future Memories</span>
+            <span className={styles.heroTagDot}>✦</span>
+            <span>Golden Envelopes</span>
           </div>
 
-          {/* Right Action Button Inside Hero Banner */}
-          <div className="shrink-0 w-full sm:w-auto flex justify-end">
-            <button
-              onClick={handleOpenCreate}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
-            >
-              <Plus className="w-4 h-4 text-white" />
-              <span>Seal a Capsule 🔒</span>
-            </button>
-          </div>
+          <h1 className={styles.heroTitle}>
+            <span>Time Capsule</span>
+            <span className={styles.heroTitleHeart}>♡</span>
+          </h1>
+
+          <p className={styles.heroVerbs}>Save · Lock · Relive</p>
+
+          <p className={styles.heroSubtitle}>
+            A treasure box for our future... ♡
+          </p>
+        </div>
+
+        {/* 3D Glowing Hourglass Artwork Frame */}
+        <div className={styles.heroArtworkContainer}>
+          <img
+            src="/assets/garden/card_capsule.jpg"
+            alt="Time Capsule Hourglass Artwork"
+            className={styles.heroArtworkImg}
+          />
         </div>
       </section>
 
-      {/* Creation Modal */}
-      {isCreating && (
-        <div className="glass-parchment-card max-w-3xl mx-auto p-7 sm:p-9 rounded-[2rem] space-y-6 sm:space-y-7 animate-fade-in relative overflow-hidden border border-amber-400/35 shadow-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-amber-400/20">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
-                <Hourglass className="w-4 h-4 text-amber-300" />
-              </span>
-              <div>
-                <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
-                  Seal a Future Capsule
-                </h4>
-                <p className="text-[11px] text-amber-200/70 font-mono uppercase tracking-wider">
-                  Milestone envelope locked until chosen date
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsCreating(false)}
-              className="w-8 h-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all"
-              aria-label="Cancel"
-            >
-              <X className="w-4 h-4" />
-            </button>
+      {/* 2. Main Sanctuary Panel with Locked Master Card */}
+      <div className={styles.mainPanel}>
+        {/* The Locked Hero Card — Exactly matching Row 3, Col 2 */}
+        <div className={styles.lockedHeroCard}>
+          <div className={styles.lockedHeroGlow} />
+
+          <div className={styles.lockIconBadge}>
+            <Lock className="w-8 h-8" />
           </div>
 
-          <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label className="form-field-label">
-                  <span>Capsule Title *</span>
-                </label>
+          <p className={styles.lockedHeroText}>
+            A special message, photos or dreams...
+            <br />
+            Locked for a future date.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleOpenCreate}
+            className={styles.createCapsuleBtn}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Create a Time Capsule ⭐</span>
+          </button>
+        </div>
+
+        {/* 3. Grid of Sealed & Unlocked Capsules */}
+        {capsules.length > 0 && (
+          <div className={styles.capsulesGrid}>
+            {capsules.map((cap) => {
+              const isAuthor = cap.authorId === currentUser.id;
+              const release = new Date(cap.releaseAt);
+              const isUnlocked = release <= now;
+              const diffDays = Math.ceil((release.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+              return (
+                <div
+                  key={cap.id}
+                  onClick={() => {
+                    if (isUnlocked || isAuthor) {
+                      soundEngine.playSparkle();
+                      setSelectedCapsule(cap);
+                    }
+                  }}
+                  className={`${styles.capsuleCard} ${isUnlocked ? styles.capsuleCardUnlocked : ''}`}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div className={styles.capsuleHeader}>
+                      <span
+                        className={`${styles.statusPill} ${
+                          isUnlocked ? styles.statusPillUnlocked : styles.statusPillSealed
+                        }`}
+                      >
+                        {isUnlocked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                        <span>{isUnlocked ? 'Unlocked ✨' : `Locked (${diffDays}d left)`}</span>
+                      </span>
+
+                      <span className={styles.datePill}>
+                        <Calendar className="w-3.5 h-3.5 text-amber-300" />
+                        <span>
+                          {release.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </span>
+                    </div>
+
+                    <h3 className={styles.capsuleTitle}>{cap.title}</h3>
+
+                    <p className={styles.capsuleBodyPreview}>
+                      {isUnlocked || isAuthor ? (
+                        cap.body
+                      ) : (
+                        <span style={{ fontStyle: 'italic', color: 'var(--cap-muted)' }}>
+                          🔒 Sealed until unlock date arrives...
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className={styles.capsuleFooter}>
+                    <span className={styles.capsuleAuthor}>
+                      From: {isAuthor ? 'You 🌷' : (cap.authorName || partner.displayName) + ' ✨'}
+                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {(isUnlocked || isAuthor) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundEngine.playSparkle();
+                            setSelectedCapsule(cap);
+                          }}
+                          className={styles.unsealBtn}
+                        >
+                          <span>Open Capsule →</span>
+                        </button>
+                      )}
+
+                      {isAuthor && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(cap);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: '0',
+                            color: '#fda4af',
+                            cursor: 'pointer',
+                            padding: '4px',
+                          }}
+                          title="Delete capsule"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Create Time Capsule Modal */}
+      {isCreating && (
+        <div className={styles.modalOverlay} onClick={() => setIsCreating(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Seal a Future Time Capsule ⏳</h3>
+              <button
+                type="button"
+                onClick={() => setIsCreating(false)}
+                className={styles.modalCloseBtn}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSave} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Capsule Title *</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Open on Our Next Anniversary..."
+                  placeholder="e.g. For our next anniversary or birthday..."
+                  className={styles.formInput}
                 />
               </div>
 
-              <div>
-                <label className="form-field-label">
-                  <span>Unlock Date *</span>
-                </label>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>Unlock Date *</label>
                 <input
                   type="date"
                   required
                   value={releaseDate}
                   min={new Date().toISOString().slice(0, 10)}
                   onChange={(e) => setReleaseDate(e.target.value)}
+                  className={styles.formInput}
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="form-field-label">
-                <span>The Sealed Message *</span>
-              </label>
-              <textarea
-                rows={5}
-                required
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="What do you want to say to your future selves? This letter will remain strictly sealed and encrypted until the release date arrives..."
-              />
-            </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>The Secret Message *</label>
+                <textarea
+                  required
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="What would you like to say to your future selves? This letter will remain strictly sealed and encrypted until the chosen date..."
+                  className={styles.formTextarea}
+                />
+              </div>
 
-            {/* Decorated Privacy Switch */}
-            <DecoratedPrivacyToggle
-              isShared={isShared}
-              onToggle={setIsShared}
-              partnerName={partner.displayName}
-              sharedTitle={`Seal Milestone Capsule for ${partner.displayName}`}
-              sharedSubtitle={`Sealed with golden wax on the server. ${partner.displayName} will be notified and able to open it on the unlock date ✨`}
-              privateTitle="Personal Future Capsule (Self Only)"
-              privateSubtitle="A private time capsule for your eyes only on the unlock date. Sealed from partner 🔒"
-            />
-
-            {errorMsg && (
-              <p className="text-xs text-rose-300 p-3 rounded-xl bg-rose-950/40 border border-rose-500/30">
-                {errorMsg}
-              </p>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-amber-400/20">
+              {/* Privacy toggle */}
               <button
                 type="button"
-                onClick={() => setIsCreating(false)}
-                className="px-5 py-2.5 rounded-full text-xs text-slate-300 hover:text-white hover:bg-white/[0.08] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn-glow-romantic"
-              >
-                <Hourglass className="w-4 h-4" />
-                <span>Seal with Golden Wax 🌟</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Grid of Capsules */}
-      {loading ? (
-        <div className="py-12 text-center text-slate-400 text-xs font-mono animate-pulse">
-          Consulting celestial hourglass...
-        </div>
-      ) : capsules.length === 0 ? (
-        <div className="glass-midnight-card p-8 sm:p-10 rounded-2xl text-center space-y-3.5 border border-amber-400/20">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 shadow-inner">
-            <Hourglass className="w-5 h-5 animate-pulse" />
-          </div>
-          <h4 className="font-serif text-lg sm:text-xl text-white font-bold">No Sealed Capsules Yet</h4>
-          <p className="text-xs sm:text-sm text-amber-200/70 max-w-md mx-auto font-light leading-relaxed">
-            Seal a note to be opened next month, on a birthday, or during a future adventure together.
-          </p>
-          <button
-            onClick={handleOpenCreate}
-            className="px-4 py-2 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium border border-amber-400/30 transition-all hover:scale-105"
-          >
-            Create Time Capsule ⏳
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-          {capsules.map((cap) => {
-            const isAuthor = cap.authorId === currentUser.id;
-            const release = new Date(cap.releaseAt);
-            const isUnlocked = release <= now;
-            const diffDays = Math.ceil((release.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-            return (
-              <div
-                key={cap.id}
                 onClick={() => {
-                  if (isUnlocked || isAuthor) {
-                    setSelectedCapsule(cap);
-                  }
+                  soundEngine.playSparkle();
+                  setIsShared(!isShared);
                 }}
-                className={`glass-midnight-card group p-5 sm:p-6 rounded-2xl border transition-all flex flex-col justify-between space-y-3.5 shadow-xl relative min-h-[200px] ${
-                  isUnlocked
-                    ? 'border-emerald-400/40 hover:border-emerald-300 cursor-pointer shadow-emerald-500/10'
-                    : 'border-amber-400/30 cursor-default shadow-amber-500/10'
-                }`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  borderRadius: '999px',
+                  background: isShared ? 'rgba(240, 68, 181, 0.15)' : 'rgba(141, 53, 189, 0.15)',
+                  border: `1px solid ${isShared ? 'rgba(240, 68, 181, 0.4)' : 'rgba(141, 53, 189, 0.4)'}`,
+                  color: isShared ? '#ff8acb' : '#c69ae8',
+                  fontSize: '12px',
+                  fontFamily: 'ui-monospace, monospace',
+                  cursor: 'pointer',
+                  alignSelf: 'flex-start',
+                }}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-mono tracking-wider uppercase border shadow-sm ${
-                        isUnlocked
-                          ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-200'
-                          : 'bg-amber-500/15 border-amber-400/30 text-amber-200'
-                      }`}
-                    >
-                      {isUnlocked ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      {isUnlocked ? 'Unlocked & Ready to Read ✨' : `Sealed (${diffDays}d left) 🔐`}
-                    </span>
+                {isShared ? (
+                  <>
+                    <Globe2 className="w-3.5 h-3.5" />
+                    <span>Sealed for Both of Us 🌸</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Private to You Only 🔒</span>
+                  </>
+                )}
+              </button>
 
-                    <span className="text-[11px] text-amber-200/80 font-mono flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-amber-400" />
-                      {release.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-
-                  <h4 className="font-serif text-lg sm:text-xl font-bold text-white mb-1.5 group-hover:text-amber-200 transition-colors">
-                    {cap.title}
-                  </h4>
-
-                  <p className="text-xs sm:text-sm text-slate-200/90 font-light leading-relaxed line-clamp-3">
-                    {isUnlocked || isAuthor ? (
-                      cap.body
-                    ) : (
-                      <span className="italic text-slate-400 flex items-center gap-2 font-light">
-                        <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        This message is sealed until {release.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.
-                      </span>
-                    )}
-                  </p>
+              {errorMsg && (
+                <div style={{
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  background: 'rgba(244, 63, 94, 0.15)',
+                  border: '1px solid rgba(251, 113, 133, 0.4)',
+                  color: '#fecdd3',
+                  fontSize: '12px',
+                }}>
+                  {errorMsg}
                 </div>
+              )}
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs text-slate-400">
-                  <span className="font-serif italic text-sm text-amber-300">
-                    From: {isAuthor ? 'You 🌷' : (cap.authorName || partner.displayName) + ' ✨'}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    {(isUnlocked || isAuthor) && (
-                      <button
-                        onClick={() => setSelectedCapsule(cap)}
-                        className="text-xs text-amber-300 hover:text-amber-200 hover:underline font-semibold"
-                      >
-                        Unseal & Read
-                      </button>
-                    )}
-
-                    {isAuthor && (
-                      <button
-                        onClick={() => handleDelete(cap)}
-                        className="p-1.5 rounded-full hover:bg-rose-500/20 text-rose-300/80 hover:text-rose-200 transition-colors"
-                        title="Delete capsule"
-                        aria-label={`Delete ${cap.title}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(false)}
+                  style={{
+                    background: 'transparent',
+                    border: '0',
+                    color: 'var(--cap-muted)',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className={styles.createCapsuleBtn}>
+                  <Lock className="w-4 h-4" />
+                  <span>Seal with Golden Wax 🌟</span>
+                </button>
               </div>
-            );
-          })}
-
-          {/* Invitation Card */}
-          {capsules.length < 4 && (
-            <div
-              onClick={handleOpenCreate}
-              className="group p-5 sm:p-6 rounded-2xl border border-dashed border-amber-400/25 hover:border-amber-300/50 bg-gradient-to-br from-amber-500/[0.04] to-transparent hover:bg-amber-500/[0.08] flex flex-col justify-center items-center text-center space-y-3 cursor-pointer transition-all duration-300 min-h-[200px]"
-            >
-              <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-105 transition-transform shadow-inner">
-                <Hourglass className="w-5 h-5 text-amber-300" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-serif text-lg font-bold text-white group-hover:text-amber-200 transition-colors">
-                  Seal a Future Letter
-                </h4>
-                <p className="text-xs text-amber-200/70 max-w-xs mx-auto leading-relaxed font-light">
-                  Write a letter to unlock on a birthday, anniversary, or special future date...
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/[0.06] text-amber-200 border border-amber-300/20 group-hover:border-amber-300/40 group-hover:bg-amber-500/20 transition-all">
-                <Plus className="w-3.5 h-3.5" /> Seal Envelope ⏳
-              </span>
-            </div>
-          )}
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Reader Modal */}
+      {/* 5. Reader Modal */}
       {selectedCapsule && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in"
-          onClick={() => setSelectedCapsule(null)}
-        >
-          <div
-            className="max-w-md w-full glass-parchment-card border border-amber-400/40 rounded-2xl p-6 sm:p-7 space-y-4 shadow-2xl relative animate-scale-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedCapsule(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 text-slate-300 hover:text-white"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-amber-500/20 text-amber-200 border border-amber-400/30">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              <span>Time Capsule Unsealed</span>
+        <div className={styles.modalOverlay} onClick={() => setSelectedCapsule(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                <h3 className={styles.modalTitle}>{selectedCapsule.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCapsule(null)}
+                className={styles.modalCloseBtn}
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
-              {selectedCapsule.title}
-            </h3>
-
-            <div className="p-4 sm:p-5 rounded-xl bg-slate-950/50 border border-amber-400/20 max-h-72 overflow-y-auto shadow-inner">
-              <p className="font-serif italic text-base sm:text-lg text-amber-100/90 leading-relaxed whitespace-pre-line">
+            <div style={{
+              background: 'rgba(15, 6, 26, 0.7)',
+              border: '1px solid var(--cap-border)',
+              borderRadius: '16px',
+              padding: '18px 22px',
+              maxHeight: '280px',
+              overflowY: 'auto',
+            }}>
+              <p style={{
+                margin: 0,
+                fontFamily: 'Playfair Display, Georgia, serif',
+                fontStyle: 'italic',
+                fontSize: '1.05rem',
+                lineHeight: 1.6,
+                color: '#fff',
+                whiteSpace: 'pre-line',
+              }}>
                 “{selectedCapsule.body}”
               </p>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-3 border-t border-purple-400/15">
-              <span>From: {selectedCapsule.authorId === currentUser.id ? 'You' : selectedCapsule.authorName || partner.displayName}</span>
-              <span>Target: {new Date(selectedCapsule.releaseAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '12px',
+              fontFamily: 'ui-monospace, monospace',
+              color: 'var(--cap-muted)',
+            }}>
+              <span>
+                From: {selectedCapsule.authorId === currentUser.id ? 'You' : selectedCapsule.authorName || partner.displayName}
+              </span>
+              <span>
+                Unlock: {new Date(selectedCapsule.releaseAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
             </div>
           </div>
         </div>

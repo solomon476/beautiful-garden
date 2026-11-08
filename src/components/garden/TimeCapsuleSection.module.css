@@ -1,0 +1,566 @@
+/* ==========================================================================
+   PERFECT TIME — TIME CAPSULE MODULE (SCOPED STYLES)
+   Phase 4: CSS Isolation & Exact Visual Alignment with 9-Module Design
+   ========================================================================== */
+
+.capsuleSection {
+  --cap-bg: #150824;
+  --cap-surface: #240d3a;
+  --cap-surface-card: rgba(36, 13, 58, 0.8);
+  --cap-surface-hover: rgba(52, 18, 82, 0.9);
+
+  --cap-purple: #8d35bd;
+  --cap-lavender: #c69ae8;
+  --cap-pink: #f044b5;
+  --cap-pink-light: #ff8acb;
+  --cap-gold: #f59e0b;
+  --cap-gold-light: #fde68a;
+
+  --cap-text: #fff5ff;
+  --cap-muted: #cbb5dd;
+  --cap-muted-dark: #9e85b5;
+
+  --cap-border: rgba(218, 160, 255, 0.22);
+  --cap-border-hover: rgba(240, 68, 181, 0.45);
+  --cap-border-active: rgba(240, 68, 181, 0.9);
+
+  --cap-glass: rgba(30, 11, 48, 0.84);
+  --cap-radius-sm: 12px;
+  --cap-radius: 20px;
+  --cap-radius-lg: 26px;
+  --cap-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  width: 100%;
+  color: var(--cap-text);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  animation: capFadeIn 0.35s ease-out;
+}
+
+@keyframes capFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   1. HERO BANNER — Panoramic enchanted header with 3D hourglass artwork
+   ========================================================================== */
+
+.heroBanner {
+  position: relative;
+  isolation: isolate;
+  min-height: 190px;
+  padding: 30px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-radius: var(--cap-radius-lg);
+  border: 1px solid var(--cap-border);
+  overflow: hidden;
+  box-shadow: var(--cap-shadow);
+  background:
+    linear-gradient(115deg, rgba(20, 8, 34, 0.92) 0%, rgba(40, 14, 62, 0.78) 55%, rgba(18, 6, 30, 0.9) 100%),
+    url('/assets/garden/card_capsule.jpg') center / cover no-repeat;
+}
+
+.heroAmbientGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 40%, rgba(240, 68, 181, 0.22) 0%, transparent 55%),
+    radial-gradient(circle at 82% 50%, rgba(245, 158, 11, 0.25) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 620px;
+}
+
+.heroTagline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--cap-lavender);
+}
+
+.heroTagDot {
+  color: var(--cap-pink-light);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+}
+
+.heroTitleHeart {
+  font-family: sans-serif;
+  color: var(--cap-pink-light);
+  font-size: 0.85em;
+  filter: drop-shadow(0 0 10px rgba(240, 68, 181, 0.8));
+}
+
+.heroVerbs {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cap-muted);
+}
+
+.heroSubtitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  color: var(--cap-text);
+  opacity: 0.95;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero Right 3D Artwork Frame */
+.heroArtworkContainer {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.heroArtworkContainer:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(240, 68, 181, 0.3);
+}
+
+.heroArtworkImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   2. MAIN LOCKED SANCTUARY CARD — Exactly matching Row 3, Col 2
+   ========================================================================== */
+
+.mainPanel {
+  position: relative;
+  background: var(--cap-glass);
+  border: 1px solid var(--cap-border);
+  border-radius: var(--cap-radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--cap-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.lockedHeroCard {
+  position: relative;
+  background: rgba(32, 12, 54, 0.88);
+  border: 1px solid var(--cap-border);
+  border-radius: var(--cap-radius);
+  padding: 34px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.lockedHeroGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 68, 181, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lockIconBadge {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(240, 68, 181, 0.25) 0%, rgba(141, 53, 189, 0.35) 100%);
+  border: 1.5px solid var(--cap-border-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cap-pink-light);
+  box-shadow: 0 0 24px rgba(240, 68, 181, 0.35);
+}
+
+.lockedHeroText {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  color: #ffffff;
+  max-width: 500px;
+  line-height: 1.5;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.createCapsuleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 30px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(110deg, #ed32a8 0%, #a33ce1 100%);
+  color: #ffffff;
+  font-weight: 650;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 6px 22px rgba(225, 49, 170, 0.32);
+  transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.createCapsuleBtn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 28px rgba(225, 49, 170, 0.45);
+}
+
+/* ==========================================================================
+   3. CAPSULES LIST / GRID
+   ========================================================================== */
+
+.capsulesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.capsuleCard {
+  background: var(--cap-surface-card);
+  border: 1px solid var(--cap-border);
+  border-radius: var(--cap-radius);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  transition: all 0.2s ease;
+  min-height: 180px;
+  cursor: pointer;
+}
+
+.capsuleCard:hover {
+  background: var(--cap-surface-hover);
+  border-color: var(--cap-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.capsuleCardUnlocked {
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.capsuleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.statusPillSealed {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: var(--cap-gold-light);
+}
+
+.statusPillUnlocked {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #a7f3d0;
+}
+
+.datePill {
+  font-size: 11.5px;
+  font-family: ui-monospace, monospace;
+  color: var(--cap-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.capsuleTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.capsuleBodyPreview {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--cap-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.capsuleFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(218, 160, 255, 0.12);
+  padding-top: 10px;
+  font-size: 12px;
+}
+
+.capsuleAuthor {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  color: var(--cap-lavender);
+}
+
+.unsealBtn {
+  background: transparent;
+  border: 0;
+  color: var(--cap-pink-light);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.unsealBtn:hover {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   4. MODALS (CREATE & READER)
+   ========================================================================== */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 4, 18, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: capFadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(28, 11, 48, 0.96);
+  border: 1px solid var(--cap-border);
+  border-radius: var(--cap-radius-lg);
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--cap-border);
+  padding-bottom: 14px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: 0;
+  color: var(--cap-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cap-muted);
+}
+
+.formInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: rgba(18, 5, 31, 0.75);
+  border: 1px solid var(--cap-border);
+  color: var(--cap-text);
+  font-family: inherit;
+  font-size: 0.92rem;
+  outline: none;
+}
+
+.formInput:focus {
+  border-color: var(--cap-pink);
+  box-shadow: 0 0 0 3px rgba(240, 68, 181, 0.18);
+}
+
+.formTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(18, 5, 31, 0.75);
+  border: 1px solid var(--cap-border);
+  color: var(--cap-text);
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+}
+
+.formTextarea:focus {
+  border-color: var(--cap-pink);
+  box-shadow: 0 0 0 3px rgba(240, 68, 181, 0.18);
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--cap-border);
+  padding-top: 16px;
+}
+
+/* ==========================================================================
+   5. RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .heroBanner {
+    padding: 24px 20px;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .heroContent {
+    align-items: center;
+    text-align: center;
+  }
+
+  .heroTitle {
+    justify-content: center;
+  }
+
+  .heroArtworkContainer {
+    width: 110px;
+    height: 110px;
+  }
+
+  .mainPanel {
+    padding: 20px 16px;
+  }
+
+  .capsulesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .createCapsuleBtn {
+    width: 100%;
+  }
+}
