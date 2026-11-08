@@ -165,12 +165,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </div>
 
             {/* Profile Avatar & Account Settings Card */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-pink-400/30 space-y-2.5">
+            <div className="p-3.5 rounded-2xl bg-white/[0.05] border border-pink-400/30 space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <div
                     onClick={() => {
                       soundEngine.playSparkle();
+                      setIsMoreMenuOpen(false);
                       setIsChangePhotoOpen(true);
                     }}
                     className="relative rounded-full overflow-hidden border-2 border-pink-400/70 shadow-md shrink-0 cursor-pointer group"
@@ -187,10 +188,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <span className="font-serif text-sm font-bold text-white block truncate">
+                    <span className="font-serif text-sm font-bold text-white block truncate leading-tight">
                       {currentUser.displayName}
                     </span>
-                    <span className="text-[10px] text-pink-200/70 block truncate">
+                    <span className="text-[10px] text-pink-200/80 block truncate mt-0.5 leading-tight">
                       Your Garden Profile
                     </span>
                   </div>
@@ -200,6 +201,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   type="button"
                   onClick={() => {
                     soundEngine.playSparkle();
+                    setIsMoreMenuOpen(false);
                     setIsChangePhotoOpen(true);
                   }}
                   className="px-3 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-[11px] font-semibold flex items-center gap-1.5 shrink-0 active:scale-95 transition-all cursor-pointer shadow-sm"
@@ -215,9 +217,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   type="button"
                   onClick={() => {
                     soundEngine.playSparkle();
+                    setIsMoreMenuOpen(false);
                     setIsChangePasscodeOpen(true);
                   }}
-                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  className="flex-1 py-2 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
                 >
                   <KeyRound className="w-3.5 h-3.5 text-pink-300" />
                   <span>Passcode 🔑</span>
@@ -227,9 +230,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                   type="button"
                   onClick={() => {
                     soundEngine.playSparkle();
+                    setIsMoreMenuOpen(false);
                     setIsAuthModalOpen(true);
                   }}
-                  className="flex-1 py-1.5 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                  className="flex-1 py-2 px-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/10 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
                   <span>Switch Account</span>
@@ -242,29 +246,41 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               type="button"
               onClick={() => {
                 soundEngine.playSparkle();
+                setIsMoreMenuOpen(false);
                 setIsBinOpen(true);
               }}
-              className="w-full p-2.5 px-3.5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-purple-500/15 to-pink-500/15 border border-pink-400/30 hover:border-pink-300/50 text-left flex items-center justify-between transition-all cursor-pointer active:scale-98 group shadow-sm"
+              style={{
+                background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(168, 85, 247, 0.12) 50%, rgba(236, 72, 153, 0.1) 100%)',
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              }}
+              className="w-full p-3 px-3.5 rounded-2xl border border-pink-400/30 hover:border-pink-300/50 text-left flex items-center justify-between transition-all cursor-pointer active:scale-98 group shadow-sm"
             >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform shrink-0">
                   <Trash2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-serif font-bold text-xs text-white flex items-center gap-1.5">
+                  <div className="font-serif font-bold text-xs text-white flex items-center gap-2">
                     <span>Garden Recycle Bin</span>
-                    <span className="text-[9.5px] font-mono text-emerald-300 bg-emerald-500/20 px-1.5 py-0.5 rounded-full border border-emerald-400/30">
+                    <span
+                      style={{
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        color: '#6ee7b7',
+                        border: '1px solid rgba(52, 211, 153, 0.35)',
+                      }}
+                      className="text-[9.5px] font-mono px-2 py-0.5 rounded-full shrink-0"
+                    >
                       Private 🔒
                     </span>
                   </div>
-                  <div className="text-[10px] text-pink-200/70 font-sans mt-0.5">
+                  <div className="text-[10.5px] text-pink-200/70 font-sans mt-0.5 leading-tight">
                     {deletedCount > 0
                       ? `${deletedCount} deleted item${deletedCount > 1 ? 's' : ''} • Tap to view or restore`
                       : 'Restore or permanently delete photos'}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-pink-300">
+              <div className="flex items-center gap-1.5 text-xs text-pink-300 shrink-0">
                 {deletedCount > 0 && (
                   <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-mono text-[10px] font-bold flex items-center justify-center shadow-sm">
                     {deletedCount}

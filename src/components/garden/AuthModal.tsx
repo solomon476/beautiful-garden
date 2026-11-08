@@ -65,11 +65,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[4000] flex items-center justify-center p-3.5 sm:p-4 bg-black/80 backdrop-blur-xl animate-fade-in font-sans"
+      className="fixed inset-0 flex items-center justify-center p-3.5 sm:p-4 bg-black/85 backdrop-blur-xl animate-fade-in font-sans"
+      style={{ zIndex: 20000 }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-b from-[#1c0d38]/95 via-[#130728]/98 to-[#0a0318] border border-pink-400/35 p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.85),0_0_40px_rgba(236,72,153,0.2)] text-white space-y-6 overflow-hidden"
+        className="relative w-full max-w-md rounded-3xl sm:rounded-[2.5rem] border border-pink-400/35 p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(236,72,153,0.2)] text-white space-y-6 overflow-hidden"
+        style={{ backgroundColor: '#130728' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Subtle Decorative Ambient Glow */}

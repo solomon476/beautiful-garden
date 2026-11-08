@@ -71,15 +71,16 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 flex items-center justify-center p-3.5 bg-black/90 backdrop-blur-xl animate-fade-in"
       onClick={onClose}
-      style={{ zIndex: 10000 }}
+      style={{ zIndex: 20000 }}
     >
       <div
-        className="relative w-full max-w-lg rounded-3xl bg-[#150a2e]/95 border border-pink-400/40 shadow-2xl p-4 sm:p-6 text-white max-h-[88vh] flex flex-col"
+        className="relative w-full max-w-lg rounded-3xl border border-pink-400/40 shadow-2xl p-4 sm:p-6 text-white max-h-[88vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{
-          boxShadow: '0 20px 60px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.15)',
+          backgroundColor: '#130728',
+          boxShadow: '0 25px 70px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.15)',
         }}
       >
         {/* Header */}
