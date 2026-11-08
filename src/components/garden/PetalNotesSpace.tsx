@@ -11,6 +11,7 @@ import { petalNotesService, authService } from '../../services/gardenService';
 import type { PetalNoteEntry, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
+import styles from './PetalNotesSpace.module.css';
 
 const PALETTE = [
   { color: '#f472b6', bgGradient: 'from-pink-500/25 via-rose-500/15 to-transparent', emoji: '🌸', name: 'Cherry Blossom' },
@@ -99,67 +100,51 @@ export const PetalNotesSpace: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Panoramic Themed Hero Banner — Matching Mockup Format */}
-      <section
-        className="relative rounded-3xl overflow-hidden border border-rose-400/30 shadow-2xl p-6 sm:p-10 lg:p-12"
-        style={{
-          background: 'linear-gradient(135deg, rgba(38, 14, 30, 0.94) 0%, rgba(20, 8, 18, 0.98) 100%)',
-        }}
-      >
-        {/* Ambient Hero Background Art */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-screen pointer-events-none"
-          style={{ backgroundImage: `url('/assets/garden/card_petals.jpg')` }}
-        />
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%), radial-gradient(circle at 85% 50%, rgba(251, 113, 133, 0.25) 0%, transparent 60%)',
-          }}
-        />
+    <div className={styles.petalsSection}>
+      {/* 1. Panoramic Themed Hero Banner */}
+      <section className={styles.heroBanner}>
+        <div className={styles.heroAmbientBg} />
+        <div className={styles.heroRadialGlow} />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 sm:gap-6 w-full">
+        <div className={styles.heroContent}>
           {/* Left Decorative Illuminated Artwork */}
-          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-            <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-rose-300/40 shadow-xl shrink-0 group">
+          <div className={styles.heroLeft}>
+            <div className={styles.heroArtwork}>
               <img
                 src="/assets/garden/card_petals.jpg"
                 alt="Petal Notes"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-rose-950/70 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-rose-300 drop-shadow-md animate-pulse" />
+              <div className={styles.heroArtworkOverlay}>
+                <Sparkles className="w-7 h-7 sm:w-8 sm:h-8" />
               </div>
             </div>
 
             {/* Title & Romantic Subtitles */}
-            <div className="space-y-1 sm:space-y-1.5 min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[10px] font-mono uppercase tracking-widest">
+            <div className={styles.heroText}>
+              <div className={styles.heroTag}>
                 <span>〰️ The Petal Garden</span>
-                <span className="text-rose-300">✦</span>
+                <span>✦</span>
               </div>
 
-              <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className={styles.heroTitle}>
                 <span>Petal Notes</span>
-                <span className="text-pink-400 font-sans text-xl sm:text-3xl">♡</span>
+                <span className={styles.heroTitleHeart}>♡</span>
               </h2>
 
-              <p className="font-serif italic text-xs sm:text-base text-rose-200/90 max-w-xl leading-relaxed">
+              <p className={styles.heroSubtitle}>
                 Little whispers, compliments, and sweet feelings that unfurl like petals.
               </p>
 
-              <div className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase text-rose-300/70 pt-0.5">
+              <div className={styles.heroSubmeta}>
                 Whisper • Unfurl • Cherish • Bloom
               </div>
 
               {/* Direct Left Column Add Trigger Button */}
-              <div className="pt-2">
+              <div>
                 <button
                   type="button"
                   onClick={handleOpenCompose}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20"
+                  className={styles.heroTriggerBtn}
                 >
                   <Plus className="w-4 h-4 text-white" />
                   <span>Leave a Petal Note 🌸</span>
@@ -169,10 +154,11 @@ export const PetalNotesSpace: React.FC = () => {
           </div>
 
           {/* Right Action Button Inside Hero Banner (Desktop) */}
-          <div className="shrink-0 w-full sm:w-auto hidden md:flex justify-end">
+          <div className={styles.heroRightBtnWrapper}>
             <button
+              type="button"
               onClick={handleOpenCompose}
-              className="btn-glow-romantic text-xs sm:text-sm font-semibold tracking-wide py-2.5 sm:py-3 px-5 sm:px-6 shadow-xl w-full sm:w-auto justify-center"
+              className={styles.heroRightActionBtn}
             >
               <Plus className="w-4 h-4 text-white" />
               <span>Leave a Petal Note 🌸</span>
@@ -181,38 +167,48 @@ export const PetalNotesSpace: React.FC = () => {
         </div>
       </section>
 
-      {/* Composing Note — High-Contrast, Luminous & Un-shady */}
+      {/* Composing Note */}
       {isComposing && (
-        <div className="max-w-3xl mx-auto p-6 sm:p-9 rounded-[2rem] space-y-6 animate-fade-in relative overflow-hidden border-2 border-pink-400/50 shadow-2xl shadow-pink-500/10" style={{ backgroundColor: '#140826' }}>
-          <div className="flex items-center justify-between pb-3.5 border-b border-pink-400/25">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shadow-sm">
-                <Sparkles className="w-4 h-4 text-pink-300" />
-              </span>
+        <div className={styles.composePanel}>
+          <div className={styles.composeHeader}>
+            <div className={styles.composeHeaderLeft}>
+              <div className={styles.composeHeaderIcon}>
+                <Sparkles className="w-4 h-4" />
+              </div>
               <div>
-                <h4 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight">
+                <h4 className={styles.composeHeaderTitle}>
                   Craft a Flower Petal Note
                 </h4>
-                <p className="text-[11px] text-pink-200/80 font-mono uppercase tracking-wider">
+                <p className={styles.composeHeaderSubtitle}>
                   Delicate whispers, encouragement, and smiles
                 </p>
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setIsComposing(false)}
-              className="w-8 h-8 rounded-full bg-white/[0.08] hover:bg-white/[0.2] border border-white/20 text-slate-200 hover:text-white flex items-center justify-center transition-all"
+              className={styles.closeIconBtn}
               aria-label="Cancel"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <form onSubmit={handleSave} className="space-y-5 sm:space-y-6">
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <label className="text-xs font-mono font-semibold uppercase tracking-wider text-pink-200 mb-2 flex items-center gap-1.5">
-                <span>Choose Floral Essence</span>
+              <label style={{
+                fontSize: '11px',
+                fontFamily: 'ui-monospace, monospace',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: 'var(--pet-rose-light)',
+                display: 'block',
+                marginBottom: '8px',
+              }}>
+                Choose Floral Essence
               </label>
-              <div className="flex gap-2 flex-wrap pt-1">
+              <div className={styles.paletteRow}>
                 {PALETTE.map((p) => {
                   const isSelected = selectedTheme.name === p.name;
                   return (
@@ -220,13 +216,9 @@ export const PetalNotesSpace: React.FC = () => {
                       key={p.name}
                       type="button"
                       onClick={() => setSelectedTheme(p)}
-                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs transition-all border ${
-                        isSelected
-                          ? 'border-2 border-pink-300 bg-pink-500/35 text-white shadow-lg shadow-pink-500/30 ring-2 ring-pink-400/50 font-bold scale-105'
-                          : 'border-white/20 bg-white/[0.08] text-slate-100 hover:text-white hover:bg-white/[0.16] hover:border-pink-300/40 font-medium'
-                      }`}
+                      className={`${styles.paletteBtn} ${isSelected ? styles.paletteBtnSelected : ''}`}
                     >
-                      <span className="text-base">{p.emoji}</span>
+                      <span style={{ fontSize: '1.1rem' }}>{p.emoji}</span>
                       <span>{p.name}</span>
                     </button>
                   );
@@ -235,12 +227,27 @@ export const PetalNotesSpace: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-mono font-semibold uppercase tracking-wider text-pink-200 mb-0 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-pink-300" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{
+                  fontSize: '11px',
+                  fontFamily: 'ui-monospace, monospace',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--pet-rose-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>Petal Whisper (Up to 240 characters)</span>
                 </label>
-                <span className="text-xs text-pink-300/80 font-mono font-semibold">
+                <span style={{
+                  fontSize: '11px',
+                  fontFamily: 'ui-monospace, monospace',
+                  color: 'var(--pet-rose-light)',
+                  opacity: 0.8,
+                }}>
                   {body.length} / 240
                 </span>
               </div>
@@ -251,8 +258,7 @@ export const PetalNotesSpace: React.FC = () => {
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="A sweet compliment, gentle observation, or warm whisper for the day..."
-                className="w-full p-4 rounded-2xl border-2 border-pink-400/40 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/40 text-white placeholder:text-pink-200/50 font-body text-sm sm:text-base leading-relaxed outline-none shadow-inner transition-all"
-                style={{ backgroundColor: '#1e0d38' }}
+                className={styles.petalTextarea}
               />
             </div>
 
@@ -267,17 +273,33 @@ export const PetalNotesSpace: React.FC = () => {
               privateSubtitle="Saved secretly on your profile. Hidden from partner until you choose to bloom it 🔒"
             />
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-rose-400/25">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(244, 114, 182, 0.2)',
+            }}>
               <button
                 type="button"
                 onClick={() => setIsComposing(false)}
-                className="px-5 py-2.5 rounded-full text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.1] transition-colors border border-white/10"
+                style={{
+                  padding: '10px 22px',
+                  borderRadius: '9999px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: 'var(--pet-muted)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-white/20"
+                className={styles.heroTriggerBtn}
               >
                 <Sparkles className="w-4 h-4 text-white" />
                 <span>Bloom Petal Note 🌸</span>
@@ -293,24 +315,37 @@ export const PetalNotesSpace: React.FC = () => {
           Gathering flower blossoms...
         </div>
       ) : petals.length === 0 ? (
-        <div className="glass-midnight-card p-10 rounded-2xl text-center space-y-3.5 border border-rose-400/25">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-300 shadow-inner">
+        <div className={styles.invitationCard} style={{ maxWidth: '440px', margin: '40px auto' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '16px',
+            background: 'rgba(244, 114, 182, 0.16)',
+            border: '1px solid var(--pet-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--pet-rose)',
+          }}>
             <Sparkles className="w-5 h-5 animate-pulse" />
           </div>
-          <h4 className="font-serif text-xl text-white">No Added Petal Notes Yet</h4>
-          <p className="text-xs sm:text-sm text-purple-200/80 max-w-md mx-auto font-light leading-relaxed">
+          <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
+            No Added Petal Notes Yet
+          </h4>
+          <p style={{ fontSize: '0.85rem', color: 'var(--pet-muted)', margin: 0 }}>
             Leave a spontaneous sweet note, funny observation, or encouragement for {partner.displayName}.
           </p>
           <button
+            type="button"
             onClick={handleOpenCompose}
-            className="btn-glow-romantic text-xs mx-auto"
+            className={styles.heroTriggerBtn}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Leave First Note 🌸</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+        <div className={styles.petalsGrid}>
           {petals.map((petal) => {
             const isMine = petal.authorId === currentUser.id;
 
@@ -318,27 +353,28 @@ export const PetalNotesSpace: React.FC = () => {
               <div
                 key={petal.id}
                 onClick={() => handleViewPetal(petal)}
-                className="glass-midnight-card group p-5 sm:p-6 rounded-2xl hover:border-pink-400/40 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-lg relative overflow-hidden min-h-[200px]"
+                className={styles.petalCard}
               >
                 {/* Glow Aura */}
                 <div
-                  className="absolute -top-3 -right-3 w-24 h-24 rounded-full opacity-25 blur-xl pointer-events-none"
+                  className={styles.petalGlowAura}
                   style={{ backgroundColor: petal.color }}
                 />
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div
-                      className="w-11 h-11 rounded-xl border flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-transform"
-                      style={{ backgroundColor: `${petal.color}20`, borderColor: `${petal.color}40` }}
+                      className={styles.petalEmojiBadge}
+                      style={{
+                        backgroundColor: `${petal.color}25`,
+                        borderColor: `${petal.color}55`,
+                      }}
                     >
                       <span>{petal.emoji}</span>
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-mono border shadow-sm ${
-                        petal.isShared
-                          ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-200'
-                          : 'bg-amber-500/20 border-amber-400/40 text-amber-200'
+                      className={`${styles.privacyBadge} ${
+                        petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
                       }`}
                     >
                       {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
@@ -346,22 +382,23 @@ export const PetalNotesSpace: React.FC = () => {
                     </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-purple-100/90 font-light line-clamp-3 leading-relaxed">
+                  <p className={styles.petalBody}>
                     “{petal.body}”
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-purple-400/15 flex items-center justify-between text-xs">
-                  <span className="font-handwriting text-xl text-pink-300 font-medium truncate">
+                <div className={styles.petalFooter}>
+                  <span className={styles.petalAuthorSignature}>
                     From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
                   </span>
                   {isMine && (
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(petal);
                       }}
-                      className="p-1.5 rounded-full hover:bg-rose-500/20 text-purple-300/70 hover:text-rose-300 transition-colors"
+                      className={styles.deleteBtn}
                       title="Delete petal"
                       aria-label="Delete petal"
                     >
@@ -377,20 +414,30 @@ export const PetalNotesSpace: React.FC = () => {
           {petals.length < 4 && (
             <div
               onClick={handleOpenCompose}
-              className="group p-5 sm:p-6 rounded-2xl border border-dashed border-rose-400/25 hover:border-rose-300/50 bg-gradient-to-br from-rose-500/[0.04] to-transparent hover:bg-rose-500/[0.08] flex flex-col justify-center items-center text-center space-y-3 cursor-pointer transition-all duration-300 min-h-[200px]"
+              className={styles.invitationCard}
             >
-              <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-rose-300 group-hover:scale-105 transition-transform">
-                <Sparkles className="w-5 h-5 text-pink-300" />
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '16px',
+                background: 'rgba(244, 114, 182, 0.16)',
+                border: '1px solid var(--pet-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--pet-rose)',
+              }}>
+                <Sparkles className="w-5 h-5" />
               </div>
-              <div className="space-y-1">
-                <h4 className="font-serif text-lg font-bold text-white group-hover:text-pink-200 transition-colors">
+              <div>
+                <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
                   Plant a New Petal
                 </h4>
-                <p className="text-xs text-rose-200/70 max-w-xs mx-auto leading-relaxed font-light">
+                <p style={{ fontSize: '0.8rem', color: 'var(--pet-muted)', margin: '4px 0 0 0' }}>
                   Leave a spontaneous whisper, flower note, or sweet thought...
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/[0.06] text-rose-200 border border-rose-300/20 group-hover:border-rose-300/40 group-hover:bg-rose-500/20 transition-all">
+              <span className={styles.heroTriggerBtn} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
                 <Plus className="w-3.5 h-3.5" /> Plant Petal 🌸
               </span>
             </div>
@@ -401,34 +448,45 @@ export const PetalNotesSpace: React.FC = () => {
       {/* Read Petal Dialog */}
       {activePetal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in"
+          className={styles.modalBackdrop}
           onClick={() => setActivePetal(null)}
         >
           <div
-            className="max-w-sm w-full glass-midnight-card border border-pink-400/50 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-2xl relative animate-scale-up"
+            className={styles.readModalCard}
             onClick={(e) => e.stopPropagation()}
           >
             <button
+              type="button"
               onClick={() => setActivePetal(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full bg-white/10 text-slate-300 hover:text-white"
+              className={styles.closeIconBtn}
+              style={{ position: 'absolute', top: '16px', right: '16px' }}
             >
               <X className="w-4 h-4" />
             </button>
 
             <div
-              className="w-18 h-18 mx-auto rounded-3xl flex items-center justify-center text-4xl shadow-xl border border-white/25 animate-bounce"
-              style={{ backgroundColor: `${activePetal.color}30` }}
+              className={styles.readEmojiStage}
+              style={{ backgroundColor: `${activePetal.color}35` }}
             >
               <span>{activePetal.emoji}</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-black/30 border border-purple-400/20 shadow-inner">
-              <p className="font-handwriting text-2xl text-pink-100 leading-relaxed">
+            <div className={styles.readQuoteBox}>
+              <p className={styles.readQuoteText}>
                 “{activePetal.body}”
               </p>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-2 border-t border-purple-400/15">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              fontFamily: 'ui-monospace, monospace',
+              color: 'var(--pet-muted)',
+              paddingTop: '10px',
+              borderTop: '1px solid rgba(244, 114, 182, 0.2)',
+            }}>
               <span>From: {activePetal.authorId === currentUser.id ? 'You' : activePetal.authorName || partner.displayName}</span>
               <span>{new Date(activePetal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
             </div>

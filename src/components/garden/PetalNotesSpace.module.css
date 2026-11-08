@@ -1,0 +1,632 @@
+/* ==========================================================================
+   PERFECT TIME — PETAL NOTES MODULE DESIGN SYSTEM (CSS Module)
+   Whisper notes, flower petals, essences, and handwritten keepsake dialogs.
+   100% Scoped under .petalsSection to guarantee zero cross-module leakage.
+   ========================================================================== */
+
+.petalsSection {
+  /* Petals Design Tokens */
+  --pet-bg: #140826;
+  --pet-surface: #260e2e;
+  --pet-surface-light: #361440;
+  --pet-surface-card: rgba(26, 12, 38, 0.88);
+
+  --pet-rose: #f472b6;
+  --pet-rose-light: #fbcfe8;
+  --pet-rose-dark: #db2777;
+
+  --pet-text: #fff5fc;
+  --pet-muted: #dfc5db;
+  --pet-muted-dark: #9a789a;
+
+  --pet-border: rgba(244, 114, 182, 0.28);
+  --pet-border-glow: rgba(244, 114, 182, 0.55);
+
+  --pet-radius: 24px;
+  --pet-radius-sm: 16px;
+  --pet-radius-pill: 9999px;
+
+  --pet-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+
+  min-height: 100%;
+  color: var(--pet-text);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3.5rem;
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   1. Panoramic Themed Hero Banner (.heroBanner)
+   ========================================================================== */
+.heroBanner {
+  position: relative;
+  border-radius: var(--pet-radius);
+  overflow: hidden;
+  border: 1px solid var(--pet-border);
+  box-shadow: var(--pet-shadow);
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(38, 14, 30, 0.94) 0%, rgba(20, 8, 18, 0.98) 100%);
+  isolation: isolate;
+}
+
+.heroAmbientBg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/garden/card_petals.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.heroRadialGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(244, 114, 182, 0.25) 0%, transparent 60%),
+    radial-gradient(circle at 85% 50%, rgba(251, 113, 133, 0.25) 0%, transparent 60%);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.heroLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+.heroArtwork {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--pet-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.heroArtwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.heroArtwork:hover img {
+  transform: scale(1.1);
+}
+
+.heroArtworkOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(38, 14, 30, 0.8) 0%, transparent 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroArtworkOverlay svg {
+  color: var(--pet-rose-light);
+  filter: drop-shadow(0 2px 8px rgba(244, 114, 182, 0.6));
+  animation: pulseSparkle 2.5s infinite;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.heroTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--pet-radius-pill);
+  background: rgba(244, 114, 182, 0.18);
+  border: 1px solid var(--pet-border);
+  color: var(--pet-rose-light);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  width: fit-content;
+}
+
+.heroTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.15;
+}
+
+.heroTitleHeart {
+  color: var(--pet-rose);
+  font-family: sans-serif;
+  font-size: 0.85em;
+}
+
+.heroSubtitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+  color: var(--pet-muted);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+.heroSubmeta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pet-rose-light);
+  opacity: 0.75;
+}
+
+.heroTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--pet-radius-pill);
+  background: linear-gradient(135deg, #f43f5e 0%, #db2777 50%, #9333ea 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 18px rgba(244, 114, 182, 0.4);
+  cursor: pointer;
+  transition: all 200ms ease;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.heroTriggerBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(244, 114, 182, 0.6);
+  filter: brightness(1.08);
+}
+
+.heroRightBtnWrapper {
+  flex-shrink: 0;
+}
+
+.heroRightActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--pet-radius-pill);
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.92) 0%, rgba(168, 85, 247, 0.92) 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(244, 114, 182, 0.4);
+  cursor: pointer;
+  transition: all 220ms ease;
+  white-space: nowrap;
+}
+
+.heroRightActionBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(244, 114, 182, 0.6);
+  filter: brightness(1.08);
+}
+
+/* ==========================================================================
+   2. Compose Panel (.composePanel)
+   ========================================================================== */
+.composePanel {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  border-radius: 28px;
+  border: 2px solid rgba(244, 114, 182, 0.45);
+  background: #140826;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(244, 114, 182, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.composeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(244, 114, 182, 0.2);
+}
+
+.composeHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.composeHeaderIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--pet-radius-sm);
+  background: rgba(244, 114, 182, 0.2);
+  border: 1px solid var(--pet-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pet-rose);
+  flex-shrink: 0;
+}
+
+.composeHeaderTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.composeHeaderSubtitle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--pet-rose-light);
+  opacity: 0.8;
+  letter-spacing: 0.06em;
+  margin: 2px 0 0 0;
+}
+
+.closeIconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pet-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--pet-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.closeIconBtn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: var(--pet-rose);
+  color: #ffffff;
+}
+
+.paletteRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.paletteBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--pet-radius-pill);
+  font-size: 0.775rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.paletteBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: var(--pet-rose-light);
+}
+
+.paletteBtnSelected {
+  border: 2px solid var(--pet-rose-light) !important;
+  background: rgba(244, 114, 182, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(244, 114, 182, 0.4);
+  font-weight: 700;
+  transform: scale(1.05);
+}
+
+.petalTextarea {
+  width: 100%;
+  border-radius: var(--pet-radius-sm);
+  background: #1e0d38;
+  border: 2px solid rgba(244, 114, 182, 0.4);
+  padding: 16px 20px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  min-height: 110px;
+  transition: all 180ms ease;
+}
+
+.petalTextarea:focus {
+  border-color: var(--pet-rose);
+  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.25);
+}
+
+/* ==========================================================================
+   3. Petals Grid (.petalsGrid)
+   ========================================================================== */
+.petalsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.petalCard {
+  position: relative;
+  border-radius: var(--pet-radius);
+  padding: 22px 24px;
+  background: var(--pet-surface-card);
+  border: 1px solid var(--pet-border);
+  box-shadow: var(--pet-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 200px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.petalCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--pet-border-glow);
+  box-shadow: 0 18px 45px -8px rgba(244, 114, 182, 0.3);
+}
+
+.petalGlowAura {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--pet-radius-pill);
+  opacity: 0.25;
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.petalEmojiBadge {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--pet-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 1px solid;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: transform 200ms ease;
+}
+
+.petalCard:hover .petalEmojiBadge {
+  transform: scale(1.08);
+}
+
+.privacyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--pet-radius-pill);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  border: 1px solid;
+}
+
+.privacyBadgeShared {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #a7f3d0;
+}
+
+.privacyBadgePrivate {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+}
+
+.petalBody {
+  font-size: 0.875rem;
+  color: #fff0f9;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.petalFooter {
+  padding-top: 12px;
+  border-top: 1px solid rgba(244, 114, 182, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.petalAuthorSignature {
+  font-family: "Playfair Display", Georgia, cursive, serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--pet-rose-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deleteBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--pet-radius-pill);
+  background: transparent;
+  border: 0;
+  color: var(--pet-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.deleteBtn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fda4af;
+}
+
+/* Invitation Card */
+.invitationCard {
+  border-radius: var(--pet-radius);
+  border: 1px dashed rgba(244, 114, 182, 0.35);
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.05) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 12px;
+  cursor: pointer;
+  min-height: 200px;
+  transition: all 220ms ease;
+}
+
+.invitationCard:hover {
+  border-color: var(--pet-rose);
+  background: rgba(244, 114, 182, 0.09);
+  transform: translateY(-2px);
+}
+
+/* Read Petal Dialog */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 3, 14, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.readModalCard {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 28px;
+  padding: 28px;
+  background: linear-gradient(150deg, #20102e 0%, #100618 100%);
+  border: 1px solid var(--pet-border-glow);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(244, 114, 182, 0.2);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.readEmojiStage {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.readQuoteBox {
+  padding: 18px 20px;
+  border-radius: var(--pet-radius-sm);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(244, 114, 182, 0.2);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.readQuoteText {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  color: #fff0f9;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ==========================================================================
+   4. Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .petalsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .heroContent {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .heroRightBtnWrapper {
+    display: none;
+  }
+
+  .petalsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .composePanel {
+    padding: 22px 18px;
+  }
+}
+
