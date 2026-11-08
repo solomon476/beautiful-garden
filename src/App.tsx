@@ -81,7 +81,18 @@ export const App: React.FC = () => {
       {/* Our Garden Collaborative Suite Modal */}
       <OurGardenModal
         isOpen={isOurGardenOpen}
-        onClose={() => setIsOurGardenOpen(false)}
+        onClose={() => {
+          setIsOurGardenOpen(false);
+          if (typeof window !== 'undefined') {
+            try {
+              window.history.replaceState(null, '', window.location.pathname);
+            } catch {
+              // ignore
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+          setActiveSection('welcome');
+        }}
         initialTab={gardenInitialTab}
       />
 
@@ -132,7 +143,15 @@ export const App: React.FC = () => {
           isGardenOpen={false}
           onNavigate={(target) => {
             if (target === 'home') {
-              scrollToSection('welcome');
+              if (typeof window !== 'undefined') {
+                try {
+                  window.history.replaceState(null, '', window.location.pathname);
+                } catch {
+                  // ignore
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+              setActiveSection('welcome');
             } else if (target === 'garden') {
               setGardenInitialTab('garden');
               setIsOurGardenOpen(true);

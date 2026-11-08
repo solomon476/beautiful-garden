@@ -65,7 +65,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       id: 'home',
       label: 'Home',
       icon: Home,
-      isActive: !isGardenOpen || currentView === 'home',
+      isActive: !isGardenOpen && (currentView === 'home' || currentView === 'welcome' || !currentView),
     },
     {
       id: 'garden',
@@ -83,7 +83,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       id: 'archive',
       label: 'Archive',
       icon: BookOpen,
-      isActive: isGardenOpen && currentView === 'archive',
+      isActive: isGardenOpen ? currentView === 'archive' : currentView === 'memories',
     },
     {
       id: 'more',

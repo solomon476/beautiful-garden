@@ -174,13 +174,21 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
     window.history.pushState({ gardenModal: true, tab: 'garden' }, '');
   };
 
-  const handleClose = () => {
+  const handleGoHome = () => {
     soundEngine.playSparkle();
-    if (window.history.state?.gardenModal) {
-      window.history.back();
-    } else {
-      onClose();
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState(null, '', window.location.pathname);
+      } catch (e) {
+        console.warn('History pushState error', e);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    onClose();
+  };
+
+  const handleClose = () => {
+    handleGoHome();
   };
 
   const handleRunSecurityAudit = async () => {
@@ -220,13 +228,18 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           className="relative z-40 px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-2 sm:gap-4 bg-garden-header backdrop-blur-xl shrink-0"
           style={{ backgroundColor: 'rgba(13, 8, 30, 0.98)' }}
         >
-          {/* Logo & Brand Title — Calligraphy Script Matching Sanctuary Mockup */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20">
+          {/* Logo & Brand Title — Calligraphy Script Matching Sanctuary Mockup (Click to return Home) */}
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="flex items-center gap-2 sm:gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer group transition-transform active:scale-95"
+            title="Return to Home page"
+          >
+            <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
               <Flower2 className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl md:text-3xl text-white font-script tracking-wide flex items-center gap-1.5 truncate drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
+              <h2 className="text-xl sm:text-2xl md:text-3xl text-white font-script tracking-wide flex items-center gap-1.5 truncate drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)] group-hover:text-pink-100 transition-colors">
                 <span>Perfect Time</span>
                 <span className="text-pink-300 font-sans text-sm sm:text-base font-light">♡</span>
               </h2>
@@ -234,7 +247,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
                 Together... always
               </p>
             </div>
-          </div>
+          </button>
 
           {/* Right Header Area: Dual Pictures of Noella & Solomon + Notification Bell + Quick Add + Close */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
@@ -410,7 +423,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           isGardenOpen={true}
           onNavigate={(target) => {
             if (target === 'home') {
-              handleClose();
+              handleGoHome();
             } else if (target === 'garden') {
               handleSelectTab('garden');
             } else if (target === 'music') {
