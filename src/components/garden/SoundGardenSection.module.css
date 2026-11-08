@@ -186,10 +186,11 @@
 .sgSubNav {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 4px 2px;
+  padding: 6px 2px;
   width: 100%;
 }
 
@@ -200,16 +201,17 @@
 .sgSubNavPill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 6px;
+  padding: 8px 16px;
   border-radius: 999px;
   background: var(--sg-glass);
   border: 1px solid var(--sg-border);
   color: var(--sg-muted);
   font-size: 0.825rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 180ms ease;
   backdrop-filter: blur(12px);
 }
@@ -955,6 +957,27 @@
   transform: scale(1.1);
 }
 
+.shelfDeleteBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.shelfDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
 .shelfMenuBtn {
   width: 28px;
   height: 28px;
@@ -978,7 +1001,7 @@
    ========================================================================== */
 .stickyPlayerBar {
   position: sticky;
-  bottom: 8px;
+  bottom: 12px;
   z-index: 30;
   margin-top: 10px;
   padding: 12px 24px;
@@ -1180,13 +1203,592 @@
   }
 
   .stickyPlayerBar {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     padding: 10px 14px;
     gap: 10px;
+    border-radius: 18px;
+  }
+
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .volumeBarContainer {
     display: none;
   }
+}
+
+/* ==========================================================================
+   6. Track Cards Grid & Cards (.cardsGrid, .sgTrackCard)
+   ========================================================================== */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+  width: 100%;
+}
+
+.sgTrackCard {
+  background: rgba(30, 11, 52, 0.78);
+  border: 1px solid rgba(255, 180, 255, 0.24);
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.sgTrackCard:hover {
+  border-color: rgba(255, 120, 220, 0.5);
+  box-shadow: 0 12px 35px rgba(235, 73, 213, 0.2);
+  transform: translateY(-2px);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.cardCover {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  min-width: 68px;
+  min-height: 68px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255, 180, 255, 0.3);
+  cursor: pointer;
+  flex-shrink: 0;
+  background: #18092c;
+}
+
+.cardCoverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 240ms ease;
+}
+
+.cardCover:hover .cardCoverImg {
+  transform: scale(1.08);
+}
+
+.cardCoverOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 5, 30, 0.35);
+  transition: background 180ms ease;
+}
+
+.cardCover:hover .cardCoverOverlay {
+  background: rgba(16, 5, 30, 0.15);
+}
+
+.cardPlayBtn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardPlayCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(110deg, #ec4acb 0%, #a33ce1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(236, 74, 203, 0.45);
+  transition: transform 180ms ease;
+}
+
+.cardCover:hover .cardPlayCircle {
+  transform: scale(1.12);
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.cardTitle:hover {
+  color: #ff9ee6;
+}
+
+.cardBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cardArtist {
+  font-size: 0.825rem;
+  color: #d8b8ff;
+  margin: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardVoiceTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(236, 74, 203, 0.15);
+  border: 1px solid rgba(236, 74, 203, 0.35);
+  color: #ff9de5;
+  font-size: 10.5px;
+  font-weight: 600;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.cardMessage {
+  margin: 4px 0 0 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: #ffe6f7;
+  background: rgba(255, 105, 205, 0.08);
+  border-left: 2px solid #ff78d2;
+  padding: 6px 10px;
+  border-radius: 0 10px 10px 0;
+}
+
+.voiceMemoCardBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(236, 74, 203, 0.1);
+  border: 1px solid rgba(236, 74, 203, 0.25);
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 180, 255, 0.16);
+  flex-wrap: wrap;
+}
+
+.cardAuthor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.775rem;
+  color: #c9b4e8;
+}
+
+.authorAvatar {
+  font-size: 13px;
+}
+
+.authorName {
+  font-weight: 500;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reactionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 180, 255, 0.3);
+  color: #ffd6f4;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.reactionBtn:hover {
+  background: rgba(236, 74, 203, 0.25);
+  border-color: #ff9de5;
+  color: #ffffff;
+  transform: scale(1.03);
+}
+
+.spotifyPillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(29, 185, 84, 0.16);
+  border: 1px solid rgba(29, 185, 84, 0.45);
+  color: #4ade80 !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.spotifyPillBtn:hover {
+  background: rgba(29, 185, 84, 0.3);
+  color: #ffffff !important;
+  border-color: #22c55e;
+}
+
+.detailsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(141, 53, 189, 0.22);
+  border: 1px solid rgba(255, 180, 255, 0.3);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.detailsBtn:hover {
+  background: rgba(190, 72, 194, 0.35);
+  border-color: #ff9de5;
+}
+
+.cardDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.cardDeleteBtn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+  border-color: #ef4444;
+  transform: scale(1.03);
+}
+
+/* ==========================================================================
+   7. Modals: Add Track & Details (.modalOverlay, .modalCard)
+   ========================================================================== */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(10, 4, 18, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modalCard {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(160deg, rgba(38, 14, 66, 0.98) 0%, rgba(20, 8, 38, 0.99) 100%);
+  border: 1px solid rgba(255, 180, 255, 0.38);
+  border-radius: 26px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 105, 210, 0.25);
+  color: #ffffff;
+}
+
+.modalCardDetails {
+  max-width: 520px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 180, 255, 0.2);
+}
+
+.modalCloseBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 180, 255, 0.25);
+  color: #ffd6f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.modalCloseBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.sgSharingOptions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 180, 255, 0.2);
+  border-radius: 16px;
+}
+
+.sgOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: #e2d4f5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.sgOption[aria-pressed="true"] {
+  background: linear-gradient(110deg, rgba(237, 50, 168, 0.5) 0%, rgba(163, 60, 225, 0.6) 100%);
+  border: 1px solid rgba(255, 180, 255, 0.6);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(237, 50, 168, 0.35);
+}
+
+.btnSpotify {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #1db954;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 180ms ease;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+}
+
+.btnSpotify:hover {
+  background: #1ed760;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.45);
+}
+
+/* Spotify direct panel inside modal */
+.spotifyPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.spotifyPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.spotifyInputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spotifyInput {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 180, 255, 0.3);
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+}
+
+.spotifyInput:focus {
+  border-color: #1db954;
+  box-shadow: 0 0 12px rgba(29, 185, 84, 0.3);
+}
+
+.spotifyPasteBtn {
+  padding: 11px 18px;
+  border-radius: 14px;
+  background: #1db954;
+  color: #000000;
+  font-weight: 700;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 180ms ease;
+  flex-shrink: 0;
+}
+
+.spotifyPasteBtn:hover {
+  background: #1ed760;
+}
+
+.spotifyHint {
+  font-size: 12px;
+  color: #e2d4f5;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.spotifyDetectedCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(29, 185, 84, 0.12);
+  border: 1px solid rgba(29, 185, 84, 0.35);
+}
+
+.spotifyDetectedImg {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.spotifyDetectedDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.spotifyDetectedTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotifyDetectedArtist {
+  font-size: 12px;
+  color: #86efac;
+}
+
+.spotifyLinkedBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #22c55e;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.modalCard input[type="text"],
+.modalCard input[type="url"],
+.modalCard textarea,
+.modalCard select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 180, 255, 0.28);
+  color: #ffffff;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.modalCard input[type="text"]:focus,
+.modalCard input[type="url"]:focus,
+.modalCard textarea:focus,
+.modalCard select:focus {
+  border-color: #ff78d2;
+  box-shadow: 0 0 14px rgba(255, 120, 210, 0.3);
+}
+
+.modalCard label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffd6f4;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Reduced Motion */

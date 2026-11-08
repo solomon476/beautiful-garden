@@ -278,11 +278,16 @@ export const SoundGardenSection: React.FC = () => {
   };
 
   const handleDelete = async (song: SongEntry) => {
-    if (song.addedBy !== currentUser.id) return;
-    if (window.confirm(`Remove "${song.title}" from recommendations?`)) {
-      await soundGardenService.deleteSong(song.id);
-      setSelectedSong(null);
-      await loadSongs();
+    if (window.confirm(`Remove "${song.title}" from Sound Garden?`)) {
+      try {
+        await soundGardenService.deleteSong(song.id);
+        soundEngine.playChime(440, 0.8, 0.08);
+        setSelectedSong(null);
+        await loadSongs();
+      } catch (err: any) {
+        console.error('Delete error', err);
+        alert(err?.message || 'Could not delete song.');
+      }
     }
   };
 
@@ -489,7 +494,7 @@ export const SoundGardenSection: React.FC = () => {
           className={`${styles.sgSubNavPill} ${subTab === 'discover' ? styles.sgSubNavPillActive : ''}`}
         >
           <Search className="w-3.5 h-3.5" />
-          <span>Discover & Send</span>
+          <span>Discover</span>
         </button>
 
         <button
@@ -507,7 +512,7 @@ export const SoundGardenSection: React.FC = () => {
           className={`${styles.sgSubNavPill} ${subTab === 'received' ? styles.sgSubNavPillActive : ''}`}
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Received Songs ({songs.filter((s) => s.addedBy !== currentUser.id).length})</span>
+          <span>Received ({songs.filter((s) => s.addedBy !== currentUser.id).length})</span>
         </button>
 
         <button
@@ -903,9 +908,21 @@ export const SoundGardenSection: React.FC = () => {
 
                         <button
                           type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(song);
+                          }}
+                          className={styles.shelfDeleteBtn}
+                          title="Delete track"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => setSelectedSong(song)}
                           className={styles.shelfMenuBtn}
-                          title="Track options"
+                          title="Track details"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
@@ -976,7 +993,7 @@ export const SoundGardenSection: React.FC = () => {
                     {song.isVoiceNote && (
                       <span className={styles.cardVoiceTag}>
                         <Mic className="w-3 h-3 text-pink-300" />
-                        <span>Voice Note Attachment</span>
+                        <span>Voice Note</span>
                       </span>
                     )}
 
@@ -997,15 +1014,6 @@ export const SoundGardenSection: React.FC = () => {
                       isVoiceNote={song.isVoiceNote}
                     />
                   </div>
-                ) : song.isVoiceNote ? (
-                  <div className={styles.voiceMemoCardBanner}>
-                    <div className="w-7 h-7 rounded-full bg-pink-500/20 flex items-center justify-center shrink-0">
-                      <Mic className="w-3.5 h-3.5 text-pink-300" />
-                    </div>
-                    <span className="font-mono text-[11px] text-pink-200/90">
-                      Heartfelt voice note memo
-                    </span>
-                  </div>
                 ) : null}
 
                 <div className={styles.cardFooter}>
@@ -1018,10 +1026,12 @@ export const SoundGardenSection: React.FC = () => {
 
                   <div className={styles.cardActions}>
                     <button
+                      type="button"
                       onClick={() => handleToggleReaction(song)}
                       className={styles.reactionBtn}
                       title="Click to cycle reaction"
                     >
+                      <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
                       <span>{song.reaction || 'Love it! 💖'}</span>
                     </button>
 
@@ -1039,10 +1049,21 @@ export const SoundGardenSection: React.FC = () => {
                     )}
 
                     <button
+                      type="button"
                       onClick={() => setSelectedSong(song)}
                       className={styles.detailsBtn}
                     >
                       <span>Details</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(song)}
+                      className={styles.cardDeleteBtn}
+                      title="Delete track from Sound Garden"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
@@ -1052,8 +1073,8 @@ export const SoundGardenSection: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Sticky Bottom Player Bar */}
-      {currentNowPlaying && (
+      {/* 4. Sticky Bottom Player Bar (only visible when modals are closed) */}
+      {!isAdding && !selectedSong && currentNowPlaying && (
         <div className={styles.stickyPlayerBar}>
           <audio ref={audioStickyRef} onEnded={handleNextTrack} />
 
@@ -1274,19 +1295,14 @@ export const SoundGardenSection: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-purple-400/20 flex items-center justify-between gap-3">
-              {selectedSong.addedBy === currentUser.id ? (
-                <button
-                  onClick={() => handleDelete(selectedSong)}
-                  className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-medium transition-all flex items-center gap-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove Track</span>
-                </button>
-              ) : (
-                <span className="text-xs font-mono text-purple-300/60">
-                  Shared by {selectedSong.addedByName || partner.displayName}
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(selectedSong)}
+                className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Track</span>
+              </button>
 
               {selectedSong.musicUrl ? (
                 isSpotifyUrl(selectedSong.musicUrl) ? (

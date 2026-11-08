@@ -800,15 +800,10 @@ export const soundGardenService = {
   },
 
   async deleteSong(id: string): Promise<void> {
-    const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('songs').delete().eq('id', id).eq('added_by', user.id);
+      await supabase.from('songs').delete().eq('id', id);
     }
     const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
-    const target = all.find((s) => s.id === id);
-    if (target && target.addedBy !== user.id) {
-      throw new Error('Unauthorized: You can only remove songs you recommended.');
-    }
     saveLocal(STORAGE_KEYS.SONGS, all.filter((s) => s.id !== id));
   },
 };
