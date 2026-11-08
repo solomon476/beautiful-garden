@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Calendar, Plus, RotateCw, ZoomIn, LayoutGrid, Layers } from 'lucide-react';
+import {
+  Camera,
+  Calendar,
+  ZoomIn,
+  LayoutGrid,
+  Layers,
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  MoreVertical,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
 import { memoryArchiveService } from '../services/gardenService';
 import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
-
-const rotationClasses = [
-  'sm:rotate-[-1.5deg] hover:rotate-0',
-  'sm:rotate-[1.5deg] hover:rotate-0',
-  'sm:rotate-[-1deg] hover:rotate-0',
-  'sm:rotate-[1.5deg] hover:rotate-0',
-  'sm:rotate-[-1deg] hover:rotate-0',
-  'sm:rotate-[1deg] hover:rotate-0',
-];
 
 interface ScrapbookSectionProps {
   onOpenArchive?: () => void;
@@ -22,8 +24,9 @@ interface ScrapbookSectionProps {
 export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchive }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [archiveMemories, setArchiveMemories] = useState<MemoryItem[]>([]);
-  const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
-  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
+  const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   const loadArchiveMemories = async () => {
     try {
@@ -37,7 +40,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             title: displayTitle,
             date: m.dateTaken || 'Keepsake Date',
             caption: m.caption || m.description || 'Pinned in our garden album.',
-            tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned Memory',
+            tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned',
             accentColor: 'from-pink-500/20 to-purple-500/20',
             photoUrl: m.photoUrl,
             altText: displayTitle,
@@ -52,8 +55,12 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   useEffect(() => {
     loadArchiveMemories();
     const handleUpdate = () => loadArchiveMemories();
-    window.addEventListener('garden-memories-updated', handleUpdate);
-    return () => window.removeEventListener('garden-memories-updated', handleUpdate);
+    window.addEventListener('garden-memory-added', handleUpdate);
+    window.addEventListener('garden-memory-deleted', handleUpdate);
+    return () => {
+      window.removeEventListener('garden-memory-added', handleUpdate);
+      window.removeEventListener('garden-memory-deleted', handleUpdate);
+    };
   }, []);
 
   const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories];
@@ -63,68 +70,88 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
     setSelectedIndex(index);
   };
 
-  const handleCardTouch = (id: string) => {
+  const handleClose = () => {
     soundEngine.playSparkle();
-    setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+    setSelectedIndex(null);
   };
 
-  const handleClose = () => setSelectedIndex(null);
-
   const handleNext = () => {
-    if (selectedIndex === null) return;
-    setSelectedIndex((selectedIndex + 1) % allMemories.length);
+    if (selectedIndex !== null && selectedIndex < allMemories.length - 1) {
+      soundEngine.playSparkle();
+      setSelectedIndex(selectedIndex + 1);
+    }
   };
 
   const handlePrev = () => {
-    if (selectedIndex === null) return;
-    setSelectedIndex((selectedIndex - 1 + allMemories.length) % allMemories.length);
+    if (selectedIndex !== null && selectedIndex > 0) {
+      soundEngine.playSparkle();
+      setSelectedIndex(selectedIndex - 1);
+    }
+  };
+
+  const handleToggleLike = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundEngine.playSparkle();
+    const isLiked = !likedCards[id];
+    setLikedCards((prev) => ({ ...prev, [id]: isLiked }));
+    setLikeCounts((prev) => ({
+      ...prev,
+      [id]: (prev[id] || getInitialLikes(id)) + (isLiked ? 1 : -1),
+    }));
+  };
+
+  const getInitialLikes = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash << 5) - hash + id.charCodeAt(i);
+    return Math.abs(hash % 35) + 15;
+  };
+
+  const getInitialComments = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash << 3) - hash + id.charCodeAt(i);
+    return Math.abs(hash % 8) + 1;
   };
 
   return (
-    <section id="memories" className="relative py-16 px-4 z-10 max-w-5xl mx-auto">
-      {/* Section Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-400/20 text-pink-300 text-xs font-medium uppercase tracking-wider mb-3">
-          <Camera className="w-3.5 h-3.5" />
-          <span>Our Scrapbook</span>
+    <section id="memories" className="relative py-12 px-3 sm:px-4 z-10 max-w-5xl mx-auto">
+      {/* Top Banner Button — Matching Mockup Reference */}
+      <div
+        onClick={() => {
+          soundEngine.playSparkle();
+          if (onOpenArchive) onOpenArchive();
+        }}
+        className="add-memory-banner group"
+        title="Pin a Photo to Our Album"
+      >
+        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+          <Camera className="w-5 h-5 text-white" />
         </div>
-        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-          Moments Kept in Bloom
-        </h2>
-        <p className="text-slate-300 text-sm sm:text-base max-w-lg mx-auto font-light mb-5">
-          Snapshots of quiet laughter, gentle talks, and the days I never want to forget.
-        </p>
-
-        {onOpenArchive && (
-          <button
-            onClick={() => {
-              soundEngine.playSparkle();
-              onOpenArchive();
-            }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500/20 via-rose-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 border border-pink-400/40 text-pink-200 text-xs sm:text-sm font-medium shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-pink-300" />
-            <span>Pin a Photo to Our Album 📷</span>
-          </button>
-        )}
+        <div className="min-w-0 text-left">
+          <h3 className="font-bold text-base text-white tracking-wide leading-tight flex items-center gap-1.5">
+            <span>Pin a Photo to Our Album</span>
+            <span className="text-pink-300">📸</span>
+          </h3>
+          <p className="text-xs text-pink-200/90 font-serif italic mt-0.5 leading-tight">
+            Capture moments, share thoughts ♡
+          </p>
+        </div>
       </div>
 
-      {/* Mobile View Mode Switcher (World-Class Format) */}
-      <div className="flex items-center justify-center gap-2 mb-6 sm:hidden">
+      {/* View Switcher Tabs — Matching Mockup Reference */}
+      <div className="archive-tabs">
         <button
           type="button"
           onClick={() => {
             soundEngine.playSparkle();
             setViewMode('cards');
           }}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-            viewMode === 'cards'
-              ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/50 shadow-md scale-105'
-              : 'bg-white/5 text-slate-300 border border-white/10'
-          }`}
+          className={`archive-tab ${viewMode === 'cards' ? 'active' : ''}`}
         >
-          <Layers className="w-3.5 h-3.5 text-pink-300" />
-          <span>Keepsake Cards (Clear Notes)</span>
+          <Layers className={`w-4 h-4 ${viewMode === 'cards' ? 'text-white' : 'text-pink-300'}`} />
+          <div className="text-left">
+            <div className="leading-tight">Keepsake Cards</div>
+            <div className="text-[10px] opacity-80 font-normal leading-tight mt-0.5">Clear Notes</div>
+          </div>
         </button>
 
         <button
@@ -133,182 +160,257 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             soundEngine.playSparkle();
             setViewMode('grid');
           }}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-            viewMode === 'grid'
-              ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 text-white border border-pink-400/50 shadow-md scale-105'
-              : 'bg-white/5 text-slate-300 border border-white/10'
-          }`}
+          className={`archive-tab ${viewMode === 'grid' ? 'active' : ''}`}
         >
-          <LayoutGrid className="w-3.5 h-3.5 text-purple-300" />
-          <span>Mini Grid</span>
+          <LayoutGrid className={`w-4 h-4 ${viewMode === 'grid' ? 'text-white' : 'text-purple-300'}`} />
+          <div className="text-left">
+            <div className="leading-tight">Mini Grid</div>
+            <div className="text-[10px] opacity-80 font-normal leading-tight mt-0.5">Compact View ✨</div>
+          </div>
         </button>
       </div>
 
-      {/* Polaroid Grid */}
-      <div
-        className={`grid ${
-          viewMode === 'grid'
-            ? 'scrapbook-grid-mode grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3'
-            : 'scrapbook-cards-mode grid-cols-1 mx-auto sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8'
-        } px-2 sm:px-4`}
-      >
-        {allMemories.map((memory, index) => {
-          const rotationClass = rotationClasses[index % rotationClasses.length];
-          const isNoteOpen = Boolean(flippedCards[memory.id]);
+      {/* Grid of Memory Cards */}
+      {viewMode === 'grid' ? (
+        /* ================= Mini Grid Mode (Horizontal Split Glass Cards) ================= */
+        <div className="archive-memory-grid">
+          {allMemories.map((memory, index) => {
+            const isLiked = Boolean(likedCards[memory.id]);
+            const count = likeCounts[memory.id] || getInitialLikes(memory.id);
+            const comments = getInitialComments(memory.id);
+            const categoryTag = memory.tag?.replace(/Pinned by/i, '').trim() || 'Moment';
 
-          return (
-            <div
-              key={memory.id}
-              className={`polaroid-container ${rotationClass} transform transition-all duration-300`}
-            >
+            return (
               <div
-                className={`polaroid-card ${viewMode === 'grid' ? 'polaroid-card-compact' : ''}`}
-                onClick={() => handleCardTouch(memory.id)}
+                key={memory.id}
+                className="archive-card group"
+                onClick={() => handleOpenPhoto(index)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleCardTouch(memory.id);
-                  }
+                  if (e.key === 'Enter') handleOpenPhoto(index);
                 }}
-                aria-label={`Keepsake: ${memory.title}. Touch to view romantic note`}
               >
-                {/* Photo Frame with Ambient Blur & Balanced Proportions */}
-                <div className="polaroid-image-wrapper relative">
-                  {/* Ambient Glow Backdrop (Eliminates harsh black bars) */}
-                  <img
-                    src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
-                    alt=""
-                    aria-hidden="true"
-                    className="polaroid-ambient-blur"
-                    loading="lazy"
-                  />
-
-                  {/* Main Photo (Dims gracefully when note is open so you still see the photo!) */}
+                {/* Left Side: Photo with Heart & Count Badges */}
+                <div className="archive-card-image-wrap">
                   <img
                     src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
                     alt={memory.altText || memory.title}
-                    className={`polaroid-image ${isNoteOpen ? 'polaroid-image-dimmed' : ''}`}
-                    style={{ objectPosition: memory.objectPosition || 'center 18%' }}
+                    className="archive-card-image"
                     loading="lazy"
-                    decoding="async"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
                     }}
                   />
 
-                  {/* Tag Badge */}
-                  <div className="absolute top-2 left-2 px-1.5 sm:px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] sm:text-[10px] text-pink-200 border border-white/20 z-10">
-                    {memory.tag}
+                  {/* Favorite Heart Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleLike(memory.id, e)}
+                    className="archive-card-favourite"
+                    title={isLiked ? 'Loved!' : 'Love this memory'}
+                  >
+                    <Heart
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        isLiked ? 'fill-pink-400 text-pink-400 scale-110' : 'text-white'
+                      }`}
+                    />
+                  </button>
+
+                  {/* Photo count badge */}
+                  <div className="archive-card-photo-count">
+                    <ImageIcon className="w-2.5 h-2.5" />
+                    <span>1</span>
                   </div>
+                </div>
 
-                  {/* Touch To See Note Badge (Only visible when note is resting) */}
-                  {!isNoteOpen && (
-                    <div className="absolute bottom-2 right-2 z-10">
-                      <span className="polaroid-tap-hint">
-                        <span>✍️ Touch for note</span>
-                      </span>
-                    </div>
-                  )}
-
-                  {/* ================= Luminous Keepsake Note Glass Overlay ================= */}
-                  {/* Emerges over the dimmed photo so you read the note while seeing the picture! */}
-                  {isNoteOpen && (
-                    <div
-                      className="polaroid-note-overlay"
+                {/* Right Side: Details & Romantic Note */}
+                <div className="archive-card-details">
+                  {/* Category Pill & Menu */}
+                  <div className="archive-card-header-row">
+                    <span className="archive-card-category truncate max-w-[120px]">
+                      {categoryTag}
+                    </span>
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCardTouch(memory.id);
+                        handleOpenPhoto(index);
                       }}
+                      className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer"
+                      title="View memory"
                     >
-                      {/* Decorative Washi Tape */}
-                      <div className="polaroid-washi-tape" />
+                      <MoreHorizontal className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
-                      {/* Card Header */}
-                      <div className="pt-1.5 text-center px-1 shrink-0">
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-pink-300 font-bold drop-shadow">
-                          Keepsake Note 💌
-                        </span>
-                        <h3 className="font-serif font-bold text-white text-sm mt-0.5 line-clamp-1 drop-shadow-sm">
-                          {memory.title}
-                        </h3>
-                      </div>
+                  {/* Title in Caveat Cursive Font */}
+                  <h3 className="archive-card-title truncate" title={memory.title}>
+                    {memory.title}
+                  </h3>
 
-                      {/* Handwritten Romantic Note Box */}
-                      <div
-                        className="polaroid-note-overlay-card"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p className="polaroid-note-overlay-caption">
-                          “{memory.caption}” ♡
-                        </p>
-                      </div>
+                  {/* Note Caption Preview */}
+                  <p className="archive-card-note line-clamp-2" title={memory.caption}>
+                    {memory.caption} ♡
+                  </p>
 
-                      {/* Footer Meta & Action Buttons */}
-                      <div className="shrink-0 space-y-1.5 pt-1">
-                        <div className="flex items-center justify-between text-[10px] font-mono text-pink-200/90 px-1">
-                          <span>📅 {memory.date}</span>
-                          <span className="text-pink-300 font-medium">{memory.tag}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-1 border-t border-white/20">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenPhoto(index);
-                            }}
-                            className="flex-1 py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
-                          >
-                            <ZoomIn className="w-3.5 h-3.5" />
-                            <span>Fullscreen 🔍</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCardTouch(memory.id);
-                            }}
-                            className="py-1.5 px-3 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-white/25 backdrop-blur-sm"
-                            title="Brighten photo"
-                          >
-                            <RotateCw className="w-3.5 h-3.5" />
-                            <span>Brighten ☀️</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Caption & Date */}
-                <div className="polaroid-caption truncate px-1 mt-2 font-bold text-slate-900 tracking-tight">
-                  {memory.title}
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-500 uppercase tracking-widest mt-1 px-1">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-pink-500/70" />
+                  {/* Date */}
+                  <div className="archive-card-date">
+                    <Calendar className="w-3 h-3 text-pink-300/80" />
                     <span>{memory.date}</span>
+                  </div>
+
+                  {/* Footer Stats & Actions */}
+                  <div className="archive-card-footer">
+                    <div className="archive-card-stats">
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleLike(memory.id, e)}
+                        className="archive-card-stat-btn text-pink-300 hover:text-pink-200"
+                      >
+                        <Heart
+                          className={`w-3 h-3 ${isLiked ? 'fill-pink-400 text-pink-400' : ''}`}
+                        />
+                        <span>{count}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenPhoto(index);
+                        }}
+                        className="archive-card-stat-btn text-purple-300 hover:text-purple-200"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        <span>{comments}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPhoto(index);
+                      }}
+                      className="text-slate-300 hover:text-pink-300 p-0.5 cursor-pointer"
+                      title="Fullscreen"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Subtle corner blossom decoration */}
+                <span className="cherry-blossom-corner">🌸</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* ================= Keepsake Cards Mode (Full Notes Luxury View) ================= */
+        <div className="space-y-6 max-w-xl mx-auto">
+          {allMemories.map((memory, index) => {
+            const isLiked = Boolean(likedCards[memory.id]);
+            const count = likeCounts[memory.id] || getInitialLikes(memory.id);
+
+            return (
+              <div
+                key={memory.id}
+                className="keepsake-album-card group cursor-pointer"
+                onClick={() => handleOpenPhoto(index)}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-pink-300/20">
+                  <span className="keepsake-album-label flex items-center gap-1.5">
+                    <span>Keepsake Note 💌</span>
                   </span>
+                  <div className="flex items-center gap-1 text-[11px] font-mono text-pink-200/80">
+                    <Calendar className="w-3 h-3 text-pink-300" />
+                    <span>{memory.date}</span>
+                  </div>
+                </div>
+
+                {/* Photo Preview in Keepsake Card */}
+                <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden my-4 border border-pink-300/30 shadow-md">
+                  <img
+                    src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
+                    alt={memory.title}
+                    className="w-full h-full object-cover object-[center_18%] group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20">
+                    {memory.tag}
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenPhoto(index);
                     }}
-                    className="p-1 rounded-full text-slate-400 hover:text-pink-600 transition-colors"
-                    title="View fullscreen"
+                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors"
+                    title="Fullscreen"
                   >
-                    <ZoomIn className="w-3.5 h-3.5" />
+                    <ZoomIn className="w-4 h-4" />
                   </button>
                 </div>
+
+                {/* Title in Caveat */}
+                <h3 className="keepsake-album-title">
+                  {memory.title}
+                </h3>
+
+                {/* Complete Unclipped Romantic Note */}
+                <div className="p-4 rounded-2xl bg-white/[0.06] border border-pink-300/30 my-2">
+                  <p className="keepsake-album-text">
+                    “{memory.caption}” ♡
+                  </p>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-pink-300/20 text-xs">
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleLike(memory.id, e)}
+                    className="flex items-center gap-1.5 text-pink-300 hover:text-pink-200 font-semibold"
+                  >
+                    <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-400 text-pink-400' : ''}`} />
+                    <span>{count} Loves</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenPhoto(index);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                    <span>View Fullscreen</span>
+                  </button>
+                </div>
+
+                <span className="cherry-blossom-corner">🌸</span>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bottom Button — Matching Mockup */}
+      <div className="mt-8 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            if (onOpenArchive) onOpenArchive();
+          }}
+          className="add-new-moment-btn"
+        >
+          <Camera className="w-4 h-4 text-white" />
+          <span>Add a New Moment ✨</span>
+        </button>
       </div>
 
       {/* Lightbox Modal */}

@@ -909,91 +909,364 @@ button:hover { opacity: 0.95; }
 }
 
 /* ==========================================================================
-   Luminous Keepsake Note Glass Overlay (Dim & Glow without Flipping)
+   Archive & Keepsake Cards System (Matching User Format & Design Reference)
    ========================================================================== */
-.polaroid-container {
-  width: 100%;
-  transition: transform 0.3s ease;
+
+:root {
+  --archive-surface: rgba(65, 29, 105, 0.78);
+  --archive-surface-light: rgba(255, 255, 255, 0.09);
+  --archive-pink: #ff78d2;
+  --archive-pink-light: #ffc2ed;
+  --archive-purple: #a855f7;
+  --archive-lavender: #d7b5ff;
+  --archive-text: #fff8ff;
+  --archive-muted: #d6bfe8;
+  --archive-border: rgba(255, 177, 245, 0.35);
+  --archive-glow: rgba(255, 90, 220, 0.25);
+  --archive-radius: 22px;
 }
 
-@media (max-width: 639px) {
-  .scrapbook-cards-mode .polaroid-container {
-    max-width: 330px;
-    margin: 0 auto;
-    width: 100%;
+/* Archive main container */
+.archive-container {
+  width: min(1050px, 94%);
+  margin: 20px auto;
+  padding: 10px 0 100px;
+}
+
+/* Add memory top banner */
+.add-memory-banner {
+  width: 100%;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 1px solid rgba(255, 177, 245, 0.4);
+  border-radius: 24px;
+  background: linear-gradient(110deg, rgba(240, 76, 174, 0.45), rgba(168, 61, 241, 0.45), rgba(119, 59, 233, 0.45));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(236, 72, 213, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.add-memory-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px var(--archive-glow);
+}
+
+/* Archive view switcher tabs */
+.archive-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.archive-tab {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--archive-border);
+  background: var(--archive-surface-light);
+  color: var(--archive-text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.archive-tab.active {
+  background: linear-gradient(110deg, #f35ac4, #a344ec);
+  border-color: var(--archive-pink-light);
+  box-shadow: 0 0 22px var(--archive-glow);
+  transform: scale(1.02);
+}
+
+/* Mini Grid mode container (2 columns on tablet/desktop, 1 or 2 on phone) */
+.archive-memory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .archive-memory-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 }
 
-.polaroid-image-dimmed {
-  filter: brightness(0.24) contrast(1.15) saturate(1.25) blur(1.5px) !important;
-  transform: scale(0.98);
+/* Individual horizontal split memory card matching Mockup */
+.archive-card {
+  position: relative;
+  min-width: 0;
+  padding: 12px;
+  background: var(--archive-surface);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--archive-border);
+  border-radius: var(--archive-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 0 15px rgba(255, 100, 220, 0.08);
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: stretch;
+  cursor: pointer;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.polaroid-note-overlay {
+.archive-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--archive-pink);
+  box-shadow: 0 14px 35px var(--archive-glow);
+}
+
+/* Left side photo area */
+.archive-card-image-wrap {
+  position: relative;
+  width: 40%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #38204f;
+  flex-shrink: 0;
+}
+
+.archive-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 18%;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.archive-card:hover .archive-card-image {
+  transform: scale(1.05);
+}
+
+.archive-card-favourite {
   position: absolute;
-  inset: 0;
-  z-index: 25;
-  background: rgba(14, 6, 28, 0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(244, 114, 182, 0.45);
-  border-radius: 6px;
-  padding: 12px 14px 10px 14px;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(30, 10, 55, 0.65);
+  color: white;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.archive-card-favourite:hover {
+  transform: scale(1.15);
+  background: rgba(255, 120, 210, 0.45);
+}
+
+.archive-card-photo-count {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: rgba(15, 6, 28, 0.7);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 5;
+}
+
+/* Right side content area */
+.archive-card-details {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-sizing: border-box;
-  animation: noteOverlayFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(244, 114, 182, 0.12);
+  padding: 2px 2px 2px 0;
 }
 
-@keyframes noteOverlayFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.archive-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
 
-.polaroid-note-overlay-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(244, 114, 182, 0.35);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin: 6px 0;
+.archive-card-category {
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255, 120, 210, 0.25);
+  border: 1px solid rgba(255, 177, 245, 0.4);
+  color: #fff8ff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.archive-card-title {
+  margin: 4px 0 2px;
+  font-family: 'Caveat', cursive;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff5ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-card-note {
+  margin: 0 0 6px;
+  color: var(--archive-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.archive-card-date {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #e3c9f4;
+  font-size: 10.5px;
+  margin-bottom: 4px;
+}
+
+.archive-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--archive-border);
+  color: #e3c9f4;
+  font-size: 11px;
+}
+
+.archive-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.archive-card-stat-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease;
+}
+
+.archive-card-stat-btn:active {
+  transform: scale(1.15);
+}
+
+/* Keepsake note cards (Clear Notes Mode) */
+.keepsake-album-card {
+  min-height: 240px;
+  padding: 20px 18px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  flex: 1 1 auto;
-  min-height: 0;
-  text-align: center;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(244, 114, 182, 0.5) transparent;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 160, 225, 0.55);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(45, 18, 62, 0.96), rgba(91, 36, 100, 0.85));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 25px rgba(255, 130, 220, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
 }
 
-.polaroid-note-overlay-caption {
-  font-family: "Playfair Display", Georgia, serif;
-  font-style: italic;
+.keepsake-album-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px var(--archive-glow);
+}
+
+.keepsake-album-label {
+  color: var(--archive-pink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.keepsake-album-title {
+  font-family: 'Caveat', cursive;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff8ff;
+  margin: 6px 0 10px;
+}
+
+.keepsake-album-text {
+  color: #f2d7f0;
   font-size: 14.5px;
-  font-weight: 600;
-  line-height: 1.55;
-  color: #ffffff;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  font-style: italic;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
-@media (max-width: 639px) {
-  .polaroid-note-overlay-caption {
-    font-size: 14px;
-    line-height: 1.5;
-  }
+/* Floral Cherry Blossom Accent */
+.cherry-blossom-corner {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+/* Bottom Add New Moment Button */
+.add-new-moment-btn {
+  width: 100%;
+  max-width: 420px;
+  margin: 25px auto 10px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 24px;
+  background: linear-gradient(110deg, #f04cae, #a83df1, #773be9);
+  color: white;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(236, 72, 213, 0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.add-new-moment-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px var(--archive-glow);
 }
 
 .polaroid-flipper {
