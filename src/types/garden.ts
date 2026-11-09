@@ -69,6 +69,7 @@ export interface MemoryEntry {
   voiceNoteUrl?: string;
   audioFileName?: string;
   dateTaken?: string;
+  category?: string;
   isShared: boolean;
   createdAt: string;
 }
