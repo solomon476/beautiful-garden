@@ -27,6 +27,7 @@ import { LittleQuestionsSection } from './LittleQuestionsSection';
 import { TimeCapsuleSection } from './TimeCapsuleSection';
 import { MoodGardenSection } from './MoodGardenSection';
 import { WorldAroundUsSection } from './WorldAroundUsSection';
+import { MoreGardenSection } from './MoreGardenSection';
 import { authService } from '../../services/gardenService';
 import type { UserProfile } from '../../types/garden';
 import { runPrivacyAndSecurityAudit, type PrivacyTestResult } from '../../utils/privacyTests';
@@ -54,7 +55,8 @@ type TabKey =
   | 'capsule'
   | 'moods'
   | 'world'
-  | 'security';
+  | 'security'
+  | 'more';
 
 const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'garden', label: 'Our Garden', icon: Flower2, color: 'from-pink-500 to-rose-400' },
@@ -68,6 +70,7 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'capsule', label: 'Time Capsule', icon: Hourglass, color: 'from-amber-300 to-yellow-500' },
   { id: 'moods', label: 'Mood Garden', icon: Heart, color: 'from-fuchsia-400 to-pink-400' },
   { id: 'world', label: 'The World Around Us', icon: Globe, color: 'from-blue-400 to-teal-400' },
+  { id: 'more', label: 'More Spaces', icon: Sparkles, color: 'from-pink-500 to-purple-500' },
   { id: 'security', label: 'Privacy Test', icon: ShieldCheck, color: 'from-emerald-400 to-teal-400' },
 ];
 
@@ -341,6 +344,12 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           {activeTab === 'capsule' && <TimeCapsuleSection />}
           {activeTab === 'moods' && <MoodGardenSection />}
           {activeTab === 'world' && <WorldAroundUsSection />}
+          {activeTab === 'more' && (
+            <MoreGardenSection
+              currentUser={currentUser}
+              onSelectTab={(tab) => handleSelectTab(tab)}
+            />
+          )}
 
           {/* Privacy & Security Audit Tab */}
           {activeTab === 'security' && (
@@ -421,6 +430,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
               handleSelectTab('sound');
             } else if (target === 'archive') {
               handleSelectTab('archive');
+            } else if (target === 'more') {
+              handleSelectTab('more');
             } else {
               handleSelectTab(target as TabKey);
             }

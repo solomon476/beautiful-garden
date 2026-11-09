@@ -160,6 +160,9 @@ export const App: React.FC = () => {
               setIsOurGardenOpen(true);
             } else if (target === 'archive') {
               scrollToSection('memories');
+            } else if (target === 'more') {
+              setGardenInitialTab('more');
+              setIsOurGardenOpen(true);
             } else {
               setGardenInitialTab(target);
               setIsOurGardenOpen(true);
