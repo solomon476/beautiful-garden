@@ -914,6 +914,7 @@
 }
 
 .lightboxImageStage {
+  position: relative;
   border-radius: var(--arc-radius-sm);
   overflow: hidden;
   max-height: 60vh;
@@ -922,10 +923,23 @@
   align-items: center;
   justify-content: center;
   padding: 6px;
-  position: relative;
 }
 
-.lightboxImageStage img {
+.lightboxImageStage .cardThumbAmbient {
+  position: absolute !important;
+  inset: -20% !important;
+  width: 140% !important;
+  height: 140% !important;
+  max-height: none !important;
+  max-width: none !important;
+  object-fit: cover !important;
+  filter: blur(28px) brightness(0.6) saturate(1.4) !important;
+  opacity: 0.75 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.lightboxMainImage {
   max-height: 58vh;
   max-width: 100%;
   width: auto;
@@ -933,6 +947,7 @@
   border-radius: 10px;
   position: relative;
   z-index: 2;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 
 .lightboxCaption {

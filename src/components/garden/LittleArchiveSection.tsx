@@ -19,8 +19,9 @@ import {
   Image as ImageIcon,
   Calendar,
 } from 'lucide-react';
-import { memoryArchiveService, authService } from '../../services/gardenService';
+import { memoryArchiveService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
+import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
 import { compressImage } from '../../utils/imageCompressor';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
@@ -60,9 +61,35 @@ export const formatMemoryDisplayTitle = (
 };
 
 export const LittleArchiveSection: React.FC = () => {
-  const [memories, setMemories] = useState<MemoryEntry[]>(() =>
-    memoryArchiveService.getCachedMemories()
-  );
+  const [memories, setMemories] = useState<MemoryEntry[]>(() => {
+    const cached = memoryArchiveService.getCachedMemories();
+    const seenIds = new Set<string>();
+    const combined: MemoryEntry[] = [];
+    for (const m of cached) {
+      if (!seenIds.has(m.id)) {
+        seenIds.add(m.id);
+        combined.push(m);
+      }
+    }
+    for (const gm of giftContent.memories) {
+      if (!seenIds.has(gm.id)) {
+        seenIds.add(gm.id);
+        combined.push({
+          id: gm.id,
+          contributorId: DEFAULT_PROFILES.solomon.id,
+          contributorName: DEFAULT_PROFILES.solomon.displayName,
+          title: gm.title,
+          caption: gm.caption,
+          description: gm.caption,
+          photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
+          dateTaken: gm.date,
+          isShared: true,
+          createdAt: '2026-11-01T12:00:00.000Z',
+        });
+      }
+    }
+    return combined;
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
@@ -118,7 +145,32 @@ export const LittleArchiveSection: React.FC = () => {
     try {
       if (memories.length === 0) setLoading(true);
       const list = await memoryArchiveService.getMemories();
-      setMemories(list);
+      const seenIds = new Set<string>();
+      const combined: MemoryEntry[] = [];
+      for (const m of list) {
+        if (!seenIds.has(m.id)) {
+          seenIds.add(m.id);
+          combined.push(m);
+        }
+      }
+      for (const gm of giftContent.memories) {
+        if (!seenIds.has(gm.id)) {
+          seenIds.add(gm.id);
+          combined.push({
+            id: gm.id,
+            contributorId: DEFAULT_PROFILES.solomon.id,
+            contributorName: DEFAULT_PROFILES.solomon.displayName,
+            title: gm.title,
+            caption: gm.caption,
+            description: gm.caption,
+            photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
+            dateTaken: gm.date,
+            isShared: true,
+            createdAt: '2026-11-01T12:00:00.000Z',
+          });
+        }
+      }
+      setMemories(combined);
     } catch (err) {
       console.error(err);
     } finally {
@@ -739,6 +791,7 @@ export const LittleArchiveSection: React.FC = () => {
               <img
                 src={lightboxMemory.photoUrl}
                 alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
+                className={styles.lightboxMainImage}
               />
             </div>
 
