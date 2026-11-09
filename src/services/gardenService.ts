@@ -87,82 +87,15 @@ export const DEFAULT_INITIAL_SHELF: ShelfEntry[] = [
 
 export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [
   {
-    id: 'mem-2',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'The Hand-Hold Moment',
-    caption: "Not gonna lie, holding your hand was pretty sweet. Proof that when we're together, the chemistry is completely effortless.",
-    description: "Proof that when we're together, the chemistry is completely effortless.",
-    photoUrl: '/assets/memories/photo-holding-hands.jpg',
-    dateTaken: 'Caught in 4K',
-    category: 'The Vibe',
-    isShared: true,
-    createdAt: '2026-11-01T10:00:00.000Z',
-  },
-  {
-    id: 'mem-3',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'Zero-Filter Laughter',
-    caption: 'That moment an inside joke took over and we completely lost our composure. Your laugh is dangerously contagious.',
-    description: 'Your laugh is dangerously contagious.',
-    photoUrl: '/assets/memories/photo-goofy-laugh.jpg',
-    dateTaken: 'Cheeks Still Hurting',
-    category: 'Pure Chaos',
-    isShared: true,
-    createdAt: '2026-11-01T11:00:00.000Z',
-  },
-  {
-    id: 'mem-4',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'Evening Moves',
-    caption: 'Chilling outside our spot under the cool evening sky. Good food and late talks with you always hit different.',
-    description: 'Good food and late talks with you always hit different.',
-    photoUrl: '/assets/memories/photo-twilight-date.jpg',
-    dateTaken: 'Post-Class Dinner',
-    category: 'Night Vibes',
-    isShared: true,
-    createdAt: '2026-11-01T12:00:00.000Z',
-  },
-  {
-    id: 'mem-5',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'Okay, Miss Photogenic',
-    caption: "Had to include this one because you looked genuinely gorgeous here. Don't let it inflate your ego too much though.",
-    description: 'Had to include this one because you looked genuinely gorgeous here.',
-    photoUrl: '/assets/memories/photo-sun-portrait.jpg',
-    dateTaken: 'Golden Hour Glow',
-    category: 'Stunning',
-    isShared: true,
-    createdAt: '2026-11-01T13:00:00.000Z',
-  },
-  {
-    id: 'mem-6',
-    contributorId: DEFAULT_PROFILES.noella.id,
-    contributorName: DEFAULT_PROFILES.noella.displayName,
-    title: 'Signature Noella Energy',
-    caption: "Double peace signs, wild smile, and 100% unapologetic energy. You're easily one of my favorite people to be around.",
-    description: "You're easily one of my favorite people to be around.",
-    photoUrl: '/assets/memories/photo-balcony-peace.jpg',
-    dateTaken: 'Balcony Sunshine',
-    category: 'Iconic',
-    isShared: true,
-    createdAt: '2026-11-01T14:00:00.000Z',
-  },
-  {
     id: 'seed-mem-1',
     contributorId: DEFAULT_PROFILES.solomon.id,
     contributorName: DEFAULT_PROFILES.solomon.displayName,
     title: 'First Walk in the Garden',
     caption: 'The moment everything clicked and time stood still.',
-    description: 'The moment everything clicked and time stood still.',
     photoUrl: '/assets/dreamy_night_garden.jpg',
-    dateTaken: 'Nov 8, 2026',
-    category: 'Pinned',
+    dateTaken: 'Nov 2026',
     isShared: true,
-    createdAt: '2026-11-01T15:00:00.000Z',
+    createdAt: '2026-11-01T16:00:00.000Z',
   },
 ];
 
@@ -1007,12 +940,7 @@ export const memoryArchiveService = {
   getCachedMemories(): MemoryEntry[] {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
-    const localStored = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    const existingIds = new Set(localStored.map((m) => m.id));
-    const missingDefaults = DEFAULT_INITIAL_MEMORIES.filter(
-      (m) => !existingIds.has(m.id) && !deletedIds.has(m.id)
-    );
-    const localAll = [...missingDefaults, ...localStored];
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     const isAuthed = authService.isAuthenticated();
     return localAll
       .filter((m) => !deletedIds.has(m.id))
@@ -1024,15 +952,7 @@ export const memoryArchiveService = {
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
-    const localStored = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    const existingIds = new Set(localStored.map((m) => m.id));
-    const missingDefaults = DEFAULT_INITIAL_MEMORIES.filter(
-      (m) => !existingIds.has(m.id) && !deletedIds.has(m.id)
-    );
-    const localAll = [...missingDefaults, ...localStored];
-    if (missingDefaults.length > 0) {
-      saveLocal(STORAGE_KEYS.MEMORIES, localAll);
-    }
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     const isAuthed = authService.isAuthenticated();
     const localVisible = localAll
       .filter((m) => !deletedIds.has(m.id))
@@ -1066,7 +986,7 @@ export const memoryArchiveService = {
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
-        // Merge: add any local-only entries (failed cloud upload or default initial memories)
+        // Merge: add any local-only entries (failed cloud upload) to the top
         const cloudIds = new Set(visibleCloudEntries.map((e) => e.id));
         const localOnlyEntries = localVisible.filter((m) => !cloudIds.has(m.id));
         return [...localOnlyEntries, ...visibleCloudEntries];
@@ -1154,7 +1074,7 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     // 1. Locate the item being deleted from local storage, defaults or memory store
     const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    const target = localActive.find((m) => m.id === id) || DEFAULT_INITIAL_MEMORIES.find((m) => m.id === id);
+    const target = localActive.find((m) => m.id === id);
 
     // 2. Add ID to DELETED_MEMORY_IDS so it immediately disappears everywhere
     const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);

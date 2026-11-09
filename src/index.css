@@ -989,7 +989,7 @@ button:hover { opacity: 0.95; }
   transform: scale(1.01);
 }
 
-/* Mini Grid mode container (2 columns matching reference mockup) */
+/* Mini Grid mode container (2 columns on tablet/desktop, 1 or 2 on phone) */
 .archive-memory-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -998,91 +998,8 @@ button:hover { opacity: 0.95; }
 
 @media (max-width: 640px) {
   .archive-memory-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .archive-card {
-    padding: 6px 8px;
-    gap: 6px;
-    border-radius: 14px;
-  }
-
-  .archive-card-image-wrap {
-    width: 36%;
-    border-radius: 9px;
-  }
-
-  .archive-card-favourite {
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
-  }
-
-  .archive-card-favourite svg {
-    width: 10px;
-    height: 10px;
-  }
-
-  .archive-card-photo-count {
-    bottom: 4px;
-    left: 4px;
-    padding: 1px 3.5px;
-    font-size: 7.5px;
-    gap: 2px;
-  }
-
-  .archive-card-category {
-    padding: 1px 5px;
-    font-size: 8px;
-    border-radius: 8px;
-  }
-
-  .archive-card-title {
-    font-size: 14px;
-    margin: 1px 0;
-    line-height: 1.15;
-  }
-
-  .archive-card-note {
-    font-size: 8.5px;
-    line-height: 1.25;
-    margin-bottom: 2px;
-  }
-
-  .archive-card-date {
-    font-size: 8px;
-    gap: 2px;
-    margin-bottom: 2px;
-  }
-
-  .archive-card-date svg {
-    width: 8px;
-    height: 8px;
-  }
-
-  .archive-card-footer {
-    padding-top: 3px;
-    font-size: 8.5px;
-  }
-
-  .archive-card-stat-btn {
-    font-size: 8.5px;
-    gap: 2px;
-  }
-
-  .archive-card-stat-btn svg {
-    width: 9px;
-    height: 9px;
-  }
-
-  .cherry-blossom-corner {
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-    bottom: -2px;
-    left: -2px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 

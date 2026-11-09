@@ -32,7 +32,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
     try {
       const items = await memoryArchiveService.getMemories();
       const mapped: MemoryItem[] = items
-        .filter((m) => Boolean(m.isShared))
+        .filter((m) => !m.id.startsWith('seed-') && Boolean(m.isShared))
         .map((m) => {
           const displayTitle = formatMemoryDisplayTitle(m.title, m.caption, m.dateTaken);
           return {
@@ -40,7 +40,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             title: displayTitle,
             date: m.dateTaken || 'Keepsake Date',
             caption: m.caption || m.description || 'Pinned in our garden album.',
-            tag: (m as any).category || (m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned'),
+            tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned',
             accentColor: 'from-pink-500/20 to-purple-500/20',
             photoUrl: m.photoUrl,
             altText: displayTitle,
@@ -66,22 +66,9 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   }, []);
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
-  // Synchronize memory items with memoryArchiveService so Home and Sanctuary Archive are 100% identical
-  const memoryMap = new Map<string, MemoryItem>();
-  if (archiveMemories.length > 0) {
-    archiveMemories.forEach((m) => {
-      if (!deletedIds.has(m.id)) {
-        memoryMap.set(m.id, m);
-      }
-    });
-  } else {
-    giftContent.memories.forEach((m) => {
-      if (!deletedIds.has(m.id)) {
-        memoryMap.set(m.id, m);
-      }
-    });
-  }
-  const allMemories: MemoryItem[] = Array.from(memoryMap.values());
+  const allMemories: MemoryItem[] = [...giftContent.memories, ...archiveMemories].filter(
+    (m) => !deletedIds.has(m.id)
+  );
 
   const handleOpenPhoto = (index: number) => {
     soundEngine.playChime(523.25, 1.2, 0.08);
