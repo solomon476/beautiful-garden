@@ -13,10 +13,12 @@ interface ChangeProfilePhotoModalProps {
 
 const PRESET_AVATARS = [
   { id: 'solomon', label: 'Solomon', url: '/assets/memories/photo-solomon-avatar.jpg' },
-  { id: 'noella', label: 'Noella', url: '/assets/memories/photo-sun-portrait.jpg' },
-  { id: 'rose', label: 'Purple Rose', url: '/assets/memories/photo-roses.jpg' },
-  { id: 'bench', label: 'Garden Bench', url: '/assets/garden/hero_bench.jpg' },
-  { id: 'archive', label: 'Floral Archive', url: '/assets/garden/card_archive.jpg' },
+  { id: 'noella-sun', label: 'Noella (Sun)', url: '/assets/memories/photo-sun-portrait.jpg' },
+  { id: 'noella-balcony', label: 'Noella (Balcony)', url: '/assets/memories/photo-balcony-peace.jpg' },
+  { id: 'noella-laugh', label: 'Noella (Laugh)', url: '/assets/memories/photo-goofy-laugh.jpg' },
+  { id: 'hands', label: 'Holding Hands', url: '/assets/memories/photo-holding-hands.jpg' },
+  { id: 'twilight', label: 'Twilight Date', url: '/assets/memories/photo-twilight-date.jpg' },
+  { id: 'rose', label: 'Garden Rose', url: '/assets/garden/mobile_rose_banner.jpg' },
   { id: 'night', label: 'Dreamy Night', url: '/assets/dreamy_night_garden.jpg' },
 ];
 

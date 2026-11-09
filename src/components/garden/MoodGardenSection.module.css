@@ -441,6 +441,7 @@
   gap: 16px;
   border-top: 1px solid var(--mood-border);
   padding-top: 20px;
+  margin-bottom: 24px;
 }
 
 .inputRow {

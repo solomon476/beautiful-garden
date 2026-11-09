@@ -24,6 +24,8 @@ import {
   Send,
   Search,
   MessageSquare,
+  Maximize2,
+  ChevronDown,
 } from 'lucide-react';
 import { soundGardenService, authService } from '../../services/gardenService';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
@@ -58,6 +60,9 @@ export const SoundGardenSection: React.FC = () => {
   const [isRepeat, setIsRepeat] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(80);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const [isMaximized, setIsMaximized] = useState<boolean>(false);
   const audioStickyRef = useRef<HTMLAudioElement | null>(null);
 
   // Modal states
@@ -306,14 +311,63 @@ export const SoundGardenSection: React.FC = () => {
 
   const currentNowPlaying = songs[nowPlayingIndex] || songs[0] || null;
 
+  const getResolvedAudioUrl = (song: SongEntry | null) => {
+    if (!song) return undefined;
+    if (song.audioUrl) return song.audioUrl;
+    const t = (song.title || '').toLowerCase();
+    if (t.includes('flying')) return '/assets/tom_odell_flying_vocal.mp3';
+    if (t.includes('golden') || t.includes('piano')) return '/assets/music.mp3';
+    return undefined;
+  };
+
+  useEffect(() => {
+    const audio = audioStickyRef.current;
+    if (!audio) return;
+
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onLoadedMetadata = () => setDuration(audio.duration || 0);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onEnded = () => handleNextTrack();
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, [nowPlayingIndex, songs]);
+
+  const handleSeek = (newTime: number) => {
+    if (audioStickyRef.current && isFinite(newTime)) {
+      audioStickyRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  const formatTime = (secs: number) => {
+    if (isNaN(secs) || !isFinite(secs) || secs < 0) return '0:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   const handlePlayTrack = (index: number) => {
     soundEngine.playSparkle();
     setNowPlayingIndex(index);
     const target = songs[index];
-    if (target?.audioUrl) {
+    const resolvedAudio = getResolvedAudioUrl(target);
+    if (resolvedAudio) {
       setIsPlaying(true);
       if (audioStickyRef.current) {
-        audioStickyRef.current.src = target.audioUrl;
+        audioStickyRef.current.src = resolvedAudio;
         audioStickyRef.current.play().catch(() => {});
       }
     } else if (isSpotifyUrl(target?.musicUrl)) {
@@ -326,12 +380,16 @@ export const SoundGardenSection: React.FC = () => {
 
   const handleTogglePlay = () => {
     if (!currentNowPlaying) return;
+    const resolvedAudio = getResolvedAudioUrl(currentNowPlaying);
     if (isPlaying) {
       setIsPlaying(false);
       audioStickyRef.current?.pause();
     } else {
       setIsPlaying(true);
-      if (currentNowPlaying.audioUrl && audioStickyRef.current) {
+      if (resolvedAudio && audioStickyRef.current) {
+        if (!audioStickyRef.current.src || !audioStickyRef.current.src.includes(resolvedAudio)) {
+          audioStickyRef.current.src = resolvedAudio;
+        }
         audioStickyRef.current.play().catch(() => {});
       } else if (isSpotifyUrl(currentNowPlaying.musicUrl)) {
         window.open(currentNowPlaying.musicUrl, '_blank', 'noopener,noreferrer');
@@ -1073,37 +1131,48 @@ export const SoundGardenSection: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Sticky Bottom Player Bar (only visible when modals are closed) */}
+      {/* 4. Balanced Floating Player Bar (only visible when modals are closed) */}
       {!isAdding && !selectedSong && currentNowPlaying && (
         <div className={styles.stickyPlayerBar}>
-          <audio ref={audioStickyRef} onEnded={handleNextTrack} />
+          <audio ref={audioStickyRef} />
 
-          {/* Left: Track Meta */}
-          <div className={styles.playerTrackSide}>
-            <img
-              src={
-                currentNowPlaying.coverUrl ||
-                (currentNowPlaying.title.toLowerCase().includes('flying')
-                  ? '/assets/garden/cover_flying.jpg'
-                  : currentNowPlaying.title.toLowerCase().includes('golden')
-                  ? '/assets/garden/cover_golden_hour.jpg'
-                  : '/assets/garden/card_sound.jpg')
-              }
-              alt={currentNowPlaying.title}
-              className={styles.playerTrackThumb}
+          {/* Top glowing progress line */}
+          <div className={styles.barProgressTrack}>
+            <div
+              className={styles.barProgressBar}
+              style={{
+                width: `${duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0}%`,
+              }}
             />
+          </div>
+
+          {/* Left: Track Meta (Tapping opens maximized view) */}
+          <div
+            className={styles.playerTrackSide}
+            onClick={() => setIsMaximized(true)}
+            role="button"
+            tabIndex={0}
+            title="Tap to maximize player"
+          >
+            <div className={styles.playerThumbWrapper}>
+              <img
+                src={
+                  currentNowPlaying.coverUrl ||
+                  (currentNowPlaying.title.toLowerCase().includes('flying')
+                    ? '/assets/garden/cover_flying.jpg'
+                    : currentNowPlaying.title.toLowerCase().includes('golden')
+                    ? '/assets/garden/cover_golden_hour.jpg'
+                    : '/assets/garden/card_sound.jpg')
+                }
+                alt={currentNowPlaying.title}
+                className={`${styles.playerTrackThumb} ${isPlaying ? styles.spinRecordMini : ''}`}
+              />
+              {isPlaying && <span className={styles.playingDotPulse} />}
+            </div>
             <div className={styles.playerTrackMeta}>
               <h4 className={styles.playerTrackTitle}>{currentNowPlaying.title}</h4>
               <p className={styles.playerTrackArtist}>{currentNowPlaying.artist}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggleReaction(currentNowPlaying)}
-              className={styles.playerHeartBtn}
-              title="Heart reaction"
-            >
-              <Heart className={`w-4 h-4 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
-            </button>
           </div>
 
           {/* Center: Playback Controls */}
@@ -1111,7 +1180,7 @@ export const SoundGardenSection: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsShuffle(!isShuffle)}
-              className={`${styles.playerControlIconBtn} ${isShuffle ? 'text-pink-300' : ''}`}
+              className={`${styles.playerControlIconBtn} ${styles.desktopOnlyControl} ${isShuffle ? 'text-pink-300' : ''}`}
               title="Shuffle"
             >
               <Shuffle className="w-4 h-4" />
@@ -1121,7 +1190,7 @@ export const SoundGardenSection: React.FC = () => {
               type="button"
               onClick={handlePrevTrack}
               className={styles.playerControlIconBtn}
-              title="Previous"
+              title="Previous Track"
             >
               <SkipBack className="w-4 h-4" />
             </button>
@@ -1143,7 +1212,7 @@ export const SoundGardenSection: React.FC = () => {
               type="button"
               onClick={handleNextTrack}
               className={styles.playerControlIconBtn}
-              title="Next"
+              title="Next Track"
             >
               <SkipForward className="w-4 h-4" />
             </button>
@@ -1151,16 +1220,25 @@ export const SoundGardenSection: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsRepeat(!isRepeat)}
-              className={`${styles.playerControlIconBtn} ${isRepeat ? 'text-pink-300' : ''}`}
+              className={`${styles.playerControlIconBtn} ${styles.desktopOnlyControl} ${isRepeat ? 'text-pink-300' : ''}`}
               title="Repeat"
             >
               <Repeat className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Right: Volume & Queue */}
+          {/* Right: Actions & Maximize */}
           <div className={styles.playerRightControls}>
-            <div className={styles.volumeBarContainer}>
+            <button
+              type="button"
+              onClick={() => handleToggleReaction(currentNowPlaying)}
+              className={styles.playerHeartBtn}
+              title="Heart reaction"
+            >
+              <Heart className={`w-4 h-4 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
+            </button>
+
+            <div className={`${styles.volumeBarContainer} ${styles.desktopOnlyControl}`}>
               <button
                 type="button"
                 onClick={handleToggleMute}
@@ -1178,14 +1256,186 @@ export const SoundGardenSection: React.FC = () => {
                 className={styles.volumeRangeInput}
               />
             </div>
+
             <button
               type="button"
-              onClick={() => setSubTab('playlists')}
-              className={styles.playerControlIconBtn}
-              title="Playlist Queue"
+              onClick={() => setIsMaximized(true)}
+              className={styles.playerMaximizeBtn}
+              title="Maximize Music Sanctuary Player"
+              aria-label="Maximize player"
             >
-              <ListMusic className="w-4 h-4" />
+              <Maximize2 className="w-4 h-4 text-pink-200" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Maximized Music Sanctuary Player (Full Sheet / Dialog) */}
+      {isMaximized && currentNowPlaying && (
+        <div className={styles.maximizedOverlay} onClick={() => setIsMaximized(false)}>
+          <div className={styles.maximizedModal} onClick={(e) => e.stopPropagation()}>
+            {/* Top Bar */}
+            <div className={styles.maximizedHeader}>
+              <button
+                type="button"
+                onClick={() => setIsMaximized(false)}
+                className={styles.maximizedMinimizeBtn}
+                title="Minimize player"
+                aria-label="Minimize player"
+              >
+                <ChevronDown className="w-5 h-5" />
+              </button>
+              <div className={styles.maximizedHeaderTitle}>
+                <span className={styles.maximizedHeaderTag}>Now Playing in Sanctuary</span>
+                <span className={styles.maximizedHeaderSub}>Sound Garden ♡</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleReaction(currentNowPlaying)}
+                className={styles.maximizedHeartBtn}
+                title="Heart reaction"
+              >
+                <Heart className={`w-5 h-5 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
+              </button>
+            </div>
+
+            {/* Giant Album Art / Vinyl Disc */}
+            <div className={styles.maximizedVinylSection}>
+              <div className={`${styles.maximizedVinylDisc} ${isPlaying ? styles.spinRecord : ''}`}>
+                <img
+                  src={
+                    currentNowPlaying.coverUrl ||
+                    (currentNowPlaying.title.toLowerCase().includes('flying')
+                      ? '/assets/garden/cover_flying.jpg'
+                      : currentNowPlaying.title.toLowerCase().includes('golden')
+                      ? '/assets/garden/cover_golden_hour.jpg'
+                      : '/assets/garden/card_sound.jpg')
+                  }
+                  alt={currentNowPlaying.title}
+                  className={styles.maximizedCoverImg}
+                />
+                <div className={styles.vinylCenterPin} />
+              </div>
+            </div>
+
+            {/* Song Meta & Dedicated Whisper */}
+            <div className={styles.maximizedMetaSection}>
+              <h2 className={styles.maximizedSongTitle}>{currentNowPlaying.title}</h2>
+              <p className={styles.maximizedSongArtist}>{currentNowPlaying.artist}</p>
+              <div className={styles.maximizedSenderBadge}>
+                <span>Shared with love by {currentNowPlaying.addedByName || 'Solomon 🌿'}</span>
+              </div>
+
+              {currentNowPlaying.message && (
+                <div className={styles.maximizedWhisperBubble}>
+                  <span className={styles.maximizedWhisperLabel}>Whisper Note ♡</span>
+                  <p className={styles.maximizedWhisperText}>“{currentNowPlaying.message}”</p>
+                </div>
+              )}
+            </div>
+
+            {/* Scrubber Progress Slider */}
+            <div className={styles.maximizedScrubber}>
+              <input
+                type="range"
+                min="0"
+                max={isFinite(duration) && duration > 0 ? duration : 100}
+                step="0.5"
+                value={currentTime}
+                onChange={(e) => handleSeek(Number(e.target.value))}
+                className={styles.maximizedRangeInput}
+              />
+              <div className={styles.maximizedTimeRow}>
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Controls Bar */}
+            <div className={styles.maximizedControls}>
+              <button
+                type="button"
+                onClick={() => setIsShuffle(!isShuffle)}
+                className={`${styles.maximizedControlBtn} ${isShuffle ? 'text-pink-300' : ''}`}
+                title="Shuffle"
+              >
+                <Shuffle className="w-5 h-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrevTrack}
+                className={styles.maximizedControlBtn}
+                title="Previous"
+              >
+                <SkipBack className="w-6 h-6" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTogglePlay}
+                className={styles.maximizedPlayBtn}
+                title={isPlaying ? 'Pause' : 'Play'}
+              >
+                {isPlaying ? (
+                  <Pause className="w-7 h-7 fill-white text-white" />
+                ) : (
+                  <Play className="w-7 h-7 ml-1 fill-white text-white" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNextTrack}
+                className={styles.maximizedControlBtn}
+                title="Next"
+              >
+                <SkipForward className="w-6 h-6" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsRepeat(!isRepeat)}
+                className={`${styles.maximizedControlBtn} ${isRepeat ? 'text-pink-300' : ''}`}
+                title="Repeat"
+              >
+                <Repeat className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Bottom Volume & Quick Links */}
+            <div className={styles.maximizedBottomRow}>
+              <div className={styles.maximizedVolumeGroup}>
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  className={styles.maximizedVolumeIconBtn}
+                  title={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4 text-rose-300" /> : <Volume2 className="w-4 h-4 text-pink-300" />}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={isMuted ? 0 : volume}
+                  onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                  className={styles.maximizedVolumeSlider}
+                />
+              </div>
+
+              {currentNowPlaying.musicUrl && isSpotifyUrl(currentNowPlaying.musicUrl) && (
+                <a
+                  href={currentNowPlaying.musicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.maximizedSpotifyBtn}
+                >
+                  <SpotifyIcon className="w-4 h-4" style={{ fill: '#000000' }} />
+                  <span>Open Spotify ↗</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}

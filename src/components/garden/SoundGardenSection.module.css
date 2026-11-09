@@ -997,42 +997,88 @@
 }
 
 /* ==========================================================================
-   4. Sticky Bottom Audio Player Bar (.stickyPlayerBar)
+   4. Floating Audio Player Bar (.stickyPlayerBar) & Maximized Player
    ========================================================================== */
 .stickyPlayerBar {
-  position: sticky;
-  bottom: 12px;
-  z-index: 30;
-  margin-top: 10px;
-  padding: 12px 24px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(840px, calc(100% - 32px));
+  z-index: 45;
+  padding: 10px 18px 10px 14px;
   border-radius: 22px;
   background: rgba(22, 6, 35, 0.95);
   border: 1px solid var(--sg-border);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(240, 68, 181, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), 0 0 25px rgba(240, 68, 181, 0.25);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  width: 100%;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.barProgressTrack {
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 2.5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barProgressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #ff69c9, #a83df0);
+  box-shadow: 0 0 8px rgba(255, 105, 201, 0.8);
+  transition: width 150ms linear;
 }
 
 .playerTrackSide {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   flex: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.playerThumbWrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .playerTrackThumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
   object-fit: cover;
   border: 1px solid var(--sg-border);
-  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.spinRecordMini {
+  animation: spinSlow 12s linear infinite;
+  border-radius: 50%;
+}
+
+.playingDotPulse {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #34d399;
+  border: 2px solid #160623;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
 }
 
 .playerTrackMeta {
@@ -1044,8 +1090,8 @@
 
 .playerTrackTitle {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: #ffffff;
   margin: 0;
   white-space: nowrap;
@@ -1054,7 +1100,7 @@
 }
 
 .playerTrackArtist {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--sg-muted);
   margin: 0;
   white-space: nowrap;
@@ -1084,7 +1130,7 @@
 .playerControlsCenter {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -1118,34 +1164,399 @@
   justify-content: center;
   border: 0;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(240, 68, 181, 0.45);
-  transition: transform 180ms ease;
+  box-shadow: 0 4px 18px rgba(240, 68, 181, 0.5);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  flex-shrink: 0;
 }
 
 .playerMasterPlayBtn:hover {
   transform: scale(1.08);
+  box-shadow: 0 6px 22px rgba(240, 68, 181, 0.7);
+}
+
+.playerMasterPlayBtn:active {
+  transform: scale(0.95);
 }
 
 .playerRightControls {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex: 1;
-  justify-content: flex-end;
-  min-width: 0;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.playerMaximizeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.playerMaximizeBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.08);
 }
 
 .volumeBarContainer {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 110px;
+  width: 100px;
 }
 
 .volumeRangeInput {
   width: 100%;
   accent-color: var(--sg-pink);
   cursor: pointer;
+}
+
+/* ==========================================================================
+   5. Maximized Music Sanctuary Player Modal
+   ========================================================================== */
+.maximizedOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 3, 20, 0.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 200ms ease-out;
+}
+
+.maximizedModal {
+  width: min(520px, 100%);
+  max-height: min(92vh, 820px);
+  background: radial-gradient(circle at 50% 0%, rgba(138, 43, 226, 0.28), transparent 70%),
+              radial-gradient(circle at 100% 100%, rgba(240, 68, 181, 0.22), transparent 60%),
+              linear-gradient(165deg, #1b072e 0%, #0e041a 100%);
+  border: 1px solid rgba(255, 177, 245, 0.35);
+  border-radius: 32px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(240, 68, 181, 0.25);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  gap: 16px;
+  position: relative;
+}
+
+.maximizedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.maximizedMinimizeBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.maximizedMinimizeBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}
+
+.maximizedHeaderTitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.maximizedHeaderTag {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff9bdf;
+  font-family: monospace;
+}
+
+.maximizedHeaderSub {
+  font-family: "Great Vibes", cursive;
+  font-size: 1.25rem;
+  color: #ffffff;
+}
+
+.maximizedHeartBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ff9bdf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.maximizedHeartBtn:hover {
+  transform: scale(1.1);
+  background: rgba(240, 68, 181, 0.2);
+}
+
+.maximizedVinylSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 4px;
+}
+
+.maximizedVinylDisc {
+  width: min(220px, 55vw);
+  height: min(220px, 55vw);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7), 0 0 30px rgba(240, 68, 181, 0.35);
+  border: 4px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinRecord {
+  animation: spinSlow 16s linear infinite;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.maximizedCoverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.vinylCenterPin {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 15%, #180928 20%, #2f124d 80%, #000000 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.maximizedMetaSection {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.maximizedSongTitle {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(240, 68, 181, 0.4);
+}
+
+.maximizedSongArtist {
+  font-size: 0.95rem;
+  color: #ffb8ec;
+  margin: 0;
+}
+
+.maximizedSenderBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  color: #e9d5ff;
+  margin-top: 4px;
+}
+
+.maximizedWhisperBubble {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 105, 201, 0.12);
+  border: 1px solid rgba(255, 105, 201, 0.3);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.maximizedWhisperLabel {
+  font-size: 0.65rem;
+  font-family: monospace;
+  text-transform: uppercase;
+  color: #ff9bdf;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.maximizedWhisperText {
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.maximizedScrubber {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.maximizedRangeInput {
+  width: 100%;
+  accent-color: #ff69c9;
+  cursor: pointer;
+  height: 5px;
+  border-radius: 4px;
+}
+
+.maximizedTimeRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #d8b4e2;
+}
+
+.maximizedControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 4px 0;
+}
+
+.maximizedControlBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  color: #e9d5ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.maximizedControlBtn:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+.maximizedPlayBtn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(110deg, #f04cae 0%, #9e36e6 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(240, 68, 181, 0.55);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.maximizedPlayBtn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 10px 34px rgba(240, 68, 181, 0.75);
+}
+
+.maximizedPlayBtn:active {
+  transform: scale(0.95);
+}
+
+.maximizedBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maximizedVolumeGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.maximizedVolumeIconBtn {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.maximizedVolumeSlider {
+  width: 90px;
+  accent-color: #ff69c9;
+  cursor: pointer;
+}
+
+.maximizedSpotifyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #1db954;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-decoration: none;
+  transition: all 180ms ease;
+  box-shadow: 0 4px 14px rgba(29, 185, 84, 0.35);
+}
+
+.maximizedSpotifyBtn:hover {
+  background: #1ed760;
+  transform: scale(1.04);
 }
 
 /* ==========================================================================
@@ -1203,10 +1614,45 @@
   }
 
   .stickyPlayerBar {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
-    padding: 10px 14px;
-    gap: 10px;
+    position: fixed;
+    bottom: calc(66px + env(safe-area-inset-bottom, 8px));
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: calc(100% - 16px);
+    transform: none;
+    padding: 8px 10px;
+    gap: 8px;
     border-radius: 18px;
+    z-index: 45;
+  }
+
+  .desktopOnlyControl {
+    display: none !important;
+  }
+
+  .playerTrackSide {
+    max-width: calc(100% - 146px);
+  }
+
+  .playerThumbWrapper {
+    width: 38px;
+    height: 38px;
+  }
+
+  .playerControlsCenter {
+    gap: 6px;
+  }
+
+  .playerMasterPlayBtn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .playerHeartBtn,
+  .playerMaximizeBtn {
+    width: 30px;
+    height: 30px;
   }
 
   .cardsGrid {
