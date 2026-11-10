@@ -234,7 +234,28 @@ export const ExchangeShelfSection: React.FC = () => {
 
   return (
     <div className={styles.shelfSection}>
-      {/* 1. Panoramic Themed Hero Banner */}
+      {/* 1. Top Banner Button — Quick Action across Mobile & Desktop */}
+      <div
+        onClick={() => handleOpenAdd()}
+        className="add-memory-banner group"
+        title="Add to Our Exchange Shelf"
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+          <Book className="w-5 h-5 text-amber-200" />
+        </div>
+        <div className="min-w-0 text-left">
+          <h3 className="font-bold text-base text-white tracking-wide leading-tight flex items-center gap-1.5">
+            <span>Add Book, PDF or Discovery</span>
+            <span className="text-amber-300">📚</span>
+          </h3>
+          <p className="text-xs text-amber-200/90 font-serif italic mt-0.5 leading-relaxed truncate">
+            Share a book, film, dish, PDF read, or cozy recommendation ✨
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Panoramic Themed Hero Banner */}
       <section className={styles.heroBanner}>
         <div className={styles.heroAmbientBg} />
         <div className={styles.heroRadialGlow} />

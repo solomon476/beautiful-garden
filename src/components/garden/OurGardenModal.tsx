@@ -305,7 +305,7 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
         {/* Tab Content Canvas */}
         <main
           ref={mainScrollRef}
-          className={`relative z-10 flex-1 min-h-0 overflow-y-auto px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
+          className={`relative z-10 flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-8 lg:px-10 py-5 sm:py-8 space-y-6 sm:space-y-8 mx-auto w-full ${
             activeTab === 'garden' ? 'max-w-7xl' : 'max-w-6xl'
           }`}
           style={{
