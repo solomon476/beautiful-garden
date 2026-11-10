@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Plus,
@@ -23,22 +23,25 @@ const PALETTE = [
 ];
 
 export const PetalNotesSpace: React.FC = () => {
-  const [petals, setPetals] = useState<PetalNoteEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [petals, setPetals] = useState<PetalNoteEntry[]>(() => petalNotesService.getCachedPetals());
+  const [loading, setLoading] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
   // Form state
   const [isComposing, setIsComposing] = useState<boolean>(false);
   const [body, setBody] = useState<string>('');
   const [selectedTheme, setSelectedTheme] = useState(PALETTE[0]);
-  const [isShared, setIsShared] = useState<boolean>(false); // Private by default
+  const [isShared, setIsShared] = useState<boolean>(true); // Shared with partner by default
   const [activePetal, setActivePetal] = useState<PetalNoteEntry | null>(null);
+
+  const composePanelRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const partner = authService.getPartner();
 
   const loadPetals = async () => {
     try {
-      setLoading(true);
+      if (petals.length === 0) setLoading(true);
       const list = await petalNotesService.getPetals();
       setPetals(list);
     } catch (err) {
@@ -61,8 +64,13 @@ export const PetalNotesSpace: React.FC = () => {
     soundEngine.playSparkle();
     setBody('');
     setSelectedTheme(PALETTE[0]);
-    setIsShared(false);
+    setIsShared(true);
     setIsComposing(true);
+
+    setTimeout(() => {
+      composePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      textareaRef.current?.focus();
+    }, 120);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -70,7 +78,7 @@ export const PetalNotesSpace: React.FC = () => {
     if (!body.trim()) return;
 
     try {
-      await petalNotesService.addPetal({
+      const newEntry = await petalNotesService.addPetal({
         body,
         color: selectedTheme.color,
         emoji: selectedTheme.emoji,
@@ -79,8 +87,12 @@ export const PetalNotesSpace: React.FC = () => {
 
       soundEngine.playChime(659.25, 1.0, 0.08);
       setIsComposing(false);
+      setBody('');
+      // Instantly bloom on screen
+      setPetals((prev) => [newEntry, ...prev.filter((p) => p.id !== newEntry.id)]);
       await loadPetals();
     } catch (err: any) {
+      console.error('Failed to bloom petal note:', err);
       alert(err?.message || 'Could not save petal note.');
     }
   };
@@ -88,8 +100,10 @@ export const PetalNotesSpace: React.FC = () => {
   const handleDelete = async (p: PetalNoteEntry) => {
     if (p.authorId !== currentUser.id) return;
     if (window.confirm('Delete this petal note?')) {
-      await petalNotesService.deletePetal(p.id);
+      soundEngine.playSparkle();
+      setPetals((prev) => prev.filter((item) => item.id !== p.id));
       if (activePetal?.id === p.id) setActivePetal(null);
+      await petalNotesService.deletePetal(p.id);
       await loadPetals();
     }
   };
@@ -101,7 +115,28 @@ export const PetalNotesSpace: React.FC = () => {
 
   return (
     <div className={styles.petalsSection}>
-      {/* 1. Panoramic Themed Hero Banner */}
+      {/* 1. Top Banner Button — Quick Action across Mobile & Desktop */}
+      <div
+        onClick={handleOpenCompose}
+        className="add-memory-banner group"
+        title="Leave a Petal Note"
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+          <Sparkles className="w-5 h-5 text-pink-200" />
+        </div>
+        <div className="min-w-0 text-left">
+          <h3 className="font-bold text-base text-white tracking-wide leading-tight flex items-center gap-1.5">
+            <span>Plant a Petal Note</span>
+            <span className="text-pink-300">🌸</span>
+          </h3>
+          <p className="text-xs text-pink-200/90 font-serif italic mt-0.5 leading-relaxed truncate">
+            Leave a sweet whisper, compliment, or secret love note for {partner.displayName} ✨
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Panoramic Themed Hero Banner */}
       <section className={styles.heroBanner}>
         <div className={styles.heroAmbientBg} />
         <div className={styles.heroRadialGlow} />
@@ -141,7 +176,7 @@ export const PetalNotesSpace: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Action Button Inside Hero Banner (Desktop) */}
+          {/* Right Action Button Inside Hero Banner (Mobile & Desktop) */}
           <div className={styles.heroRightBtnWrapper}>
             <button
               type="button"
@@ -157,7 +192,7 @@ export const PetalNotesSpace: React.FC = () => {
 
       {/* Composing Note */}
       {isComposing && (
-        <div className={styles.composePanel}>
+        <div ref={composePanelRef} className={styles.composePanel}>
           <div className={styles.composeHeader}>
             <div className={styles.composeHeaderLeft}>
               <div className={styles.composeHeaderIcon}>
@@ -240,6 +275,7 @@ export const PetalNotesSpace: React.FC = () => {
                 </span>
               </div>
               <textarea
+                ref={textareaRef}
                 rows={4}
                 required
                 maxLength={240}
@@ -333,104 +369,118 @@ export const PetalNotesSpace: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className={styles.petalsGrid}>
-          {petals.map((petal) => {
-            const isMine = petal.authorId === currentUser.id;
+        <>
+          <div className={styles.petalsGrid}>
+            {petals.map((petal) => {
+              const isMine = petal.authorId === currentUser.id;
 
-            return (
-              <div
-                key={petal.id}
-                onClick={() => handleViewPetal(petal)}
-                className={styles.petalCard}
-              >
-                {/* Glow Aura */}
+              return (
                 <div
-                  className={styles.petalGlowAura}
-                  style={{ backgroundColor: petal.color }}
-                />
+                  key={petal.id}
+                  onClick={() => handleViewPetal(petal)}
+                  className={styles.petalCard}
+                >
+                  {/* Glow Aura */}
+                  <div
+                    className={styles.petalGlowAura}
+                    style={{ backgroundColor: petal.color }}
+                  />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div
-                      className={styles.petalEmojiBadge}
-                      style={{
-                        backgroundColor: `${petal.color}25`,
-                        borderColor: `${petal.color}55`,
-                      }}
-                    >
-                      <span>{petal.emoji}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div
+                        className={styles.petalEmojiBadge}
+                        style={{
+                          backgroundColor: `${petal.color}25`,
+                          borderColor: `${petal.color}55`,
+                        }}
+                      >
+                        <span>{petal.emoji}</span>
+                      </div>
+                      <span
+                        className={`${styles.privacyBadge} ${
+                          petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
+                        }`}
+                      >
+                        {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                        <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
+                      </span>
                     </div>
-                    <span
-                      className={`${styles.privacyBadge} ${
-                        petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
-                      }`}
-                    >
-                      {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
-                    </span>
+
+                    <p className={styles.petalBody}>
+                      “{petal.body}”
+                    </p>
                   </div>
 
-                  <p className={styles.petalBody}>
-                    “{petal.body}”
+                  <div className={styles.petalFooter}>
+                    <span className={styles.petalAuthorSignature}>
+                      From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
+                    </span>
+                    {isMine && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(petal);
+                        }}
+                        className={styles.deleteBtn}
+                        title="Delete petal"
+                        aria-label="Delete petal"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Invitation Card */}
+            {petals.length < 4 && (
+              <div
+                onClick={handleOpenCompose}
+                className={styles.invitationCard}
+              >
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '16px',
+                  background: 'rgba(244, 114, 182, 0.16)',
+                  border: '1px solid var(--pet-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--pet-rose)',
+                }}>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    Plant a New Petal
+                  </h4>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--pet-muted)', margin: '4px 0 0 0' }}>
+                    Leave a spontaneous whisper, flower note, or sweet thought...
                   </p>
                 </div>
-
-                <div className={styles.petalFooter}>
-                  <span className={styles.petalAuthorSignature}>
-                    From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
-                  </span>
-                  {isMine && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(petal);
-                      }}
-                      className={styles.deleteBtn}
-                      title="Delete petal"
-                      aria-label="Delete petal"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
+                <span className={styles.heroTriggerBtn} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
+                  <Plus className="w-3.5 h-3.5" /> Plant Petal 🌸
+                </span>
               </div>
-            );
-          })}
+            )}
+          </div>
 
-          {/* Invitation Card */}
-          {petals.length < 4 && (
-            <div
+          {/* Bottom Floating Action Button */}
+          <div className="flex justify-center pt-4">
+            <button
+              type="button"
               onClick={handleOpenCompose}
-              className={styles.invitationCard}
+              className="add-new-moment-btn"
             >
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '16px',
-                background: 'rgba(244, 114, 182, 0.16)',
-                border: '1px solid var(--pet-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--pet-rose)',
-              }}>
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 style={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: '1.15rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                  Plant a New Petal
-                </h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--pet-muted)', margin: '4px 0 0 0' }}>
-                  Leave a spontaneous whisper, flower note, or sweet thought...
-                </p>
-              </div>
-              <span className={styles.heroTriggerBtn} style={{ padding: '8px 16px', fontSize: '0.8rem' }}>
-                <Plus className="w-3.5 h-3.5" /> Plant Petal 🌸
-              </span>
-            </div>
-          )}
-        </div>
+              <Sparkles className="w-4 h-4" />
+              <span>Plant a Petal Whisper 🌸</span>
+            </button>
+          </div>
+        </>
       )}
 
       {/* Read Petal Dialog */}

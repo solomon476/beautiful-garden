@@ -614,11 +614,19 @@
 @media (max-width: 768px) {
   .heroContent {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
   }
 
   .heroRightBtnWrapper {
-    display: none;
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .heroRightActionBtn {
+    width: 100%;
+    justify-content: center;
   }
 
   .petalsGrid {

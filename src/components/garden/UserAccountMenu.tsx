@@ -122,9 +122,8 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({ currentUser, c
               <span className="hidden sm:inline">{gardenLabel}</span>
             </span>
             <ChevronDown
-              className={`w-3 h-3 text-pink-300/80 transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              }`}
+              className={`w-3 h-3 text-pink-300/80 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+                }`}
             />
           </div>
         </button>

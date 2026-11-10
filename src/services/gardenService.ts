@@ -1218,43 +1218,56 @@ export const memoryArchiveService = {
 // Feature E: Petal Notes (Short Messages)
 // ==============================================================================
 export const petalNotesService = {
+  getCachedPetals(): PetalNoteEntry[] {
+    const user = authService.getCurrentUser();
+    const local = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
+    return local.filter((p) => {
+      if (p.authorId === user.id) return true;
+      return p.isShared && (!p.recipientId || p.recipientId === user.id);
+    });
+  },
+
   async getPetals(): Promise<PetalNoteEntry[]> {
     const user = authService.getCurrentUser();
-    const isAuthed = authService.isAuthenticated();
     const local = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
     const localVisible = local.filter((p) => {
-      if (!isAuthed) return p.isShared;
-      return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
+      // Author always sees their own petals; partner sees shared ones
+      if (p.authorId === user.id) return true;
+      return p.isShared && (!p.recipientId || p.recipientId === user.id);
     });
 
     if (isLiveSupabaseConfigured && supabase) {
-      syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
-      const { data, error } = await supabase
-        .from('petal_notes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        syncLocalDraftsToCloud().catch((err) => console.warn('Background sync error:', err));
+        const { data, error } = await supabase
+          .from('petal_notes')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const cloudEntries: PetalNoteEntry[] = data
-          .map((d: any) => ({
-            id: d.id,
-            authorId: d.author_id,
-            authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-            recipientId: d.recipient_id,
-            body: d.body,
-            color: d.color,
-            emoji: d.emoji,
-            isShared: d.is_shared,
-            createdAt: d.created_at,
-          }))
-          .filter((p) => {
-            if (!isAuthed) return p.isShared;
-            return p.authorId === user.id || (p.isShared && (!p.recipientId || p.recipientId === user.id));
-          });
+        if (!error && data && data.length > 0) {
+          const cloudEntries: PetalNoteEntry[] = data
+            .map((d: any) => ({
+              id: d.id,
+              authorId: d.author_id,
+              authorName: d.author_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+              recipientId: d.recipient_id,
+              body: d.body,
+              color: d.color,
+              emoji: d.emoji,
+              isShared: d.is_shared,
+              createdAt: d.created_at,
+            }))
+            .filter((p) => {
+              if (p.authorId === user.id) return true;
+              return p.isShared && (!p.recipientId || p.recipientId === user.id);
+            });
 
-        const cloudIds = new Set(cloudEntries.map((c) => c.id));
-        const localOnly = localVisible.filter((l) => !cloudIds.has(l.id));
-        return [...cloudEntries, ...localOnly];
+          const cloudIds = new Set(cloudEntries.map((c) => c.id));
+          const localOnly = localVisible.filter((l) => !cloudIds.has(l.id));
+          return [...cloudEntries, ...localOnly];
+        }
+      } catch (err) {
+        console.warn('Background petal fetch error:', err);
       }
     }
     return localVisible;
@@ -1276,18 +1289,22 @@ export const petalNotesService = {
     };
 
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('petal_notes').insert({
-        id: entry.id,
-        author_id: user.id,
-        recipient_id: partner.id,
-        body: entry.body,
-        color: entry.color,
-        emoji: entry.emoji,
-        is_shared: entry.isShared,
-      });
+      try {
+        await supabase.from('petal_notes').insert({
+          id: entry.id,
+          author_id: user.id,
+          recipient_id: partner.id,
+          body: entry.body,
+          color: entry.color,
+          emoji: entry.emoji,
+          is_shared: entry.isShared,
+        });
+      } catch (err) {
+        console.warn('Supabase insert petal error:', err);
+      }
     }
 
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, []);
+    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
     all.unshift(entry);
     saveLocal(STORAGE_KEYS.PETALS, all);
 
@@ -1311,9 +1328,13 @@ export const petalNotesService = {
   async deletePetal(id: string): Promise<void> {
     const user = authService.getCurrentUser();
     if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('petal_notes').delete().eq('id', id).eq('author_id', user.id);
+      try {
+        await supabase.from('petal_notes').delete().eq('id', id).eq('author_id', user.id);
+      } catch (err) {
+        console.warn('Supabase delete petal error:', err);
+      }
     }
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, []);
+    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
     const target = all.find((p) => p.id === id);
     if (target && target.authorId !== user.id) {
       throw new Error('Unauthorized: You can only remove your own petal notes.');
