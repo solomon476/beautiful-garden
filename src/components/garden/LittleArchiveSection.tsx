@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Camera,
   Plus,
@@ -143,6 +144,7 @@ export const LittleArchiveSection: React.FC = () => {
   const [showRecorder, setShowRecorder] = useState<boolean>(false);
   const [dateTaken, setDateTaken] = useState<string>('');
   const [isShared, setIsShared] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Lightbox preview
@@ -157,16 +159,21 @@ export const LittleArchiveSection: React.FC = () => {
       if (memories.length === 0) setLoading(true);
       const list = await memoryArchiveService.getMemories();
       const seenIds = new Set<string>();
+      const seenMedia = new Set<string>();
       const combined: MemoryEntry[] = [];
       for (const m of list) {
-        if (!seenIds.has(m.id)) {
+        const mediaKey = m.videoMediaId || `${m.title.toLowerCase().trim()}_${(m.dateTaken || '').trim()}`;
+        if (!seenIds.has(m.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(m.id);
+          seenMedia.add(mediaKey);
           combined.push(m);
         }
       }
       for (const gm of giftContent.memories) {
-        if (!seenIds.has(gm.id)) {
+        const mediaKey = `${gm.title.toLowerCase().trim()}_${(gm.date || '').trim()}`;
+        if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(gm.id);
+          seenMedia.add(mediaKey);
           combined.push({
             id: gm.id,
             contributorId: DEFAULT_PROFILES.solomon.id,
@@ -302,6 +309,7 @@ export const LittleArchiveSection: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return; // Prevent double submit
     if (!title.trim()) {
       setErrorMsg('Please provide a title for this moment.');
       return;
@@ -312,6 +320,8 @@ export const LittleArchiveSection: React.FC = () => {
     }
 
     try {
+      setIsSaving(true);
+      setErrorMsg(null);
       const newEntry = await memoryArchiveService.addMemory({
         title,
         caption,
@@ -334,9 +344,11 @@ export const LittleArchiveSection: React.FC = () => {
         videoUrl: videoUrl || newEntry.videoUrl,
       };
       setMemories((prev) => [localPlayableEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
-      loadMemories();
+      await loadMemories();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not save memory.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -394,7 +406,12 @@ export const LittleArchiveSection: React.FC = () => {
       {/* 1. Top Banner Button — Matching Mockup Reference */}
       <div
         onClick={handleOpenAdd}
-        className="add-memory-banner group"
+        className="add-memory-banner group cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleOpenAdd();
+        }}
         title="Pin a Photo or Video to Our Album"
       >
         <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
@@ -865,33 +882,85 @@ export const LittleArchiveSection: React.FC = () => {
       </div>
 
       {/* 3. Lightbox Modal */}
-      {lightboxMemory && (
-        <div
-          className={styles.modalBackdrop}
-          onClick={() => setLightboxMemory(null)}
-        >
+      {lightboxMemory && (() => {
+        const modalContent = (
           <div
-            className={styles.lightboxCard}
-            onClick={(e) => e.stopPropagation()}
+            className={
+              lightboxMemory.videoUrl
+                ? 'fixed inset-0 flex flex-col justify-between select-none animate-fade-in'
+                : styles.modalBackdrop
+            }
+            style={
+              lightboxMemory.videoUrl
+                ? {
+                    zIndex: 99999,
+                    backgroundColor: '#05020a',
+                    position: 'fixed',
+                    inset: 0,
+                  }
+                : { zIndex: 5000 }
+            }
+            onClick={() => setLightboxMemory(null)}
           >
-            <div className={styles.modalHeader}>
-              <div className={styles.modalHeaderTitleGroup}>
-                <Camera className="w-4 h-4 text-pink-300" />
-                <h3 className="font-serif text-lg font-bold text-white truncate">
-                  {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLightboxMemory(null)}
-                className={styles.modalCloseBtn}
+          {lightboxMemory.videoUrl ? (
+            /* Immersive Full-Screen Cinema Video Player */
+            <>
+              {/* Floating Top Header Bar */}
+              <div
+                className="relative z-30 flex items-center justify-between p-3 sm:p-5"
+                style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
+                    <Film className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-serif text-base sm:text-lg font-bold text-white truncate drop-shadow-md">
+                      {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
+                    </h3>
+                    <p className="text-[11px] font-mono text-pink-200/80 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-pink-400" />
+                      <span>{lightboxMemory.dateTaken || 'Special Day'}</span>
+                      {filteredMemories.length > 1 && (
+                        <>
+                          <span className="text-white/40">•</span>
+                          <span>{currentLightboxIdx + 1} of {filteredMemories.length}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
 
-            <div className={styles.lightboxImageStage}>
-              {lightboxMemory.videoUrl ? (
+                <div className="flex items-center gap-2 shrink-0">
+                  {lightboxMemory.contributorId === currentUser.id && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(lightboxMemory)}
+                      className="px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/40 border border-rose-400/30 text-rose-300 text-xs flex items-center gap-1 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                      title="Move to Bin"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Delete</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setLightboxMemory(null)}
+                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                    aria-label="Close video view"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Full-Screen Center Video Stage */}
+              <div
+                className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <video
                   key={lightboxMemory.id}
                   src={lightboxMemory.videoUrl}
@@ -900,7 +969,7 @@ export const LittleArchiveSection: React.FC = () => {
                   playsInline
                   autoPlay
                   preload="auto"
-                  className={styles.lightboxVideo}
+                  className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     const v = e.currentTarget;
@@ -908,97 +977,187 @@ export const LittleArchiveSection: React.FC = () => {
                     else v.pause();
                   }}
                 />
-              ) : (
+              </div>
+
+              {/* Floating Bottom Navigation & Romantic Caption */}
+              <div
+                className="relative z-30 p-3 sm:p-5 space-y-2"
+                style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {lightboxMemory.caption && (
+                  <p className="font-handwriting text-xl sm:text-2xl text-center text-pink-100/90 leading-snug drop-shadow-md px-3 line-clamp-2">
+                    “{lightboxMemory.caption}” ♡
+                  </p>
+                )}
+
+                {lightboxMemory.voiceNoteUrl && (
+                  <div className="max-w-md mx-auto">
+                    <GardenAudioPlayer
+                      src={lightboxMemory.voiceNoteUrl}
+                      title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                      subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                      isVoiceNote={true}
+                    />
+                  </div>
+                )}
+
+                {filteredMemories.length > 1 && (
+                  <div className="flex items-center justify-between max-w-sm mx-auto text-xs text-white/90">
+                    <button
+                      type="button"
+                      disabled={currentLightboxIdx <= 0}
+                      onClick={() => {
+                        if (currentLightboxIdx > 0) {
+                          soundEngine.playSparkle();
+                          setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Previous</span>
+                    </button>
+
+                    <span className="font-mono text-[11px] text-pink-300">
+                      {currentLightboxIdx + 1} of {filteredMemories.length}
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={currentLightboxIdx >= filteredMemories.length - 1}
+                      onClick={() => {
+                        if (currentLightboxIdx < filteredMemories.length - 1) {
+                          soundEngine.playSparkle();
+                          setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Standard Romantic Photo Card Modal */
+            <div
+              className={styles.lightboxCard}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <div className={styles.modalHeaderTitleGroup}>
+                  <Camera className="w-4 h-4 text-pink-300" />
+                  <h3 className="font-serif text-lg font-bold text-white truncate">
+                    {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLightboxMemory(null)}
+                  className={styles.modalCloseBtn}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className={styles.lightboxImageStage}>
                 <img
                   src={lightboxMemory.photoUrl}
                   alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   className={styles.lightboxMainImage}
                 />
+              </div>
+
+              {lightboxMemory.caption && (
+                <p className={styles.lightboxCaption}>
+                  “{lightboxMemory.caption}” ♡
+                </p>
               )}
-            </div>
 
-            {lightboxMemory.caption && (
-              <p className={styles.lightboxCaption}>
-                “{lightboxMemory.caption}” ♡
-              </p>
-            )}
+              {lightboxMemory.voiceNoteUrl && (
+                <GardenAudioPlayer
+                  src={lightboxMemory.voiceNoteUrl}
+                  title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                  subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                  isVoiceNote={true}
+                />
+              )}
 
-            {lightboxMemory.voiceNoteUrl && (
-              <GardenAudioPlayer
-                src={lightboxMemory.voiceNoteUrl}
-                title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
-                subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
-                isVoiceNote={true}
-              />
-            )}
+              {/* Gallery Navigation Controls */}
+              {filteredMemories.length > 1 && (
+                <div className={styles.lightboxNavRow}>
+                  <button
+                    type="button"
+                    disabled={currentLightboxIdx <= 0}
+                    onClick={() => {
+                      if (currentLightboxIdx > 0) {
+                        soundEngine.playSparkle();
+                        setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
+                      }
+                    }}
+                    className={styles.lightboxNavBtn}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
 
-            {/* Gallery Navigation Controls */}
-            {filteredMemories.length > 1 && (
-              <div className={styles.lightboxNavRow}>
+                  <span className={styles.lightboxCounter}>
+                    {currentLightboxIdx + 1} of {filteredMemories.length}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={currentLightboxIdx >= filteredMemories.length - 1}
+                    onClick={() => {
+                      if (currentLightboxIdx < filteredMemories.length - 1) {
+                        soundEngine.playSparkle();
+                        setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
+                      }
+                    }}
+                    className={styles.lightboxNavBtn}
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
                 <button
                   type="button"
-                  disabled={currentLightboxIdx <= 0}
-                  onClick={() => {
-                    if (currentLightboxIdx > 0) {
-                      soundEngine.playSparkle();
-                      setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
-                    }
-                  }}
-                  className={styles.lightboxNavBtn}
+                  onClick={() => handleDelete(lightboxMemory)}
+                  className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Previous</span>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Move to Bin</span>
                 </button>
 
-                <span className={styles.lightboxCounter}>
-                  {currentLightboxIdx + 1} of {filteredMemories.length}
-                </span>
-
                 <button
                   type="button"
-                  disabled={currentLightboxIdx >= filteredMemories.length - 1}
-                  onClick={() => {
-                    if (currentLightboxIdx < filteredMemories.length - 1) {
-                      soundEngine.playSparkle();
-                      setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
-                    }
-                  }}
-                  className={styles.lightboxNavBtn}
+                  onClick={() => setLightboxMemory(null)}
+                  className={styles.cancelBtn}
                 >
-                  <span>Next</span>
-                  <ChevronRight className="w-4 h-4" />
+                  Close
                 </button>
               </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-              <button
-                type="button"
-                onClick={() => handleDelete(lightboxMemory)}
-                className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Move to Bin</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLightboxMemory(null)}
-                className={styles.cancelBtn}
-              >
-                Close
-              </button>
             </div>
-          </div>
+          )}
         </div>
-      )}
+        );
+        return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
+      })()}
 
       {/* 4. Add Memory Form Modal */}
-      {isAdding && (
-        <div
-          className={styles.modalBackdrop}
-          onClick={() => setIsAdding(false)}
-        >
+      {isAdding && (() => {
+        const addModalContent = (
+          <div
+            className={styles.modalBackdrop}
+            style={{ zIndex: 9999 }}
+            onClick={() => setIsAdding(false)}
+          >
           <div
             className={styles.addModalCard}
             onClick={(e) => e.stopPropagation()}
@@ -1236,15 +1395,30 @@ export const LittleArchiveSection: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className={styles.submitBtn}>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Pin into Album ✨</span>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className={`${styles.submitBtn} ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Pinning into Album... ✨</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Pin into Album ✨</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
+        );
+        return typeof document !== 'undefined' ? createPortal(addModalContent, document.body) : addModalContent;
+      })()}
     </div>
   );
 };

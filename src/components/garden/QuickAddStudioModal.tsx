@@ -185,6 +185,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
 
   const handleSavePhoto = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return; // Prevent double submit
     if (!photoTitle.trim()) {
       setErrorMsg('Please specify a title for the moment.');
       return;

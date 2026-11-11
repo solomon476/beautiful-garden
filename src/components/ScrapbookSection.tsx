@@ -73,12 +73,15 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   }, []);
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
-  // Deduplicate by memory ID so pictures never repeat themselves
+  // Deduplicate by memory ID and media key so pictures and videos never multiply
   const seenIds = new Set<string>();
+  const seenMedia = new Set<string>();
   const allMemories: MemoryItem[] = [];
   for (const m of [...giftContent.memories, ...archiveMemories]) {
-    if (!seenIds.has(m.id) && !deletedIds.has(m.id)) {
+    const mediaKey = m.videoMediaId || `${m.title.toLowerCase().trim()}_${(m.date || '').trim()}`;
+    if (!seenIds.has(m.id) && !seenMedia.has(mediaKey) && !deletedIds.has(m.id)) {
       seenIds.add(m.id);
+      seenMedia.add(mediaKey);
       allMemories.push(m);
     }
   }

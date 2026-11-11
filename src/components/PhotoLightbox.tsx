@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
@@ -106,7 +107,134 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     touchEndX.current = null;
   };
 
-  return (
+  // 1. Immersive Full-Screen Cinema Theater View for Videos
+  if (memory.videoUrl) {
+    const videoContent = (
+      <div
+        className="fixed inset-0 flex flex-col justify-between select-none animate-fade-in"
+        style={{
+          zIndex: 99999,
+          backgroundColor: '#05020a',
+          position: 'fixed',
+          inset: 0,
+        }}
+        onClick={onClose}
+      >
+        {/* Floating Top Header Bar */}
+        <div
+          className="relative z-30 flex items-center justify-between p-3 sm:p-5"
+          style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+            <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
+              <Film className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-serif text-base sm:text-lg font-bold text-white truncate drop-shadow-md">
+                {memory.title}
+              </h3>
+              <p className="text-[11px] font-mono text-pink-200/80 flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-pink-400" />
+                <span>{memory.date}</span>
+                <span className="text-white/40">•</span>
+                <span>{currentIndex + 1} of {totalCount}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleLike}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-pink-400 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+              title="Love this video"
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+              aria-label="Close video view"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Full-Screen Video Stage */}
+        <div
+          className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <video
+            key={memory.id}
+            src={memory.videoUrl}
+            poster={memory.photoUrl}
+            controls
+            playsInline
+            autoPlay
+            preload="auto"
+            className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              const v = e.currentTarget;
+              if (v.paused) v.play().catch(() => {});
+              else v.pause();
+            }}
+          />
+        </div>
+
+        {/* Floating Bottom Navigation & Caption Bar */}
+        <div
+          className="relative z-30 p-3 sm:p-5 space-y-2"
+          style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {memory.caption && (
+            <p className="font-handwriting text-xl sm:text-2xl text-center text-pink-100/90 leading-snug drop-shadow-md px-3 line-clamp-2">
+              “{memory.caption}” ♡
+            </p>
+          )}
+
+          {totalCount > 1 && (
+            <div className="flex items-center justify-between max-w-sm mx-auto text-xs text-white/90">
+              <button
+                type="button"
+                onClick={onPrev}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
+
+              <span className="font-mono text-[11px] text-pink-300">
+                {currentIndex + 1} of {totalCount}
+              </span>
+
+              <button
+                type="button"
+                onClick={onNext}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+    if (typeof document !== 'undefined') {
+      return createPortal(videoContent, document.body);
+    }
+    return videoContent;
+  }
+
+  // 2. Authentic Polaroid Keepsake Frame for Photos
+  const photoContent = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in"
       onClick={onClose}
@@ -250,4 +378,9 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(photoContent, document.body);
+  }
+  return photoContent;
 };

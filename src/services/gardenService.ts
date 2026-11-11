@@ -1112,6 +1112,20 @@ export const memoryArchiveService = {
   }): Promise<MemoryEntry> {
     const user = authService.getCurrentUser();
     const partner = authService.getPartner();
+
+    // Check for recent duplicate submission within 12 seconds to prevent multi-posting
+    const existingList = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const recentDuplicate = existingList.find((m) => {
+      const isSameVideo = Boolean(memory.videoMediaId && m.videoMediaId === memory.videoMediaId);
+      const isSameTitle = m.title.trim().toLowerCase() === memory.title.trim().toLowerCase() && m.contributorId === user.id;
+      const isRecent = Math.abs(Date.now() - new Date(m.createdAt).getTime()) < 12000;
+      return (isSameVideo || isSameTitle) && isRecent;
+    });
+    if (recentDuplicate) {
+      console.warn('[Archive] Debounced duplicate memory submission within 12s');
+      return recentDuplicate;
+    }
+
     const entry: MemoryEntry = {
       id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       contributorId: user.id,
@@ -1175,8 +1189,14 @@ export const memoryArchiveService = {
         ...entry,
         videoUrl: entry.videoUrl && entry.videoUrl.length > 500000 ? undefined : entry.videoUrl,
       };
-      all.unshift(storageEntry);
-      saveLocal(STORAGE_KEYS.MEMORIES, all);
+      // Prevent duplicates in localStorage by ID and videoMediaId
+      const filtered = all.filter(
+        (m) =>
+          m.id !== entry.id &&
+          (!entry.videoMediaId || m.videoMediaId !== entry.videoMediaId)
+      );
+      filtered.unshift(storageEntry);
+      saveLocal(STORAGE_KEYS.MEMORIES, filtered);
     } catch (storageErr) {
       console.warn('[Archive] localStorage save failed (possibly full):', storageErr);
     }
