@@ -9,6 +9,8 @@ export interface StoredMediaItem {
   type: string;
   size: number;
   dataUrl: string;
+  blob?: Blob;
+  blobUrl?: string;
   createdAt: string;
 }
 
@@ -33,6 +35,8 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export const mediaStorage = {
+  blobUrlCache: new Map<string, string>(),
+
   /**
    * Reads a File or Blob into a base64 Data URL
    */
@@ -46,21 +50,55 @@ export const mediaStorage = {
   },
 
   /**
-   * Stores a file or blob in IndexedDB and returns stored media metadata + data URL
+   * Converts data URL to Blob for video playback compatibility
+   */
+  dataUrlToBlob(dataUrl: string): Blob {
+    const parts = dataUrl.split(',');
+    const mime = parts[0].match(/:(.*?);/)?.[1] || 'video/mp4';
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  },
+
+  /**
+   * Stores a file or blob in IndexedDB and returns stored media metadata + fast streaming blob URL
    */
   async saveFile(fileOrBlob: File | Blob, customName?: string): Promise<StoredMediaItem> {
-    const dataUrl = await this.readFileAsDataUrl(fileOrBlob);
     const id = `media-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const name = customName || (fileOrBlob as File).name || `Garden-File-${Date.now()}`;
     const type = fileOrBlob.type || 'application/octet-stream';
-    const size = fileOrBlob.size || dataUrl.length;
+    const size = fileOrBlob.size || 0;
+
+    // Create an instant, lightweight object URL for zero-copy streaming
+    let blobUrl = '';
+    if (typeof window !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
+      try {
+        blobUrl = window.URL.createObjectURL(fileOrBlob);
+        this.blobUrlCache.set(id, blobUrl);
+      } catch {}
+    }
+
+    // Only generate base64 dataUrl for small files (< 1.5MB, e.g. voice notes/images)
+    // Avoid generating massive base64 strings for videos (> 2MB) to prevent crashing localStorage & mobile decoders
+    let dataUrl = '';
+    if (size < 1.5 * 1024 * 1024) {
+      try {
+        dataUrl = await this.readFileAsDataUrl(fileOrBlob);
+      } catch {}
+    }
 
     const item: StoredMediaItem = {
       id,
       name,
       type,
       size,
-      dataUrl,
+      blob: fileOrBlob,
+      dataUrl: dataUrl || blobUrl,
+      blobUrl: blobUrl || dataUrl,
       createdAt: new Date().toISOString(),
     };
 
@@ -78,6 +116,39 @@ export const mediaStorage = {
     }
 
     return item;
+  },
+
+  /**
+   * Retrieves a playable media URL for a given media ID from IndexedDB
+   */
+  async getMediaUrl(id: string): Promise<string | null> {
+    if (this.blobUrlCache.has(id)) {
+      return this.blobUrlCache.get(id)!;
+    }
+    const item = await this.getFile(id);
+    if (!item) return null;
+
+    if (item.blob && typeof window !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
+      try {
+        const url = window.URL.createObjectURL(item.blob);
+        this.blobUrlCache.set(id, url);
+        return url;
+      } catch {}
+    }
+
+    if (item.dataUrl) {
+      if (item.dataUrl.startsWith('data:video/')) {
+        try {
+          const blob = this.dataUrlToBlob(item.dataUrl);
+          const url = window.URL.createObjectURL(blob);
+          this.blobUrlCache.set(id, url);
+          return url;
+        } catch {}
+      }
+      return item.dataUrl;
+    }
+
+    return null;
   },
 
   /**

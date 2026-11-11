@@ -1,6 +1,7 @@
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
 import { notificationService } from './notificationService';
 import { authService, AUTHORIZED_PROFILES } from './authService';
+import { mediaStorage } from '../utils/mediaStorage';
 import { isSpotifyUrl, getCleanSpotifyUrl, fetchSpotifyOEmbed } from '../utils/spotify';
 export { authService };
 export const DEFAULT_PROFILES = AUTHORIZED_PROFILES;
@@ -986,24 +987,64 @@ export const memoryArchiveService = {
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
-        // Merge: preserve videoUrl & mediaType from local cache if available
+        // Merge: preserve videoUrl & mediaType from local cache or IndexedDB
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
-        const mergedCloudEntries = visibleCloudEntries.map((c) => {
+        const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
-          if (l && l.videoUrl) {
-            return { ...c, videoUrl: l.videoUrl, mediaType: l.mediaType || 'video' };
+          let videoUrl = l?.videoUrl || c.videoUrl;
+          const videoMediaId = l?.videoMediaId || c.videoMediaId;
+          const mediaType = l?.mediaType || c.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+
+          if (videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
+            const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+            if (idbUrl) videoUrl = idbUrl;
+          } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+            try {
+              const blob = mediaStorage.dataUrlToBlob(videoUrl);
+              videoUrl = URL.createObjectURL(blob);
+            } catch {}
           }
-          return c;
-        });
+
+          return { ...c, videoUrl, videoMediaId, mediaType };
+        }));
 
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
-        const localOnlyEntries = localVisible.filter((m) => !cloudIds.has(m.id));
-        return [...localOnlyEntries, ...mergedCloudEntries];
+        const resolvedLocalEntries = await Promise.all(
+          localVisible.filter((m) => !cloudIds.has(m.id)).map(async (l) => {
+            let videoUrl = l.videoUrl;
+            if (l.videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
+              const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+              if (idbUrl) videoUrl = idbUrl;
+            } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+              try {
+                const blob = mediaStorage.dataUrlToBlob(videoUrl);
+                videoUrl = URL.createObjectURL(blob);
+              } catch {}
+            }
+            return { ...l, videoUrl };
+          })
+        );
+
+        return [...resolvedLocalEntries, ...mergedCloudEntries];
       }
     }
 
-    // Fallback: local only
-    return localVisible;
+    // Fallback: local only with resolved IndexedDB video URLs
+    return Promise.all(
+      localVisible.map(async (l) => {
+        let videoUrl = l.videoUrl;
+        if (l.videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
+          const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+          if (idbUrl) videoUrl = idbUrl;
+        } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+          try {
+            const blob = mediaStorage.dataUrlToBlob(videoUrl);
+            videoUrl = URL.createObjectURL(blob);
+          } catch {}
+        }
+        return { ...l, videoUrl };
+      })
+    );
   },
 
   async addMemory(memory: {
@@ -1012,6 +1053,7 @@ export const memoryArchiveService = {
     description?: string;
     photoUrl: string;
     videoUrl?: string;
+    videoMediaId?: string;
     mediaType?: 'photo' | 'video';
     voiceNoteUrl?: string;
     audioFileName?: string;
@@ -1029,7 +1071,8 @@ export const memoryArchiveService = {
       description: memory.description?.trim(),
       photoUrl: memory.photoUrl.trim(),
       videoUrl: memory.videoUrl,
-      mediaType: memory.mediaType || (memory.videoUrl ? 'video' : 'photo'),
+      videoMediaId: memory.videoMediaId,
+      mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
       voiceNoteUrl: memory.voiceNoteUrl,
       audioFileName: memory.audioFileName,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
@@ -1058,9 +1101,14 @@ export const memoryArchiveService = {
     }
 
     // Always save to localStorage as a reliable local cache
+    // Strip giant base64 dataUrls so localStorage never throws QuotaExceededError
     try {
       const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-      all.unshift(entry);
+      const storageEntry: MemoryEntry = {
+        ...entry,
+        videoUrl: entry.videoUrl && entry.videoUrl.length > 500000 ? undefined : entry.videoUrl,
+      };
+      all.unshift(storageEntry);
       saveLocal(STORAGE_KEYS.MEMORIES, all);
     } catch (storageErr) {
       console.warn('[Archive] localStorage save failed (possibly full):', storageErr);

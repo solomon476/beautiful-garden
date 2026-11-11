@@ -46,6 +46,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             accentColor: 'from-pink-500/20 to-purple-500/20',
             photoUrl: m.photoUrl,
             videoUrl: m.videoUrl,
+            videoMediaId: m.videoMediaId,
             mediaType: m.mediaType,
             altText: displayTitle,
           };

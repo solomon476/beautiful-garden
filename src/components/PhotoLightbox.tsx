@@ -81,6 +81,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   // Mobile swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
+    // If user touches the video or interactive controls, don't trigger swipe gestures
+    if ((e.target as HTMLElement).closest('video, button, input')) return;
     touchStartX.current = e.targetTouches[0].clientX;
   };
 
@@ -130,12 +132,15 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         <div className="polaroid-lightbox-image-wrapper relative group">
           {memory.videoUrl ? (
             <video
+              key={memory.id}
               src={memory.videoUrl}
               poster={memory.photoUrl}
               controls
               playsInline
               autoPlay
-              className="polaroid-lightbox-video"
+              preload="auto"
+              className="polaroid-lightbox-video relative z-10"
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <img
@@ -164,26 +169,43 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             )}
           </div>
 
-          {/* Interactive Heart Button on Photo */}
-          <button
-            onClick={handleLike}
-            className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-10 cursor-pointer"
-            aria-label="Love this memory"
-          >
-            <Heart
-              className={`w-4 h-4 transition-all duration-300 ${
-                isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
-              }`}
-            />
-            <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
-          </button>
+          {/* Interactive Heart Button on Photo (only shown when not a video to avoid blocking video controls) */}
+          {!memory.videoUrl && (
+            <button
+              onClick={handleLike}
+              className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-20 cursor-pointer"
+              aria-label="Love this memory"
+            >
+              <Heart
+                className={`w-4 h-4 transition-all duration-300 ${
+                  isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
+                }`}
+              />
+              <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
+            </button>
+          )}
         </div>
 
         {/* Polaroid Handwritten Caption Area */}
         <div className="pt-4 text-center">
-          <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 mb-1">
-            {memory.title}
-          </h3>
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-8" />
+            <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 truncate px-2">
+              {memory.title}
+            </h3>
+            {memory.videoUrl ? (
+              <button
+                type="button"
+                onClick={handleLike}
+                className="p-1.5 rounded-full hover:bg-pink-50 text-pink-500 transition-colors cursor-pointer"
+                title="Love this video"
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-500' : ''}`} />
+              </button>
+            ) : (
+              <div className="w-8" />
+            )}
+          </div>
           <div className="flex items-center justify-center gap-1 text-slate-500 text-xs font-mono uppercase tracking-wider mb-2">
             <Calendar className="w-3.5 h-3.5 text-pink-500" />
             <span>{memory.date}</span>

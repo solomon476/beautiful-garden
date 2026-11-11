@@ -133,6 +133,7 @@ export const LittleArchiveSection: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
+  const [videoMediaId, setVideoMediaId] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const [videoDuration, setVideoDuration] = useState<number | undefined>(undefined);
   const [isProcessingMedia, setIsProcessingMedia] = useState<boolean>(false);
@@ -210,6 +211,7 @@ export const LittleArchiveSection: React.FC = () => {
     setDescription('');
     setPhotoUrl('');
     setVideoUrl(undefined);
+    setVideoMediaId(undefined);
     setMediaType('photo');
     setVideoDuration(undefined);
     setIsProcessingMedia(false);
@@ -262,7 +264,8 @@ export const LittleArchiveSection: React.FC = () => {
 
       // 2. Store video in local IndexedDB media database
       const saved = await mediaStorage.saveFile(file, file.name);
-      setVideoUrl(saved.dataUrl);
+      setVideoUrl(saved.blobUrl || saved.dataUrl);
+      setVideoMediaId(saved.id);
       setMediaType('video');
 
       if (!title) {
@@ -301,6 +304,7 @@ export const LittleArchiveSection: React.FC = () => {
         description,
         photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
         videoUrl,
+        videoMediaId,
         mediaType,
         voiceNoteUrl,
         audioFileName,
@@ -852,11 +856,13 @@ export const LittleArchiveSection: React.FC = () => {
             <div className={styles.lightboxImageStage}>
               {lightboxMemory.videoUrl ? (
                 <video
+                  key={lightboxMemory.id}
                   src={lightboxMemory.videoUrl}
                   poster={lightboxMemory.photoUrl}
                   controls
                   playsInline
                   autoPlay
+                  preload="auto"
                   className={styles.lightboxVideo}
                 />
               ) : (

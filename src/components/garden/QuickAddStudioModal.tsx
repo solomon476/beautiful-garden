@@ -87,6 +87,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const [photoDate, setPhotoDate] = useState('');
   const [photoDataUrl, setPhotoDataUrl] = useState('');
   const [photoVideoUrl, setPhotoVideoUrl] = useState<string | undefined>(undefined);
+  const [photoVideoMediaId, setPhotoVideoMediaId] = useState<string | undefined>(undefined);
   const [photoMediaType, setPhotoMediaType] = useState<'photo' | 'video'>('photo');
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
   const [photoVoiceNote, setPhotoVoiceNote] = useState<string | undefined>(undefined);
@@ -163,13 +164,15 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         const { thumbnailUrl } = await extractVideoThumbnail(file, 0.5);
         const stored = await mediaStorage.saveFile(file);
         setPhotoDataUrl(thumbnailUrl);
-        setPhotoVideoUrl(stored.dataUrl);
+        setPhotoVideoUrl(stored.blobUrl || stored.dataUrl);
+        setPhotoVideoMediaId(stored.id);
         setPhotoMediaType('video');
         if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
       } else {
         const compressed = await compressImage(file, 1280, 1280, 0.82);
         setPhotoDataUrl(compressed);
         setPhotoVideoUrl(undefined);
+        setPhotoVideoMediaId(undefined);
         setPhotoMediaType('photo');
         if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
@@ -198,6 +201,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         caption: photoCaption,
         photoUrl: photoDataUrl,
         videoUrl: photoVideoUrl,
+        videoMediaId: photoVideoMediaId,
         mediaType: photoMediaType,
         voiceNoteUrl: photoVoiceNote,
         dateTaken: photoDate || 'Special Day',
