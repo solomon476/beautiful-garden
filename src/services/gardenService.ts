@@ -986,10 +986,19 @@ export const memoryArchiveService = {
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
-        // Merge: add any local-only entries (failed cloud upload) to the top
-        const cloudIds = new Set(visibleCloudEntries.map((e) => e.id));
+        // Merge: preserve videoUrl & mediaType from local cache if available
+        const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
+        const mergedCloudEntries = visibleCloudEntries.map((c) => {
+          const l = localMap.get(c.id);
+          if (l && l.videoUrl) {
+            return { ...c, videoUrl: l.videoUrl, mediaType: l.mediaType || 'video' };
+          }
+          return c;
+        });
+
+        const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
         const localOnlyEntries = localVisible.filter((m) => !cloudIds.has(m.id));
-        return [...localOnlyEntries, ...visibleCloudEntries];
+        return [...localOnlyEntries, ...mergedCloudEntries];
       }
     }
 
@@ -1002,6 +1011,8 @@ export const memoryArchiveService = {
     caption?: string;
     description?: string;
     photoUrl: string;
+    videoUrl?: string;
+    mediaType?: 'photo' | 'video';
     voiceNoteUrl?: string;
     audioFileName?: string;
     dateTaken?: string;
@@ -1017,6 +1028,8 @@ export const memoryArchiveService = {
       caption: memory.caption?.trim(),
       description: memory.description?.trim(),
       photoUrl: memory.photoUrl.trim(),
+      videoUrl: memory.videoUrl,
+      mediaType: memory.mediaType || (memory.videoUrl ? 'video' : 'photo'),
       voiceNoteUrl: memory.voiceNoteUrl,
       audioFileName: memory.audioFileName,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
@@ -1025,18 +1038,22 @@ export const memoryArchiveService = {
     };
 
     if (isLiveSupabaseConfigured && supabase) {
-      const { error: insertError } = await supabase.from('garden_memories').insert({
-        id: entry.id,
-        contributor_id: user.id,
-        title: entry.title,
-        caption: entry.caption,
-        description: entry.description,
-        photo_url: entry.photoUrl,
-        date_taken: entry.dateTaken,
-        is_shared: entry.isShared,
-      });
-      if (insertError) {
-        console.warn('[Archive] Supabase insert failed, saving to localStorage only:', insertError.message);
+      try {
+        const { error: insertError } = await supabase.from('garden_memories').insert({
+          id: entry.id,
+          contributor_id: user.id,
+          title: entry.title,
+          caption: entry.caption,
+          description: entry.description,
+          photo_url: entry.photoUrl,
+          date_taken: entry.dateTaken,
+          is_shared: entry.isShared,
+        });
+        if (insertError) {
+          console.warn('[Archive] Supabase insert failed, saving to localStorage only:', insertError.message);
+        }
+      } catch (err) {
+        console.warn('[Archive] Supabase insert error:', err);
       }
     }
 
@@ -1052,8 +1069,8 @@ export const memoryArchiveService = {
     if (entry.isShared) {
       notificationService.sendNotification({
         type: 'memory',
-        title: '📷 New Keepsake in Our Archive',
-        message: `${user.displayName} saved a new moment: "${entry.title}"`,
+        title: entry.mediaType === 'video' ? '🎬 New Video in Our Archive' : '📷 New Keepsake in Our Archive',
+        message: `${user.displayName} saved a new ${entry.mediaType === 'video' ? 'video clip' : 'moment'}: "${entry.title}"`,
         targetTab: 'archive',
         senderId: user.id,
         senderName: user.displayName,

@@ -66,6 +66,8 @@ export interface MemoryEntry {
   caption?: string;
   description?: string;
   photoUrl: string;
+  videoUrl?: string;
+  mediaType?: 'photo' | 'video';
   voiceNoteUrl?: string;
   audioFileName?: string;
   dateTaken?: string;

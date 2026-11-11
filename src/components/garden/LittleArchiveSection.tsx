@@ -18,12 +18,16 @@ import {
   MoreVertical,
   Image as ImageIcon,
   Calendar,
+  Film,
+  Play,
+  Loader2,
 } from 'lucide-react';
 import { memoryArchiveService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
-import { compressImage } from '../../utils/imageCompressor';
+import { compressImage, extractVideoThumbnail } from '../../utils/imageCompressor';
+import { mediaStorage } from '../../utils/mediaStorage';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
@@ -128,6 +132,10 @@ export const LittleArchiveSection: React.FC = () => {
   const [caption, setCaption] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
+  const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
+  const [videoDuration, setVideoDuration] = useState<number | undefined>(undefined);
+  const [isProcessingMedia, setIsProcessingMedia] = useState<boolean>(false);
   const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | undefined>(undefined);
   const [audioFileName, setAudioFileName] = useState<string | undefined>(undefined);
   const [showRecorder, setShowRecorder] = useState<boolean>(false);
@@ -139,6 +147,7 @@ export const LittleArchiveSection: React.FC = () => {
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
   const partner = authService.getPartner();
 
   const loadMemories = async () => {
@@ -200,6 +209,10 @@ export const LittleArchiveSection: React.FC = () => {
     setCaption('');
     setDescription('');
     setPhotoUrl('');
+    setVideoUrl(undefined);
+    setMediaType('photo');
+    setVideoDuration(undefined);
+    setIsProcessingMedia(false);
     setVoiceNoteUrl(undefined);
     setAudioFileName(undefined);
     setShowRecorder(false);
@@ -217,12 +230,49 @@ export const LittleArchiveSection: React.FC = () => {
       soundEngine.playSparkle();
       const compressedDataUrl = await compressImage(file, 1280, 1280, 0.82);
       setPhotoUrl(compressedDataUrl);
+      setVideoUrl(undefined);
+      setMediaType('photo');
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
     } catch (err) {
       console.error(err);
       setErrorMsg('Failed to process image file.');
+    }
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 120 * 1024 * 1024) {
+      setErrorMsg('Video file is larger than 120MB. Please choose a shorter video clip.');
+      return;
+    }
+
+    try {
+      soundEngine.playSparkle();
+      setIsProcessingMedia(true);
+      setErrorMsg(null);
+
+      // 1. Extract instant frame as poster thumbnail & calculate duration
+      const { thumbnailUrl, duration } = await extractVideoThumbnail(file);
+      setPhotoUrl(thumbnailUrl);
+      setVideoDuration(duration);
+
+      // 2. Store video in local IndexedDB media database
+      const saved = await mediaStorage.saveFile(file, file.name);
+      setVideoUrl(saved.dataUrl);
+      setMediaType('video');
+
+      if (!title) {
+        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+      }
+    } catch (err) {
+      console.error('[VideoUpload] Failed to process video:', err);
+      setErrorMsg('Failed to process video file. Please try another video format (MP4, MOV, WebM).');
+    } finally {
+      setIsProcessingMedia(false);
     }
   };
 
@@ -239,8 +289,8 @@ export const LittleArchiveSection: React.FC = () => {
       setErrorMsg('Please provide a title for this moment.');
       return;
     }
-    if (!photoUrl.trim()) {
-      setErrorMsg('Please select a photo from your phone or provide an image URL.');
+    if (!photoUrl.trim() && !videoUrl) {
+      setErrorMsg('Please select a photo or video from your phone.');
       return;
     }
 
@@ -249,7 +299,9 @@ export const LittleArchiveSection: React.FC = () => {
         title,
         caption,
         description,
-        photoUrl,
+        photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
+        videoUrl,
+        mediaType,
         voiceNoteUrl,
         audioFileName,
         dateTaken: dateTaken || 'Special Day',
@@ -258,7 +310,7 @@ export const LittleArchiveSection: React.FC = () => {
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
-      setMemories((prev) => [newEntry, ...prev]);
+      setMemories((prev) => [newEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
       loadMemories();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not save memory.');
@@ -320,18 +372,18 @@ export const LittleArchiveSection: React.FC = () => {
       <div
         onClick={handleOpenAdd}
         className="add-memory-banner group"
-        title="Pin a Photo to Our Album"
+        title="Pin a Photo or Video to Our Album"
       >
         <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
           <Camera className="w-5 h-5 text-white" />
         </div>
         <div className="min-w-0 text-left">
           <h3 className="font-bold text-base text-white tracking-wide leading-tight flex items-center gap-1.5">
-            <span>Pin a Photo to Our Album</span>
-            <span className="text-pink-300">📸</span>
+            <span>Pin a Photo or Video to Our Album</span>
+            <span className="text-pink-300">📸 🎬</span>
           </h3>
           <p className="text-xs text-pink-200/90 font-serif italic mt-0.5 leading-tight">
-            Capture moments, share thoughts ♡
+            Add photos, video clips, and voice memories ♡
           </p>
         </div>
       </div>
@@ -476,6 +528,15 @@ export const LittleArchiveSection: React.FC = () => {
                     }}
                   />
 
+                  {/* Video Play Icon Overlay */}
+                  {mem.videoUrl && (
+                    <div className={styles.videoPlayBadgeOverlay}>
+                      <div className={styles.videoPlayIconCircle}>
+                        <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Favorite Heart Button */}
                   <button
                     type="button"
@@ -490,11 +551,18 @@ export const LittleArchiveSection: React.FC = () => {
                     />
                   </button>
 
-                  {/* Photo count badge */}
-                  <div className="archive-card-photo-count">
-                    <ImageIcon className="w-2.5 h-2.5" />
-                    <span>1</span>
-                  </div>
+                  {/* Photo or Video count badge */}
+                  {mem.videoUrl ? (
+                    <div className="archive-card-photo-count bg-black/70 text-amber-200 border border-amber-300/40">
+                      <Film className="w-2.5 h-2.5 text-amber-300" />
+                      <span>Video</span>
+                    </div>
+                  ) : (
+                    <div className="archive-card-photo-count">
+                      <ImageIcon className="w-2.5 h-2.5" />
+                      <span>1</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Side: Details & Romantic Note */}
@@ -782,17 +850,22 @@ export const LittleArchiveSection: React.FC = () => {
             </div>
 
             <div className={styles.lightboxImageStage}>
-              <img
-                src={lightboxMemory.photoUrl}
-                alt=""
-                aria-hidden="true"
-                className={styles.cardThumbAmbient}
-              />
-              <img
-                src={lightboxMemory.photoUrl}
-                alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
-                className={styles.lightboxMainImage}
-              />
+              {lightboxMemory.videoUrl ? (
+                <video
+                  src={lightboxMemory.videoUrl}
+                  poster={lightboxMemory.photoUrl}
+                  controls
+                  playsInline
+                  autoPlay
+                  className={styles.lightboxVideo}
+                />
+              ) : (
+                <img
+                  src={lightboxMemory.photoUrl}
+                  alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
+                  className={styles.lightboxMainImage}
+                />
+              )}
             </div>
 
             {lightboxMemory.caption && (
@@ -911,11 +984,22 @@ export const LittleArchiveSection: React.FC = () => {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className={`${styles.uploadChoiceBtn} ${
-                  photoUrl ? styles.uploadChoiceBtnActive : ''
+                  photoUrl && !videoUrl ? styles.uploadChoiceBtnActive : ''
                 }`}
               >
                 <Upload className="w-4 h-4" />
-                <span>Choose Photo from Phone</span>
+                <span>Upload Photo 📸</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => videoInputRef.current?.click()}
+                className={`${styles.uploadChoiceBtn} ${
+                  videoUrl ? styles.uploadChoiceBtnActive : ''
+                }`}
+              >
+                <Film className="w-4 h-4" />
+                <span>Upload Video 🎬</span>
               </button>
 
               <button
@@ -938,6 +1022,22 @@ export const LittleArchiveSection: React.FC = () => {
               onChange={handlePhotoUpload}
             />
 
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={handleVideoUpload}
+            />
+
+            {/* Processing Video Spinner */}
+            {isProcessingMedia && (
+              <div className="p-4 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center justify-center gap-3 text-xs text-pink-200 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-pink-300" />
+                <span>Processing video clip & generating keepsake poster frame... ✨</span>
+              </div>
+            )}
+
             {/* Voice Recorder */}
             {showRecorder && (
               <VoiceNoteRecorder
@@ -946,8 +1046,38 @@ export const LittleArchiveSection: React.FC = () => {
               />
             )}
 
-            {/* Photo Preview */}
-            {photoUrl && (
+            {/* Video Preview */}
+            {videoUrl && (
+              <div className="relative rounded-2xl overflow-hidden max-h-60 border border-pink-400/30 shadow-md bg-black/60">
+                <video
+                  src={videoUrl}
+                  poster={photoUrl}
+                  controls
+                  playsInline
+                  className="w-full max-h-60 object-contain mx-auto"
+                />
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[11px] font-mono text-pink-200 flex items-center gap-1.5">
+                  <Film className="w-3.5 h-3.5 text-pink-300" />
+                  <span>Video Clip {videoDuration ? `(${Math.round(videoDuration)}s)` : ''}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoUrl(undefined);
+                    setMediaType('photo');
+                    setPhotoUrl('');
+                    setVideoDuration(undefined);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                  title="Remove video"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Photo Preview (when photo selected and no video) */}
+            {photoUrl && !videoUrl && (
               <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
                 <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
                 <button

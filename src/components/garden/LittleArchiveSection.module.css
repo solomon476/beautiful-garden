@@ -918,36 +918,66 @@
   border-radius: var(--arc-radius-sm);
   overflow: hidden;
   max-height: 60vh;
-  background: radial-gradient(circle at 50% 30%, rgba(244, 114, 182, 0.18) 0%, rgba(18, 9, 28, 0.98) 100%);
+  width: 100%;
+  background: radial-gradient(circle at 50% 30%, rgba(244, 114, 182, 0.16) 0%, rgba(18, 9, 28, 0.98) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6px;
-}
-
-.lightboxImageStage .cardThumbAmbient {
-  position: absolute !important;
-  inset: -20% !important;
-  width: 140% !important;
-  height: 140% !important;
-  max-height: none !important;
-  max-width: none !important;
-  object-fit: cover !important;
-  filter: blur(28px) brightness(0.6) saturate(1.4) !important;
-  opacity: 0.75 !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
+  box-sizing: border-box;
 }
 
 .lightboxMainImage {
   max-height: 58vh;
   max-width: 100%;
   width: auto;
+  height: auto;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
   position: relative;
   z-index: 2;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(244, 114, 182, 0.15);
+}
+
+.lightboxVideo {
+  max-height: 58vh;
+  max-width: 100%;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  background: #000000;
+  outline: none;
+}
+
+.videoPlayBadgeOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 5, 20, 0.28);
+  pointer-events: none;
+  z-index: 3;
+  transition: background 250ms ease;
+}
+
+.videoPlayIconCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.9) 0%, rgba(192, 132, 252, 0.9) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(244, 114, 182, 0.6), 0 0 12px rgba(0, 0, 0, 0.4);
+  transition: transform 220ms ease;
 }
 
 .lightboxCaption {
@@ -1016,7 +1046,7 @@
 
 .addModalUploadGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px;
 }
 

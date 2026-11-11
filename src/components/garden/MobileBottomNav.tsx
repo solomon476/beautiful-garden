@@ -80,18 +80,16 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           >
             <div className="relative">
               <Icon
-                className={`w-5 h-5 ${
-                  isActive ? 'stroke-[2.2] text-[#8b25a8]' : 'text-[#65487d]'
-                }`}
+                className={`w-5 h-5 ${isActive ? 'stroke-[2.2] text-[#8b25a8]' : 'text-[#65487d]'
+                  }`}
               />
               {isActive && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#8b25a8]" />
               )}
             </div>
             <span
-              className={`text-[10px] font-sans ${
-                isActive ? 'font-bold text-[#8b25a8]' : 'text-[#65487d]'
-              }`}
+              className={`text-[10px] font-sans ${isActive ? 'font-bold text-[#8b25a8]' : 'text-[#65487d]'
+                }`}
             >
               {item.label}
             </span>

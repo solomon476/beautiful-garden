@@ -22,6 +22,9 @@ import {
   FileText,
   Clock,
   Search,
+  Film,
+  Play,
+  Loader2,
 } from 'lucide-react';
 import {
   memoryArchiveService,
@@ -34,7 +37,7 @@ import {
 import type { ShelfCategory, SongStatus } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
-import { compressImage } from '../../utils/imageCompressor';
+import { compressImage, extractVideoThumbnail } from '../../utils/imageCompressor';
 import {
   isSpotifyUrl,
   getCleanSpotifyUrl,
@@ -78,11 +81,14 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const currentUser = authService.getCurrentUser();
   const partner = authService.getPartner();
 
-  // 1. Photo state
+  // 1. Photo & Video state
   const [photoTitle, setPhotoTitle] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [photoDate, setPhotoDate] = useState('');
   const [photoDataUrl, setPhotoDataUrl] = useState('');
+  const [photoVideoUrl, setPhotoVideoUrl] = useState<string | undefined>(undefined);
+  const [photoMediaType, setPhotoMediaType] = useState<'photo' | 'video'>('photo');
+  const [isProcessingMedia, setIsProcessingMedia] = useState(false);
   const [photoVoiceNote, setPhotoVoiceNote] = useState<string | undefined>(undefined);
   const [photoShared, setPhotoShared] = useState(true);
   const [showPhotoRecorder, setShowPhotoRecorder] = useState(false);
@@ -142,17 +148,35 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
     setIsSuccess(false);
   };
 
-  // --- Handlers for Photo ---
+  // --- Handlers for Photo & Video ---
   const handlePhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       soundEngine.playSparkle();
-      const compressed = await compressImage(file, 1280, 1280, 0.82);
-      setPhotoDataUrl(compressed);
-      if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
+      if (file.type.startsWith('video/')) {
+        if (file.size > 120 * 1024 * 1024) {
+          setErrorMsg('Video file is too large (max 120MB). Please select a shorter video clip.');
+          return;
+        }
+        setIsProcessingMedia(true);
+        const { thumbnailUrl } = await extractVideoThumbnail(file, 0.5);
+        const stored = await mediaStorage.saveFile(file);
+        setPhotoDataUrl(thumbnailUrl);
+        setPhotoVideoUrl(stored.dataUrl);
+        setPhotoMediaType('video');
+        if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
+      } else {
+        const compressed = await compressImage(file, 1280, 1280, 0.82);
+        setPhotoDataUrl(compressed);
+        setPhotoVideoUrl(undefined);
+        setPhotoMediaType('photo');
+        if (!photoTitle) setPhotoTitle(file.name.replace(/\.[^/.]+$/, ''));
+      }
     } catch {
-      setErrorMsg('Failed to process image file.');
+      setErrorMsg('Failed to process image or video file.');
+    } finally {
+      setIsProcessingMedia(false);
     }
   };
 
@@ -163,7 +187,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
       return;
     }
     if (!photoDataUrl.trim()) {
-      setErrorMsg('Please select a photo from your device or gallery.');
+      setErrorMsg('Please select a photo or video from your device or gallery.');
       return;
     }
 
@@ -173,6 +197,8 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         title: photoTitle,
         caption: photoCaption,
         photoUrl: photoDataUrl,
+        videoUrl: photoVideoUrl,
+        mediaType: photoMediaType,
         voiceNoteUrl: photoVoiceNote,
         dateTaken: photoDate || 'Special Day',
         isShared: photoShared,
@@ -499,27 +525,43 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
             <input
               ref={photoInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               style={{ display: 'none' }}
               onChange={handlePhotoFile}
             />
 
             <div
               className={styles.uploadArea}
-              onClick={() => photoInputRef.current?.click()}
+              onClick={() => !isProcessingMedia && photoInputRef.current?.click()}
             >
-              {photoDataUrl ? (
+              {isProcessingMedia ? (
+                <div className="flex flex-col items-center justify-center p-8 gap-3 w-full text-pink-300">
+                  <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
+                  <span className="text-xs font-mono font-medium">Processing video & generating keepsake frame...</span>
+                </div>
+              ) : photoDataUrl ? (
                 <>
                   <div
                     className={styles.imagePreview}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <img src={photoDataUrl} alt="Preview" />
+                    {photoVideoUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+                        <div className="w-10 h-10 rounded-full bg-pink-500/80 backdrop-blur-md flex items-center justify-center shadow-lg">
+                          <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                        </div>
+                      </div>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setPhotoDataUrl('')}
+                      onClick={() => {
+                        setPhotoDataUrl('');
+                        setPhotoVideoUrl(undefined);
+                        setPhotoMediaType('photo');
+                      }}
                       className={styles.removeImage}
-                      title="Remove image"
+                      title="Remove image or video"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -529,13 +571,13 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
 
                   <div className={styles.uploadContentRight}>
                     <div className={styles.uploadIcon}>
-                      <UploadCloud className="w-7 h-7" />
+                      {photoVideoUrl ? <Film className="w-7 h-7 text-pink-300" /> : <UploadCloud className="w-7 h-7" />}
                     </div>
                     <div className={styles.uploadTitle}>
-                      Click to change image
+                      {photoVideoUrl ? 'Video Clip Selected' : 'Click to change image'}
                     </div>
                     <div className={styles.uploadSubtitle}>
-                      JPG, PNG or other files
+                      {photoVideoUrl ? 'Click to change video or photo' : 'JPG, PNG, MP4, MOV or WebM'}
                     </div>
                     <svg width="40" height="20" viewBox="0 0 50 25" fill="none" stroke="#ff78d2" strokeWidth="1.8" strokeLinecap="round">
                       <path d="M5 18 C15 22, 25 22, 35 15 C38 12, 43 8, 41 4 C39 0, 34 3, 33 8 C32 13, 38 18, 47 16" />
@@ -548,10 +590,10 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                     <UploadCloud className="w-7 h-7" />
                   </div>
                   <div className={styles.uploadTitle}>
-                    Click to upload or drag and drop
+                    Click to upload photo or video
                   </div>
                   <div className={styles.uploadSubtitle}>
-                    JPG, PNG or other files
+                    JPG, PNG, MP4, MOV or WebM
                   </div>
                   <svg width="40" height="20" viewBox="0 0 50 25" fill="none" stroke="#ff78d2" strokeWidth="1.8" strokeLinecap="round">
                     <path d="M5 18 C15 22, 25 22, 35 15 C38 12, 43 8, 41 4 C39 0, 34 3, 33 8 C32 13, 38 18, 47 16" />
