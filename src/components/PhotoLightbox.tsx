@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 
@@ -126,22 +126,42 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Polaroid Picture: Natural Proportions, Same Shape As Card, Zero Crop & Zero Zoom */}
+        {/* Polaroid Picture or Video: Natural Proportions, Same Shape As Card, Zero Crop & Zero Zoom */}
         <div className="polaroid-lightbox-image-wrapper relative group">
-          <img
-            src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
-            alt={memory.altText || memory.title}
-            className="polaroid-lightbox-image"
-            loading="eager"
-            decoding="async"
-            onError={(e) => {
-              // Graceful fallback to memory placeholder
-              (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
-            }}
-          />
-          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10">
-            <Sparkles className="w-3 h-3 text-pink-400" />
-            <span>{memory.tag}</span>
+          {memory.videoUrl ? (
+            <video
+              src={memory.videoUrl}
+              poster={memory.photoUrl}
+              controls
+              playsInline
+              autoPlay
+              className="polaroid-lightbox-video"
+            />
+          ) : (
+            <img
+              src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
+              alt={memory.altText || memory.title}
+              className="polaroid-lightbox-image"
+              loading="eager"
+              decoding="async"
+              onError={(e) => {
+                // Graceful fallback to memory placeholder
+                (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+              }}
+            />
+          )}
+          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
+            {memory.videoUrl ? (
+              <>
+                <Film className="w-3 h-3 text-amber-300" />
+                <span>Video Keepsake 🎬</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3 h-3 text-pink-400" />
+                <span>{memory.tag}</span>
+              </>
+            )}
           </div>
 
           {/* Interactive Heart Button on Photo */}

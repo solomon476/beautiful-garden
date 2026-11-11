@@ -10,6 +10,8 @@ import {
   MoreHorizontal,
   MoreVertical,
   Image as ImageIcon,
+  Play,
+  Film,
 } from 'lucide-react';
 import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
@@ -43,6 +45,8 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
             tag: m.contributorName ? `Pinned by ${m.contributorName}` : 'Pinned',
             accentColor: 'from-pink-500/20 to-purple-500/20',
             photoUrl: m.photoUrl,
+            videoUrl: m.videoUrl,
+            mediaType: m.mediaType,
             altText: displayTitle,
           };
         });
@@ -132,18 +136,18 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
           if (onOpenArchive) onOpenArchive();
         }}
         className="add-memory-banner group"
-        title="Pin a Photo to Our Album"
+        title="Pin a Photo or Video to Our Album"
       >
         <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
           <Camera className="w-5 h-5 text-white" />
         </div>
         <div className="min-w-0 text-left">
           <h3 className="font-bold text-base text-white tracking-wide leading-tight flex items-center gap-1.5">
-            <span>Pin a Photo to Our Album</span>
-            <span className="text-pink-300">📸</span>
+            <span>Pin a Photo or Video to Our Album</span>
+            <span className="text-pink-300">📸 🎬</span>
           </h3>
           <p className="text-xs text-pink-200/90 font-serif italic mt-0.5 leading-tight">
-            Capture moments, share thoughts ♡
+            Capture moments & video clips, share thoughts ♡
           </p>
         </div>
       </div>
@@ -214,6 +218,15 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     }}
                   />
 
+                  {/* Video Play Icon Overlay */}
+                  {memory.videoUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none z-10">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
+                        <Play className="w-4 h-4 fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Favorite Heart Button */}
                   <button
                     type="button"
@@ -228,11 +241,18 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     />
                   </button>
 
-                  {/* Photo count badge */}
-                  <div className="archive-card-photo-count">
-                    <ImageIcon className="w-2.5 h-2.5" />
-                    <span>1</span>
-                  </div>
+                  {/* Photo or Video count badge */}
+                  {memory.videoUrl ? (
+                    <div className="archive-card-photo-count bg-black/70 text-amber-200 border border-amber-300/40">
+                      <Film className="w-2.5 h-2.5 text-amber-300" />
+                      <span>Video</span>
+                    </div>
+                  ) : (
+                    <div className="archive-card-photo-count">
+                      <ImageIcon className="w-2.5 h-2.5" />
+                      <span>1</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Side: Details & Romantic Note */}
@@ -350,8 +370,19 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     className="w-full h-full object-cover object-[center_18%] group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20">
-                    {memory.tag}
+
+                  {/* Video Play Icon Overlay */}
+                  {memory.videoUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none z-10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
+                        <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20 flex items-center gap-1.5">
+                    {memory.videoUrl && <Film className="w-3 h-3 text-amber-300" />}
+                    <span>{memory.videoUrl ? 'Video Keepsake' : memory.tag}</span>
                   </div>
                   <button
                     type="button"
@@ -359,8 +390,8 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                       e.stopPropagation();
                       handleOpenPhoto(index);
                     }}
-                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors"
-                    title="Fullscreen"
+                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors z-10"
+                    title={memory.videoUrl ? 'Play Video' : 'Fullscreen'}
                   >
                     <ZoomIn className="w-4 h-4" />
                   </button>

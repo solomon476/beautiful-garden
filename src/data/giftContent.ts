@@ -6,6 +6,8 @@ export interface MemoryItem {
   tag: string;
   accentColor: string;
   photoUrl?: string;
+  videoUrl?: string;
+  mediaType?: 'photo' | 'video';
   altText: string;
   objectPosition?: string;
   filter?: string;
