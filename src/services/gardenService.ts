@@ -968,18 +968,54 @@ export const memoryArchiveService = {
 
       if (!error && data && data.length > 0) {
         const cloudEntries: MemoryEntry[] = data
-          .map((d: any) => ({
-            id: d.id,
-            contributorId: d.contributor_id,
-            contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
-            title: d.title,
-            caption: d.caption,
-            description: d.description,
-            photoUrl: d.photo_url,
-            dateTaken: d.date_taken,
-            isShared: d.is_shared,
-            createdAt: d.created_at,
-          }))
+          .map((d: any) => {
+            let videoUrl: string | undefined = d.video_url || undefined;
+            let videoMediaId: string | undefined = undefined;
+            let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
+            let description: string = d.description || '';
+
+            // Check if description is packed JSON containing video metadata
+            if (
+              description &&
+              typeof description === 'string' &&
+              description.startsWith('{') &&
+              description.includes('"videoUrl"')
+            ) {
+              try {
+                const parsed = JSON.parse(description);
+                if (parsed.videoUrl) {
+                  videoUrl = parsed.videoUrl;
+                  mediaType = 'video';
+                }
+                if (parsed.videoMediaId) {
+                  videoMediaId = parsed.videoMediaId;
+                  mediaType = 'video';
+                }
+                if (parsed.mediaType) {
+                  mediaType = parsed.mediaType;
+                }
+                if (parsed.note !== undefined) {
+                  description = parsed.note;
+                }
+              } catch {}
+            }
+
+            return {
+              id: d.id,
+              contributorId: d.contributor_id,
+              contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+              title: d.title,
+              caption: d.caption,
+              description: description,
+              photoUrl: d.photo_url,
+              videoUrl: videoUrl,
+              videoMediaId: videoMediaId,
+              mediaType: mediaType,
+              dateTaken: d.date_taken,
+              isShared: d.is_shared,
+              createdAt: d.created_at,
+            };
+          })
           .filter((d) => !deletedIds.has(d.id));
 
         // Filter cloud entries by privacy (private memories only visible to contributor)
@@ -991,18 +1027,26 @@ export const memoryArchiveService = {
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
         const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
-          let videoUrl = l?.videoUrl || c.videoUrl;
-          const videoMediaId = l?.videoMediaId || c.videoMediaId;
-          const mediaType = l?.mediaType || c.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+          let videoUrl = c.videoUrl || l?.videoUrl;
+          const videoMediaId = c.videoMediaId || l?.videoMediaId;
+          const mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-          if (videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
-            const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-            if (idbUrl) videoUrl = idbUrl;
-          } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+          // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
+          if (videoMediaId) {
+            try {
+              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+              if (idbUrl) videoUrl = idbUrl;
+            } catch {}
+          }
+
+          // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
+          if (videoUrl && videoUrl.startsWith('data:video/')) {
             try {
               const blob = mediaStorage.dataUrlToBlob(videoUrl);
               videoUrl = URL.createObjectURL(blob);
-            } catch {}
+            } catch (err) {
+              console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
+            }
           }
 
           return { ...c, videoUrl, videoMediaId, mediaType };
@@ -1012,10 +1056,13 @@ export const memoryArchiveService = {
         const resolvedLocalEntries = await Promise.all(
           localVisible.filter((m) => !cloudIds.has(m.id)).map(async (l) => {
             let videoUrl = l.videoUrl;
-            if (l.videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
-              const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
-              if (idbUrl) videoUrl = idbUrl;
-            } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+            if (l.videoMediaId) {
+              try {
+                const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+                if (idbUrl) videoUrl = idbUrl;
+              } catch {}
+            }
+            if (videoUrl && videoUrl.startsWith('data:video/')) {
               try {
                 const blob = mediaStorage.dataUrlToBlob(videoUrl);
                 videoUrl = URL.createObjectURL(blob);
@@ -1033,10 +1080,13 @@ export const memoryArchiveService = {
     return Promise.all(
       localVisible.map(async (l) => {
         let videoUrl = l.videoUrl;
-        if (l.videoMediaId && (!videoUrl || videoUrl.length > 500000)) {
-          const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
-          if (idbUrl) videoUrl = idbUrl;
-        } else if (videoUrl && videoUrl.startsWith('data:video/')) {
+        if (l.videoMediaId) {
+          try {
+            const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+            if (idbUrl) videoUrl = idbUrl;
+          } catch {}
+        }
+        if (videoUrl && videoUrl.startsWith('data:video/')) {
           try {
             const blob = mediaStorage.dataUrlToBlob(videoUrl);
             videoUrl = URL.createObjectURL(blob);
@@ -1082,12 +1132,29 @@ export const memoryArchiveService = {
 
     if (isLiveSupabaseConfigured && supabase) {
       try {
+        let descriptionToSave = entry.description || entry.caption || '';
+        if (entry.mediaType === 'video' || entry.videoUrl || entry.videoMediaId) {
+          // If videoUrl is a local blob: URL, do not sync the dead blob URL to cloud!
+          // Only sync remote URLs or base64 data URLs to cloud
+          const syncableVideoUrl =
+            entry.videoUrl && !entry.videoUrl.startsWith('blob:')
+              ? entry.videoUrl
+              : undefined;
+
+          descriptionToSave = JSON.stringify({
+            note: entry.description || entry.caption || '',
+            videoUrl: syncableVideoUrl,
+            videoMediaId: entry.videoMediaId,
+            mediaType: 'video',
+          });
+        }
+
         const { error: insertError } = await supabase.from('garden_memories').insert({
           id: entry.id,
           contributor_id: user.id,
           title: entry.title,
           caption: entry.caption,
-          description: entry.description,
+          description: descriptionToSave,
           photo_url: entry.photoUrl,
           date_taken: entry.dateTaken,
           is_shared: entry.isShared,
@@ -1130,6 +1197,7 @@ export const memoryArchiveService = {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('garden-memories-updated'));
+      window.dispatchEvent(new Event('garden-memory-added'));
     }
 
     return entry;

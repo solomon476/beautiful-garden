@@ -133,6 +133,7 @@ export const LittleArchiveSection: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
+  const [cloudVideoUrl, setCloudVideoUrl] = useState<string | undefined>(undefined);
   const [videoMediaId, setVideoMediaId] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const [videoDuration, setVideoDuration] = useState<number | undefined>(undefined);
@@ -211,6 +212,7 @@ export const LittleArchiveSection: React.FC = () => {
     setDescription('');
     setPhotoUrl('');
     setVideoUrl(undefined);
+    setCloudVideoUrl(undefined);
     setVideoMediaId(undefined);
     setMediaType('photo');
     setVideoDuration(undefined);
@@ -268,6 +270,18 @@ export const LittleArchiveSection: React.FC = () => {
       setVideoMediaId(saved.id);
       setMediaType('video');
 
+      // 3. For video clips under 7MB, read base64 data URL for cross-device cloud sync to partner
+      if (file.size <= 7 * 1024 * 1024) {
+        try {
+          const syncDataUrl = await mediaStorage.readFileAsDataUrl(file);
+          setCloudVideoUrl(syncDataUrl);
+        } catch (e) {
+          console.warn('[VideoUpload] Could not generate base64 for cloud sync:', e);
+        }
+      } else {
+        setCloudVideoUrl(undefined);
+      }
+
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ''));
       }
@@ -303,7 +317,7 @@ export const LittleArchiveSection: React.FC = () => {
         caption,
         description,
         photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
-        videoUrl,
+        videoUrl: cloudVideoUrl || videoUrl,
         videoMediaId,
         mediaType,
         voiceNoteUrl,
@@ -314,7 +328,12 @@ export const LittleArchiveSection: React.FC = () => {
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
-      setMemories((prev) => [newEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
+      // For immediate local display, preserve the instant blobUrl
+      const localPlayableEntry: MemoryEntry = {
+        ...newEntry,
+        videoUrl: videoUrl || newEntry.videoUrl,
+      };
+      setMemories((prev) => [localPlayableEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
       loadMemories();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not save memory.');
@@ -728,6 +747,24 @@ export const LittleArchiveSection: React.FC = () => {
                   <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20">
                     {mem.isShared ? 'Shared ♡' : 'Private 🔒'}
                   </div>
+
+                  {/* Video Play Icon Overlay */}
+                  {mem.videoUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
+                        <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Video Clip Badge */}
+                  {mem.videoUrl && (
+                    <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-mono text-amber-200 border border-amber-300/40 flex items-center gap-1.5 z-10">
+                      <Film className="w-3 h-3 text-amber-300" />
+                      <span>Video Clip</span>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={(e) => {
@@ -735,7 +772,7 @@ export const LittleArchiveSection: React.FC = () => {
                       soundEngine.playSparkle();
                       setLightboxMemory(mem);
                     }}
-                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors"
+                    className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors z-10"
                     title="Fullscreen"
                   >
                     <ZoomIn className="w-4 h-4" />
@@ -864,6 +901,12 @@ export const LittleArchiveSection: React.FC = () => {
                   autoPlay
                   preload="auto"
                   className={styles.lightboxVideo}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const v = e.currentTarget;
+                    if (v.paused) v.play().catch(() => {});
+                    else v.pause();
+                  }}
                 />
               ) : (
                 <img

@@ -139,8 +139,13 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
               playsInline
               autoPlay
               preload="auto"
-              className="polaroid-lightbox-video relative z-10"
-              onClick={(e) => e.stopPropagation()}
+              className="polaroid-lightbox-video relative z-10 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                const v = e.currentTarget;
+                if (v.paused) v.play().catch(() => {});
+                else v.pause();
+              }}
             />
           ) : (
             <img

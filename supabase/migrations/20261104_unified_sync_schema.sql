@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS public.mood_entries (
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 5. Our Little Archive (Photos & Memories)
+-- 5. Our Little Archive (Photos, Videos & Memories)
 CREATE TABLE IF NOT EXISTS public.garden_memories (
   id TEXT PRIMARY KEY,
   contributor_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -65,10 +65,15 @@ CREATE TABLE IF NOT EXISTS public.garden_memories (
   caption TEXT,
   description TEXT,
   photo_url TEXT NOT NULL,
+  video_url TEXT,
+  media_type TEXT DEFAULT 'photo',
   date_taken TEXT,
   is_shared BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
+
+ALTER TABLE public.garden_memories ADD COLUMN IF NOT EXISTS video_url TEXT;
+ALTER TABLE public.garden_memories ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'photo';
 
 -- 6. Sound Garden (Songs & Audio)
 CREATE TABLE IF NOT EXISTS public.songs (

@@ -61,10 +61,12 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
     loadArchiveMemories();
     const handleUpdate = () => loadArchiveMemories();
     window.addEventListener('garden-memory-added', handleUpdate);
+    window.addEventListener('garden-memories-updated', handleUpdate);
     window.addEventListener('garden-memory-deleted', handleUpdate);
     window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
       window.removeEventListener('garden-memory-added', handleUpdate);
+      window.removeEventListener('garden-memories-updated', handleUpdate);
       window.removeEventListener('garden-memory-deleted', handleUpdate);
       window.removeEventListener('garden-bin-updated', handleUpdate);
     };
