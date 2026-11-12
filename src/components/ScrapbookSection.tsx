@@ -137,8 +137,8 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
       // Realtime notification to partner
       notificationService.sendNotification({
         type: 'memory',
-        title: '❤️ Loved a Memory',
-        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        title: '❤️ Liked a Photo',
+        message: `${user.displayName} liked "${displayTitle}" in Our Archive! ♡`,
         targetTab: 'archive',
         senderId: user.id,
         senderName: user.displayName,
@@ -147,7 +147,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
       });
 
       // Immediate confirmation toast to self
-      setLikeToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setLikeToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
       setTimeout(() => setLikeToast(null), 3800);
     }
   };
@@ -275,7 +275,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     type="button"
                     onClick={(e) => handleToggleLike(memory.id, e)}
                     className="archive-card-favourite"
-                    title={isLiked ? 'Loved!' : 'Love this memory'}
+                    title={isLiked ? 'Liked!' : 'Like this memory'}
                   >
                     <Heart
                       className={`w-3.5 h-3.5 transition-transform ${
@@ -460,7 +460,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
                     className="flex items-center gap-1.5 text-pink-300 hover:text-pink-200 font-semibold"
                   >
                     <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-400 text-pink-400' : ''}`} />
-                    <span>{count} Loves</span>
+                    <span>{count} {count === 1 ? 'Like' : 'Likes'}</span>
                   </button>
 
                   <button

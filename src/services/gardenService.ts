@@ -86,19 +86,7 @@ export const DEFAULT_INITIAL_SHELF: ShelfEntry[] = [
   },
 ];
 
-export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [
-  {
-    id: 'seed-mem-1',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'First Walk in the Garden',
-    caption: 'The moment everything clicked and time stood still.',
-    photoUrl: '/assets/dreamy_night_garden.jpg',
-    dateTaken: 'Nov 2026',
-    isShared: true,
-    createdAt: '2026-11-01T16:00:00.000Z',
-  },
-];
+export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [];
 
 export const DEFAULT_INITIAL_PETALS: PetalNoteEntry[] = [
   {
@@ -941,7 +929,7 @@ export const memoryArchiveService = {
   getCachedMemories(): MemoryEntry[] {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
-    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     return localAll
       .filter((m) => !deletedIds.has(m.id))
@@ -953,7 +941,7 @@ export const memoryArchiveService = {
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
-    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     const localVisible = localAll
       .filter((m) => !deletedIds.has(m.id))
@@ -1072,7 +1060,10 @@ export const memoryArchiveService = {
           })
         );
 
-        return [...resolvedLocalEntries, ...mergedCloudEntries];
+        const fullEntries = [...resolvedLocalEntries, ...mergedCloudEntries];
+        // Cache to local storage so subsequent opens are instant with ZERO delay or placeholder flicker!
+        saveLocal(STORAGE_KEYS.MEMORIES, fullEntries);
+        return fullEntries;
       }
     }
 
@@ -1223,11 +1214,35 @@ export const memoryArchiveService = {
     return entry;
   },
 
-  async deleteMemory(id: string): Promise<void> {
+  async deleteMemory(id: string, memoryFallback?: MemoryEntry): Promise<void> {
     const user = authService.getCurrentUser();
-    // 1. Locate the item being deleted from local storage, defaults or memory store
-    const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
-    const target = localActive.find((m) => m.id === id);
+    // 1. Locate the item being deleted from local storage, fallback, or cloud
+    const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    let target = memoryFallback || localActive.find((m) => m.id === id);
+
+    // If still not found, fetch from Supabase
+    if (!target && isLiveSupabaseConfigured && supabase) {
+      try {
+        const { data } = await supabase.from('garden_memories').select('*').eq('id', id).maybeSingle();
+        if (data) {
+          target = {
+            id: data.id,
+            contributorId: data.contributor_id,
+            contributorName: data.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            title: data.title,
+            caption: data.caption,
+            description: data.description,
+            photoUrl: data.photo_url,
+            videoUrl: data.video_url,
+            dateTaken: data.date_taken,
+            isShared: data.is_shared,
+            createdAt: data.created_at,
+          };
+        }
+      } catch (err) {
+        console.warn('[Archive] Could not fetch target memory before delete:', err);
+      }
+    }
 
     // Strict ownership: Neither partner can EVER delete a memory posted by the other!
     if (target && target.contributorId && target.contributorId !== user.id) {
@@ -1253,7 +1268,8 @@ export const memoryArchiveService = {
           contributorId: user.id,
           contributorName: user.displayName,
           title: 'Treasured Keepsake ♡',
-          photoUrl: '/assets/dreamy_night_garden.jpg',
+          caption: 'Memories kept in bloom',
+          photoUrl: '/assets/memories/photo-holding-hands.jpg',
           isShared: true,
           createdAt: new Date().toISOString(),
         },
@@ -1291,8 +1307,35 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const targetUserId = userId || user.id;
     const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const activeMemories = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+
+    // Heal any legacy bin items where photoUrl fell back to dreamy_night_garden
+    let hasHealed = false;
+    const healed = allDeleted.map((item) => {
+      if (item.originalMemory && item.originalMemory.photoUrl === '/assets/dreamy_night_garden.jpg') {
+        const found = activeMemories.find((m) => m.id === item.id);
+        if (found && found.photoUrl && found.photoUrl !== '/assets/dreamy_night_garden.jpg') {
+          hasHealed = true;
+          return {
+            ...item,
+            originalMemory: {
+              ...item.originalMemory,
+              photoUrl: found.photoUrl,
+              title: found.title || item.originalMemory.title,
+              caption: found.caption || item.originalMemory.caption,
+            },
+          };
+        }
+      }
+      return item;
+    });
+
+    if (hasHealed) {
+      saveLocal(STORAGE_KEYS.DELETED_MEMORIES, healed);
+    }
+
     // Completely private! Solomon only sees items deleted by Solomon; Noella sees items deleted by Noella.
-    return allDeleted.filter(
+    return healed.filter(
       (item) =>
         item.deletedBy === targetUserId ||
         (user.username && item.deletedBy === user.username) ||

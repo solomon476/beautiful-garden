@@ -16,6 +16,7 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
   currentUser,
 }) => {
   const [deletedItems, setDeletedItems] = useState<DeletedMemoryItem[]>([]);
+  const [previewItem, setPreviewItem] = useState<DeletedMemoryItem | null>(null);
 
   const refreshBin = () => {
     const items = memoryArchiveService.getDeletedMemories(currentUser.id);
@@ -153,22 +154,32 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
                   key={item.id}
                   className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.06] border border-pink-400/30 hover:border-pink-300/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                 >
-                  {/* Left: Thumbnail & Title */}
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-purple-950 border border-pink-300/30 shrink-0">
+                  {/* Left: Thumbnail & Title (Tap to Preview) */}
+                  <div
+                    className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setPreviewItem(item);
+                    }}
+                    title="Tap to preview deleted image"
+                  >
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-purple-950 border border-pink-300/30 shrink-0 relative group/thumb">
                       <img
-                        src={mem.photoUrl || '/assets/dreamy_night_garden.jpg'}
+                        src={mem.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
                         alt={displayTitle}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/dreamy_night_garden.jpg';
+                          (e.target as HTMLImageElement).src = '/assets/memories/photo-holding-hands.jpg';
                         }}
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-serif font-bold text-sm text-white truncate" title={displayTitle}>
-                        {displayTitle}
-                      </h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-serif font-bold text-sm text-white truncate" title={displayTitle}>
+                          {displayTitle}
+                        </h4>
+                        <span className="text-[10px] text-pink-300/70 font-sans">🔍 View</span>
+                      </div>
                       <p className="text-xs text-pink-200/80 italic truncate mt-0.5">
                         “{mem.caption || mem.description || 'Memories kept in bloom'}”
                       </p>
@@ -220,6 +231,82 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Deleted Memory Preview Modal (When user taps an item to open it) */}
+      {previewItem && (
+        <div
+          className="fixed inset-0 z-[25000] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-xl animate-fade-in"
+          onClick={() => setPreviewItem(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl border border-pink-400/40 shadow-2xl p-4 sm:p-5 text-white flex flex-col space-y-3"
+            style={{
+              backgroundColor: '#16082c',
+              boxShadow: '0 25px 70px rgba(0,0,0,0.95)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-pink-400/20">
+              <h4 className="font-serif font-bold text-base text-white truncate pr-2">
+                {previewItem.originalMemory.title || 'Deleted Keepsake'}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setPreviewItem(null)}
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-rose-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Media Display */}
+            <div className="relative rounded-2xl overflow-hidden max-h-[55vh] bg-purple-950 border border-pink-300/30 flex items-center justify-center">
+              {previewItem.originalMemory.videoUrl ? (
+                <video
+                  src={previewItem.originalMemory.videoUrl}
+                  controls
+                  playsInline
+                  className="max-h-[52vh] w-full object-contain"
+                />
+              ) : (
+                <img
+                  src={previewItem.originalMemory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
+                  alt={previewItem.originalMemory.title}
+                  className="max-h-[52vh] w-full object-contain"
+                />
+              )}
+            </div>
+
+            {previewItem.originalMemory.caption && (
+              <p className="text-xs text-pink-200/90 italic text-center px-2">
+                “{previewItem.originalMemory.caption}”
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center justify-between gap-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setPreviewItem(null)}
+                className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium cursor-pointer"
+              >
+                Close Preview
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleRestore(previewItem.id);
+                  setPreviewItem(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-emerald-500/20"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-white" />
+                <span>Restore to Archive ↺</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

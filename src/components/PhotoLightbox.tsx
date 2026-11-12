@@ -84,8 +84,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       // Notify partner
       notificationService.sendNotification({
         type: 'memory',
-        title: '❤️ Loved a Memory',
-        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        title: '❤️ Liked a Photo',
+        message: `${user.displayName} liked "${displayTitle}" in Our Archive! ♡`,
         targetTab: 'archive',
         senderId: user.id,
         senderName: user.displayName,
@@ -93,7 +93,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         entityId: `like-${memory.id}-${user.id}-${Date.now()}`,
       });
       // Show instant confirmation toast to self
-      setLikeToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setLikeToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
       setTimeout(() => setLikeToast(null), 3800);
     }
 
@@ -178,7 +178,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
               type="button"
               onClick={handleLike}
               className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-pink-400 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
-              title="Love this video"
+              title="Like this video"
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
             </button>
@@ -369,14 +369,14 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 type="button"
                 onClick={handleLike}
                 className="pointer-events-auto px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform cursor-pointer shadow-md"
-                aria-label="Love this memory"
+                aria-label="Like this memory"
               >
                 <Heart
                   className={`w-4 h-4 transition-all duration-300 ${
                     isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
                   }`}
                 />
-                <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
+                <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Like'}</span>
               </button>
             </div>
           )}
@@ -394,7 +394,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
                 type="button"
                 onClick={handleLike}
                 className="p-1.5 rounded-full hover:bg-pink-50 text-pink-500 transition-colors cursor-pointer"
-                title="Love this video"
+                title="Like this video"
               >
                 <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-500' : ''}`} />
               </button>

@@ -71,32 +71,21 @@ export const formatMemoryDisplayTitle = (
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>(() => {
     const cached = memoryArchiveService.getCachedMemories();
-    const seenIds = new Set<string>();
-    const combined: MemoryEntry[] = [];
-    for (const m of cached) {
-      if (!seenIds.has(m.id)) {
-        seenIds.add(m.id);
-        combined.push(m);
-      }
+    if (cached.length > 0) {
+      return cached;
     }
-    for (const gm of giftContent.memories) {
-      if (!seenIds.has(gm.id)) {
-        seenIds.add(gm.id);
-        combined.push({
-          id: gm.id,
-          contributorId: DEFAULT_PROFILES.solomon.id,
-          contributorName: DEFAULT_PROFILES.solomon.displayName,
-          title: gm.title,
-          caption: gm.caption,
-          description: gm.caption,
-          photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
-          dateTaken: gm.date,
-          isShared: true,
-          createdAt: '2026-11-01T12:00:00.000Z',
-        });
-      }
-    }
-    return combined;
+    return giftContent.memories.map((gm) => ({
+      id: gm.id,
+      contributorId: DEFAULT_PROFILES.solomon.id,
+      contributorName: DEFAULT_PROFILES.solomon.displayName,
+      title: gm.title,
+      caption: gm.caption,
+      description: gm.caption,
+      photoUrl: gm.photoUrl || '/assets/memories/photo-holding-hands.jpg',
+      dateTaken: gm.date,
+      isShared: true,
+      createdAt: '2026-11-01T12:00:00.000Z',
+    }));
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
@@ -133,8 +122,8 @@ export const LittleArchiveSection: React.FC = () => {
       // Realtime notification to partner
       notificationService.sendNotification({
         type: 'memory',
-        title: '❤️ Loved a Memory',
-        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        title: '❤️ Liked a Photo',
+        message: `${user.displayName} liked "${displayTitle}" in Our Archive! ♡`,
         targetTab: 'archive',
         senderId: user.id,
         senderName: user.displayName,
@@ -143,7 +132,7 @@ export const LittleArchiveSection: React.FC = () => {
       });
 
       // Immediate confirmation to self
-      setLikeNotificationToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setLikeNotificationToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
       setTimeout(() => setLikeNotificationToast(null), 3800);
     }
   };
@@ -440,7 +429,7 @@ export const LittleArchiveSection: React.FC = () => {
       setLightboxMemory(null);
       // Instantly remove from state for real-time visual feedback
       setMemories((prev) => prev.filter((m) => m.id !== memory.id));
-      await memoryArchiveService.deleteMemory(memory.id);
+      await memoryArchiveService.deleteMemory(memory.id, memory);
       setUndoBanner({ id: memory.id, title: displayTitle });
       setTimeout(() => setUndoBanner((curr) => (curr?.id === memory.id ? null : curr)), 8000);
       setBinCount(memoryArchiveService.getDeletedMemories(currentUser.id).length);
@@ -727,7 +716,7 @@ export const LittleArchiveSection: React.FC = () => {
                     type="button"
                     onClick={(e) => handleToggleLike(mem.id, e)}
                     className="archive-card-favourite"
-                    title={isLiked ? 'Loved!' : 'Love this memory'}
+                    title={isLiked ? 'Liked!' : 'Like this memory'}
                   >
                     <Heart
                       className={`w-3.5 h-3.5 transition-transform ${
@@ -959,7 +948,7 @@ export const LittleArchiveSection: React.FC = () => {
                     className="flex items-center gap-1.5 text-pink-300 hover:text-pink-200 font-semibold"
                   >
                     <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-400 text-pink-400' : ''}`} />
-                    <span>{count} Loves</span>
+                    <span>{count} {count === 1 ? 'Like' : 'Likes'}</span>
                   </button>
 
                   <div className="flex items-center gap-2">
