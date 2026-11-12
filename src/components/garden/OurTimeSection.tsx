@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   CalendarDays,
   Plus,
@@ -9,8 +9,13 @@ import {
   Clock,
   Bell,
   CalendarPlus,
+  Gift,
 } from 'lucide-react';
 import { hangoutService, authService } from '../../services/gardenService';
+import {
+  getUpcomingCelebrations,
+  type UpcomingCelebration,
+} from '../../services/celebrationService';
 import type { HangoutEntry, HangoutStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import styles from './OurTimeSection.module.css';
@@ -91,6 +96,19 @@ export const OurTimeSection: React.FC = () => {
     setTitle('');
     setDescription('');
     setProposedDate('');
+    setLocation('');
+    setReminderEnabled(true);
+    setErrorMsg(null);
+    setIsAdding(true);
+  };
+
+  const celebrations = useMemo(() => getUpcomingCelebrations(), []);
+
+  const handlePlanCelebration = (c: UpcomingCelebration) => {
+    soundEngine.playSparkle();
+    setTitle(`${c.title} Date 🌹`);
+    setDescription(`Special celebration for ${c.title}! ${c.subtitle}`);
+    setProposedDate(c.formattedDate);
     setLocation('');
     setReminderEnabled(true);
     setErrorMsg(null);
@@ -256,6 +274,61 @@ export const OurTimeSection: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Special Celebrations & Birthdays Radar */}
+      <div className="relative overflow-hidden rounded-3xl border border-pink-400/30 bg-gradient-to-r from-purple-950/60 via-pink-950/40 to-slate-950/80 p-4 shadow-xl backdrop-blur-xl space-y-3">
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-pink-500/20 border border-pink-400/40 flex items-center justify-center text-pink-300">
+              <Gift className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <h3 className="font-serif text-sm font-bold text-white flex items-center gap-1.5">
+                <span>Upcoming Birthdays & Special Days</span>
+                <span className="text-pink-300">🎂 ✨</span>
+              </h3>
+              <p className="text-[11px] text-pink-200/80 font-serif italic">
+                Never miss a celebration for each other ♡
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-purple-200 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+            {celebrations.length} Occasions
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {celebrations.map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-pink-400/30 transition-all duration-200"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">{c.emoji}</span>
+                  <h4 className="text-xs font-bold text-white truncate">{c.title}</h4>
+                </div>
+                <div className="flex items-center gap-2 mt-1 text-[11px] text-pink-200/80">
+                  <span className="font-semibold text-pink-300">{c.formattedDate}</span>
+                  <span className="opacity-40">•</span>
+                  <span className="font-mono text-purple-200">
+                    {c.isToday ? 'Today! 🎉' : `in ${c.daysUntil} days`}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handlePlanCelebration(c)}
+                className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white bg-gradient-to-r from-pink-500/80 to-purple-600/80 hover:from-pink-500 hover:to-purple-600 border border-white/20 transition-all shadow-sm active:scale-95 shrink-0"
+                title={`Plan a date for ${c.title}`}
+              >
+                + Plan Date
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Filter Row */}
       <div className={styles.filterRow}>

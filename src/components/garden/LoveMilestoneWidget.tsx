@@ -10,8 +10,14 @@ import {
   Check,
   X,
   Compass,
+  Gift,
+  PartyPopper,
 } from 'lucide-react';
 import { hangoutService } from '../../services/gardenService';
+import {
+  getUpcomingCelebrations,
+  type UpcomingCelebration,
+} from '../../services/celebrationService';
 import type { HangoutEntry } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import styles from './LoveMilestoneWidget.module.css';
@@ -96,6 +102,10 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
   const [hangouts, setHangouts] = useState<HangoutEntry[]>([]);
   const [now, setNow] = useState<Date>(new Date());
 
+  // Countdown mode: 'date' (Hangout) vs 'celebrations' (Birthdays / Holidays)
+  const [countdownMode, setCountdownMode] = useState<'date' | 'celebrations'>('date');
+  const [selectedCelebrationId, setSelectedCelebrationId] = useState<string | null>(null);
+
   // Tick every second for live countdown
   useEffect(() => {
     const timer = setInterval(() => {
@@ -155,6 +165,38 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     };
   }, [anniversaryDate, now]);
 
+  // Celebrations list
+  const celebrations: UpcomingCelebration[] = useMemo(() => {
+    return getUpcomingCelebrations(now);
+  }, [now]);
+
+  // Active celebration
+  const activeCelebration: UpcomingCelebration = useMemo(() => {
+    if (selectedCelebrationId) {
+      const found = celebrations.find((c) => c.id === selectedCelebrationId);
+      if (found) return found;
+    }
+    return celebrations[0];
+  }, [celebrations, selectedCelebrationId]);
+
+  // Celebration countdown parts
+  const celebrationCountdownParts = useMemo(() => {
+    if (!activeCelebration) return null;
+    const diffMs = activeCelebration.targetDate.getTime() - now.getTime();
+    const totalSecs = Math.max(0, Math.floor(diffMs / 1000));
+    const days = Math.floor(totalSecs / (3600 * 24));
+    const hours = Math.floor((totalSecs % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+
+    return {
+      days: String(days).padStart(2, '0'),
+      hours: String(hours).padStart(2, '0'),
+      minutes: String(minutes).padStart(2, '0'),
+      seconds: String(seconds).padStart(2, '0'),
+    };
+  }, [activeCelebration, now]);
+
   // Find next upcoming hangout
   const nextHangoutData = useMemo(() => {
     const valid = hangouts.filter(
@@ -198,8 +240,8 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     setIsEditingAnniversary(false);
   };
 
-  // Format countdown digits
-  const countdownParts = useMemo(() => {
+  // Format hangout countdown digits
+  const hangoutCountdownParts = useMemo(() => {
     if (!nextHangoutData || !nextHangoutData.diffMs || nextHangoutData.diffMs <= 0) {
       return null;
     }
@@ -216,6 +258,13 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
       seconds: String(seconds).padStart(2, '0'),
     };
   }, [nextHangoutData]);
+
+  // Switch to a celebration when tapping its chip
+  const handleSelectCelebration = (id: string) => {
+    soundEngine.playSparkle();
+    setSelectedCelebrationId(id);
+    setCountdownMode('celebrations');
+  };
 
   return (
     <div className={styles.widgetContainer}>
@@ -270,42 +319,136 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
         </div>
       </div>
 
-      {/* 2. NEXT DATE / LIVE COUNTDOWN CARD */}
+      {/* 2. NEXT DATE & CELEBRATIONS COUNTDOWN CARD */}
       <div className={styles.countdownCard}>
         <div className={styles.countdownGlow} />
 
-        {/* Header */}
+        {/* Header with Mode Switcher (Hangout vs Celebrations) */}
         <div className={styles.cardHeader}>
-          <div className={styles.badge}>
-            <Compass className="w-3.5 h-3.5 text-purple-300" />
-            <span>Next Date Countdown</span>
+          <div className={styles.modeSwitcher}>
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playSparkle();
+                setCountdownMode('date');
+              }}
+              className={`${styles.modeBtn} ${countdownMode === 'date' ? styles.modeBtnActive : ''}`}
+            >
+              <Compass className="w-3 h-3 text-purple-300" />
+              <span>Next Hangout</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playSparkle();
+                setCountdownMode('celebrations');
+              }}
+              className={`${styles.modeBtn} ${countdownMode === 'celebrations' ? styles.modeBtnActive : ''}`}
+            >
+              <Gift className="w-3 h-3 text-pink-300" />
+              <span>Birthdays & Holidays</span>
+            </button>
           </div>
-          {nextHangoutData?.hangout.status && (
+
+          {countdownMode === 'date' && nextHangoutData?.hangout.status && (
             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
               {nextHangoutData.hangout.status === 'confirmed' ? '✨ Confirmed' : '💡 Proposed'}
             </span>
           )}
+
+          {countdownMode === 'celebrations' && (
+            <span className="text-[10px] font-mono font-bold tracking-wide px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/30">
+              {activeCelebration.formattedDate}
+            </span>
+          )}
         </div>
 
-        {/* Content */}
-        {nextHangoutData && countdownParts ? (
+        {/* MODE A: CELEBRATIONS (Birthdays & Holidays) */}
+        {countdownMode === 'celebrations' && (
+          <div>
+            {/* If Today is the celebration! */}
+            {activeCelebration.isToday ? (
+              <div className={styles.todayCelebrationBanner}>
+                <div className="flex items-center gap-1.5 text-amber-300 font-bold text-sm">
+                  <PartyPopper className="w-4 h-4 animate-bounce" />
+                  <span>TODAY IS THE DAY! ✨</span>
+                </div>
+                <h4 className="text-base sm:text-lg font-serif font-bold text-white">
+                  {activeCelebration.title}
+                </h4>
+                <p className="text-xs text-pink-100 font-serif italic">
+                  “{activeCelebration.subtitle}”
+                </p>
+              </div>
+            ) : celebrationCountdownParts ? (
+              /* Live Ticking Countdown Digits to Birthday / Holiday */
+              <div className={styles.countdownDigitsGrid}>
+                <div className={styles.digitBox}>
+                  <span className={styles.digitValue}>{celebrationCountdownParts.days}</span>
+                  <span className={styles.digitLabel}>Days</span>
+                </div>
+                <div className={styles.digitBox}>
+                  <span className={styles.digitValue}>{celebrationCountdownParts.hours}</span>
+                  <span className={styles.digitLabel}>Hours</span>
+                </div>
+                <div className={styles.digitBox}>
+                  <span className={styles.digitValue}>{celebrationCountdownParts.minutes}</span>
+                  <span className={styles.digitLabel}>Mins</span>
+                </div>
+                <div className={styles.digitBox}>
+                  <span className={styles.digitValue}>{celebrationCountdownParts.seconds}</span>
+                  <span className={styles.digitLabel}>Secs</span>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Celebration Details Bar */}
+            <div className={styles.dateInfoBox}>
+              <div className="min-w-0 flex-1 pr-2">
+                <h4 className={styles.dateTitle}>
+                  <span>{activeCelebration.emoji}</span>
+                  <span className="truncate">{activeCelebration.title}</span>
+                </h4>
+                <div className={styles.dateMeta}>
+                  <span>{activeCelebration.subtitle}</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  onSelectTab('time');
+                }}
+                className={styles.viewButton}
+                title="Plan something sweet in Our Time"
+              >
+                <span>Plan Date 🌹</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MODE B: NEXT HANGOUT COUNTDOWN */}
+        {countdownMode === 'date' && nextHangoutData && hangoutCountdownParts && (
           <div>
             {/* Live Ticking Digits Grid */}
             <div className={styles.countdownDigitsGrid}>
               <div className={styles.digitBox}>
-                <span className={styles.digitValue}>{countdownParts.days}</span>
+                <span className={styles.digitValue}>{hangoutCountdownParts.days}</span>
                 <span className={styles.digitLabel}>Days</span>
               </div>
               <div className={styles.digitBox}>
-                <span className={styles.digitValue}>{countdownParts.hours}</span>
+                <span className={styles.digitValue}>{hangoutCountdownParts.hours}</span>
                 <span className={styles.digitLabel}>Hours</span>
               </div>
               <div className={styles.digitBox}>
-                <span className={styles.digitValue}>{countdownParts.minutes}</span>
+                <span className={styles.digitValue}>{hangoutCountdownParts.minutes}</span>
                 <span className={styles.digitLabel}>Mins</span>
               </div>
               <div className={styles.digitBox}>
-                <span className={styles.digitValue}>{countdownParts.seconds}</span>
+                <span className={styles.digitValue}>{hangoutCountdownParts.seconds}</span>
                 <span className={styles.digitLabel}>Secs</span>
               </div>
             </div>
@@ -347,7 +490,9 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
               </button>
             </div>
           </div>
-        ) : nextHangoutData && !countdownParts ? (
+        )}
+
+        {countdownMode === 'date' && nextHangoutData && !hangoutCountdownParts && (
           /* When date is entered in natural speech but not parsed as exact Unix timestamp */
           <div className="space-y-3">
             <div className="p-3 rounded-2xl bg-purple-950/40 border border-purple-400/20 text-center">
@@ -374,16 +519,18 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
               </button>
             </div>
           </div>
-        ) : (
-          /* Empty Hangouts State */
+        )}
+
+        {countdownMode === 'date' && !nextHangoutData && (
+          /* Empty Hangouts State: spotlights the next holiday/birthday */
           <div className={styles.emptyDateContainer}>
-            <div className="w-10 h-10 rounded-2xl bg-white/5 border border-purple-400/20 flex items-center justify-center text-pink-300 text-lg shadow-inner">
+            <div className="w-9 h-9 rounded-2xl bg-white/5 border border-purple-400/20 flex items-center justify-center text-pink-300 text-base shadow-inner">
               🌷
             </div>
             <div>
-              <h4 className={styles.emptyTitle}>No Upcoming Date Yet</h4>
+              <h4 className={styles.emptyTitle}>No Upcoming Date Scheduled</h4>
               <p className={styles.emptyText}>
-                Our next sweet adventure is waiting to be planned. Propose a date!
+                Next celebration is {activeCelebration.title} ({activeCelebration.daysUntil} days away). Propose a sweet adventure!
               </p>
             </div>
             <button
@@ -399,6 +546,34 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
             </button>
           </div>
         )}
+
+        {/* ALWAYS-VISIBLE CELEBRATIONS RADAR CHIPS (Noella's Bday, Solomon's Bday, Christmas, etc.) */}
+        <div className={styles.celebrationsChips} title="Upcoming Birthdays & Special Days">
+          {celebrations.map((c) => {
+            const isSelected = countdownMode === 'celebrations' && activeCelebration.id === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => handleSelectCelebration(c.id)}
+                className={`${styles.celebrationChip} ${isSelected ? styles.celebrationChipActive : ''}`}
+                title={`${c.title} • ${c.daysUntil} days away`}
+              >
+                <span>{c.emoji}</span>
+                <span>
+                  {c.id === 'noella-bday'
+                    ? 'Noella'
+                    : c.id === 'solomon-bday'
+                    ? 'Solomon'
+                    : c.title.split(' ')[0]}
+                </span>
+                <span className="text-[10px] opacity-75 font-mono">
+                  {c.isToday ? 'Today! 🎉' : `${c.daysUntil}d`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 3. ANNIVERSARY DATE PICKER POPOVER MODAL */}
