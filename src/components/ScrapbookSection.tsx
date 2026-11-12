@@ -16,7 +16,7 @@ import {
 import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
-import { memoryArchiveService } from '../services/gardenService';
+import { memoryArchiveService, authService } from '../services/gardenService';
 import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
 
 interface ScrapbookSectionProps {
@@ -33,8 +33,11 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   const loadArchiveMemories = async () => {
     try {
       const items = await memoryArchiveService.getMemories();
+      const user = authService.getCurrentUser();
+      const isAuthed = authService.isAuthenticated();
       const mapped: MemoryItem[] = items
-        .filter((m) => !m.id.startsWith('seed-') && Boolean(m.isShared))
+        .filter((m) => !m.id.startsWith('seed-'))
+        .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared !== false : m.isShared !== false))
         .map((m) => {
           const displayTitle = formatMemoryDisplayTitle(m.title, m.caption, m.dateTaken);
           return {
@@ -60,11 +63,13 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   useEffect(() => {
     loadArchiveMemories();
     const handleUpdate = () => loadArchiveMemories();
+    const unsubUser = authService.subscribeUser(() => loadArchiveMemories());
     window.addEventListener('garden-memory-added', handleUpdate);
     window.addEventListener('garden-memories-updated', handleUpdate);
     window.addEventListener('garden-memory-deleted', handleUpdate);
     window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
+      unsubUser();
       window.removeEventListener('garden-memory-added', handleUpdate);
       window.removeEventListener('garden-memories-updated', handleUpdate);
       window.removeEventListener('garden-memory-deleted', handleUpdate);
@@ -73,12 +78,13 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   }, []);
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
-  // Deduplicate by memory ID and media key so pictures and videos never multiply
+  // Deduplicate by memory ID and distinct media so photos never multiply yet never collide
   const seenIds = new Set<string>();
   const seenMedia = new Set<string>();
   const allMemories: MemoryItem[] = [];
-  for (const m of [...giftContent.memories, ...archiveMemories]) {
-    const mediaKey = m.videoMediaId || `${m.title.toLowerCase().trim()}_${(m.date || '').trim()}`;
+  // User-uploaded archive memories come first, matching LittleArchiveSection
+  for (const m of [...archiveMemories, ...giftContent.memories]) {
+    const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
     if (!seenIds.has(m.id) && !seenMedia.has(mediaKey) && !deletedIds.has(m.id)) {
       seenIds.add(m.id);
       seenMedia.add(mediaKey);

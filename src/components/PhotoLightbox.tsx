@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 
@@ -39,6 +39,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     }
   });
 
+  const [isCoverMode, setIsCoverMode] = useState<boolean>(true);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
@@ -247,17 +248,18 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute -top-11 right-0 sm:-right-2 w-9 h-9 rounded-full bg-slate-900/90 text-white border border-white/20 flex items-center justify-center hover:bg-pink-600 transition-colors shadow-lg z-20"
-          aria-label="Close photo view"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Polaroid Picture or Video: Natural Proportions, Same Shape As Card, Zero Crop & Zero Zoom */}
+        {/* Polaroid Picture or Video: Fills the full width with zero side empty margins */}
         <div className="polaroid-lightbox-image-wrapper relative group">
+          {/* Sleek Round Floating Close Button — perfectly circular, unclipped, matching garden styling */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/65 hover:bg-rose-600 border border-white/30 text-white backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-xl z-30 cursor-pointer"
+            aria-label="Close photo view"
+          >
+            <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+          </button>
+
           {memory.videoUrl ? (
             <video
               key={memory.id}
@@ -279,7 +281,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <img
               src={memory.photoUrl || '/assets/memories/photo-holding-hands.jpg'}
               alt={memory.altText || memory.title}
-              className="polaroid-lightbox-image"
+              className={`polaroid-lightbox-image ${isCoverMode ? 'object-cover' : 'object-contain'}`}
               loading="eager"
               decoding="async"
               onError={(e) => {
@@ -288,7 +290,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
               }}
             />
           )}
-          <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
             {memory.videoUrl ? (
               <>
                 <Film className="w-3 h-3 text-amber-300" />
@@ -302,20 +304,46 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             )}
           </div>
 
-          {/* Interactive Heart Button on Photo (only shown when not a video to avoid blocking video controls) */}
+          {/* Optional Fit/Fill Toggle & Interactive Heart Button on Photo */}
           {!memory.videoUrl && (
-            <button
-              onClick={handleLike}
-              className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform z-20 cursor-pointer"
-              aria-label="Love this memory"
-            >
-              <Heart
-                className={`w-4 h-4 transition-all duration-300 ${
-                  isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
-                }`}
-              />
-              <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
-            </button>
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundEngine.playSparkle();
+                  setIsCoverMode((prev) => !prev);
+                }}
+                className="pointer-events-auto px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white text-[11px] flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-md"
+                title={isCoverMode ? 'Switch to uncropped fit' : 'Switch to fill full space'}
+              >
+                {isCoverMode ? (
+                  <>
+                    <Minimize2 className="w-3 h-3 text-pink-300" />
+                    <span>Fit</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-3 h-3 text-pink-300" />
+                    <span>Fill</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLike}
+                className="pointer-events-auto px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs flex items-center gap-1.5 hover:scale-105 active:scale-90 transition-transform cursor-pointer shadow-md"
+                aria-label="Love this memory"
+              >
+                <Heart
+                  className={`w-4 h-4 transition-all duration-300 ${
+                    isLiked ? 'fill-pink-500 text-pink-500 scale-110' : 'text-white'
+                  }`}
+                />
+                <span className="font-mono text-[11px]">{currentLikes > 0 ? currentLikes : 'Love'}</span>
+              </button>
+            </div>
           )}
         </div>
 

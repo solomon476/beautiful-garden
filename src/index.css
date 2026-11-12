@@ -1402,11 +1402,11 @@ button:hover { opacity: 0.95; }
 
 .polaroid-lightbox-image-wrapper {
   width: 100%;
-  max-width: 440px;
+  max-width: 100%;
   margin: 0 auto;
-  border-radius: 8px;
+  border-radius: 14px;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, rgba(244, 114, 182, 0.18) 0%, rgba(18, 9, 28, 0.95) 100%);
+  background: #090314;
   position: relative;
   display: flex;
   align-items: center;
@@ -1415,14 +1415,21 @@ button:hover { opacity: 0.95; }
 
 .polaroid-lightbox-image {
   width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: 60vh;
-  object-fit: contain;
+  height: 52vh;
+  max-height: 560px;
+  min-height: 290px;
+  object-fit: cover;
   object-position: center;
-  border-radius: 6px;
+  border-radius: 12px;
   user-select: none;
   display: block;
+  transition: object-fit 200ms ease;
+}
+
+.polaroid-lightbox-image.object-contain {
+  object-fit: contain;
+  height: auto;
+  max-height: 56vh;
 }
 
 .polaroid-lightbox-video {
@@ -1432,16 +1439,19 @@ button:hover { opacity: 0.95; }
   max-height: 60vh;
   object-fit: contain;
   object-position: center;
-  border-radius: 6px;
+  border-radius: 12px;
   display: block;
   background: #000000;
   outline: none;
 }
 
 @media (max-height: 750px) {
-  .polaroid-lightbox-image,
+  .polaroid-lightbox-image {
+    height: 46vh;
+    min-height: 250px;
+  }
   .polaroid-lightbox-video {
-    max-height: 42vh;
+    max-height: 44vh;
   }
 }
 

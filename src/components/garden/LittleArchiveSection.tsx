@@ -32,6 +32,7 @@ import { mediaStorage } from '../../utils/mediaStorage';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
+import { GardenBinModal } from './GardenBinModal';
 import styles from './LittleArchiveSection.module.css';
 
 export const formatMemoryDisplayTitle = (
@@ -101,6 +102,11 @@ export const LittleArchiveSection: React.FC = () => {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'shared' | 'private'>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
+  const [isBinOpen, setIsBinOpen] = useState<boolean>(false);
+  const [binCount, setBinCount] = useState<number>(() => {
+    return memoryArchiveService.getDeletedMemories(authService.getCurrentUser().id).length;
+  });
+  const [undoBanner, setUndoBanner] = useState<{ id: string; title: string } | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
@@ -162,7 +168,7 @@ export const LittleArchiveSection: React.FC = () => {
       const seenMedia = new Set<string>();
       const combined: MemoryEntry[] = [];
       for (const m of list) {
-        const mediaKey = m.videoMediaId || `${m.title.toLowerCase().trim()}_${(m.dateTaken || '').trim()}`;
+        const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
         if (!seenIds.has(m.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(m.id);
           seenMedia.add(mediaKey);
@@ -170,7 +176,7 @@ export const LittleArchiveSection: React.FC = () => {
         }
       }
       for (const gm of giftContent.memories) {
-        const mediaKey = `${gm.title.toLowerCase().trim()}_${(gm.date || '').trim()}`;
+        const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
         if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(gm.id);
           seenMedia.add(mediaKey);
@@ -198,11 +204,19 @@ export const LittleArchiveSection: React.FC = () => {
 
   useEffect(() => {
     loadMemories();
+    const updateBin = () => {
+      setBinCount(memoryArchiveService.getDeletedMemories(authService.getCurrentUser().id).length);
+    };
+    updateBin();
     const unsubscribe = authService.subscribeUser((u) => {
       setCurrentUser(u);
       loadMemories();
+      updateBin();
     });
-    const handleUpdate = () => loadMemories();
+    const handleUpdate = () => {
+      loadMemories();
+      updateBin();
+    };
     window.addEventListener('garden-memories-updated', handleUpdate);
     window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
@@ -354,14 +368,26 @@ export const LittleArchiveSection: React.FC = () => {
 
   const handleDelete = async (memory: MemoryEntry) => {
     const displayTitle = formatMemoryDisplayTitle(memory.title, memory.caption, memory.dateTaken);
-    if (window.confirm(`Move "${displayTitle}" to Recycle Bin? You can restore it anytime from the More tab.`)) {
+    if (window.confirm(`Move "${displayTitle}" to Recycle Bin? You can retrieve it anytime from the Recycle Bin button in this archive.`)) {
       soundEngine.playSparkle();
       setLightboxMemory(null);
       // Instantly remove from state for real-time visual feedback
       setMemories((prev) => prev.filter((m) => m.id !== memory.id));
       await memoryArchiveService.deleteMemory(memory.id);
+      setUndoBanner({ id: memory.id, title: displayTitle });
+      setTimeout(() => setUndoBanner((curr) => (curr?.id === memory.id ? null : curr)), 8000);
+      setBinCount(memoryArchiveService.getDeletedMemories(currentUser.id).length);
       await loadMemories();
     }
+  };
+
+  const handleUndoDelete = async () => {
+    if (!undoBanner) return;
+    soundEngine.playSparkle();
+    await memoryArchiveService.restoreMemory(undoBanner.id);
+    setUndoBanner(null);
+    setBinCount(memoryArchiveService.getDeletedMemories(currentUser.id).length);
+    await loadMemories();
   };
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
@@ -503,7 +529,54 @@ export const LittleArchiveSection: React.FC = () => {
             My Private 🔒
           </button>
         </div>
+
+        {/* Recycle Bin Access Button */}
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            setIsBinOpen(true);
+          }}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/15 hover:border-rose-400/40 text-pink-200 hover:text-white text-xs transition-all active:scale-95 cursor-pointer shadow-sm"
+          title="Garden Recycle Bin — Retrieve deleted memories"
+        >
+          <Trash2 className="w-3.5 h-3.5 text-rose-300" />
+          <span className="hidden sm:inline">Recycle Bin</span>
+          {binCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono font-bold">
+              {binCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Instant Undo Delete Banner */}
+      {undoBanner && (
+        <div className="my-3 p-3 rounded-2xl bg-rose-500/20 border border-rose-400/40 backdrop-blur-md flex items-center justify-between text-xs text-white animate-fade-in shadow-lg">
+          <div className="flex items-center gap-2 truncate pr-2">
+            <span className="text-base">🗑️</span>
+            <span className="truncate">
+              Moved <strong>"{undoBanner.title}"</strong> to Recycle Bin.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleUndoDelete}
+              className="px-3 py-1 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-md"
+            >
+              <span>Undo ↺</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUndoBanner(null)}
+              className="p-1 rounded-full text-white/60 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 3. Memories Display */}
       {loading ? (
@@ -933,18 +1006,6 @@ export const LittleArchiveSection: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {lightboxMemory.contributorId === currentUser.id && (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(lightboxMemory)}
-                      className="px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/40 border border-rose-400/30 text-rose-300 text-xs flex items-center gap-1 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
-                      title="Move to Bin"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Delete</span>
-                    </button>
-                  )}
-
                   <button
                     type="button"
                     onClick={() => setLightboxMemory(null)}
@@ -1002,43 +1063,60 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
                 )}
 
-                {filteredMemories.length > 1 && (
-                  <div className="flex items-center justify-between max-w-sm mx-auto text-xs text-white/90">
+                {/* Bottom Navigation & Safe Action Row */}
+                <div className="flex items-center justify-between max-w-lg mx-auto pt-1 gap-2">
+                  {lightboxMemory.contributorId === currentUser.id ? (
                     <button
                       type="button"
-                      disabled={currentLightboxIdx <= 0}
-                      onClick={() => {
-                        if (currentLightboxIdx > 0) {
-                          soundEngine.playSparkle();
-                          setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                      onClick={() => handleDelete(lightboxMemory)}
+                      className="px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/35 text-rose-300 text-xs flex items-center gap-1.5 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md shrink-0"
+                      title="Move video to Recycle Bin"
                     >
-                      <ChevronLeft className="w-4 h-4" />
-                      <span>Previous</span>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Move to Bin</span>
                     </button>
+                  ) : (
+                    <div className="w-2" />
+                  )}
 
-                    <span className="font-mono text-[11px] text-pink-300">
-                      {currentLightboxIdx + 1} of {filteredMemories.length}
-                    </span>
+                  {filteredMemories.length > 1 && (
+                    <div className="flex items-center gap-2 text-xs text-white/90">
+                      <button
+                        type="button"
+                        disabled={currentLightboxIdx <= 0}
+                        onClick={() => {
+                          if (currentLightboxIdx > 0) {
+                            soundEngine.playSparkle();
+                            setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Previous</span>
+                      </button>
 
-                    <button
-                      type="button"
-                      disabled={currentLightboxIdx >= filteredMemories.length - 1}
-                      onClick={() => {
-                        if (currentLightboxIdx < filteredMemories.length - 1) {
-                          soundEngine.playSparkle();
-                          setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
-                    >
-                      <span>Next</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                      <span className="font-mono text-[11px] text-pink-300">
+                        {currentLightboxIdx + 1} of {filteredMemories.length}
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={currentLightboxIdx >= filteredMemories.length - 1}
+                        onClick={() => {
+                          if (currentLightboxIdx < filteredMemories.length - 1) {
+                            soundEngine.playSparkle();
+                            setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           ) : (
@@ -1419,6 +1497,16 @@ export const LittleArchiveSection: React.FC = () => {
         );
         return typeof document !== 'undefined' ? createPortal(addModalContent, document.body) : addModalContent;
       })()}
+
+      {/* Garden Recycle Bin Modal — Easily retrieve deleted memories */}
+      <GardenBinModal
+        isOpen={isBinOpen}
+        onClose={() => {
+          setIsBinOpen(false);
+          loadMemories();
+        }}
+        currentUser={currentUser}
+      />
     </div>
   );
 };

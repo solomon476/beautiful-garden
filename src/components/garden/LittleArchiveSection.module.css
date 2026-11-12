@@ -919,26 +919,26 @@
   overflow: hidden;
   max-height: 60vh;
   width: 100%;
-  background: radial-gradient(circle at 50% 30%, rgba(244, 114, 182, 0.16) 0%, rgba(18, 9, 28, 0.98) 100%);
+  background: #090314;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .lightboxMainImage {
-  max-height: 58vh;
-  max-width: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  height: 52vh;
+  max-height: 560px;
+  min-height: 280px;
+  width: 100%;
+  object-fit: cover;
   border-radius: 12px;
   display: block;
   margin: 0 auto;
   position: relative;
   z-index: 2;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 20px rgba(244, 114, 182, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
 }
 
 .lightboxVideo {
