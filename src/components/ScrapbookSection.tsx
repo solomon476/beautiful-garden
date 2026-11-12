@@ -84,8 +84,9 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   const seenIds = new Set<string>();
   const seenMedia = new Set<string>();
   const allMemories: MemoryItem[] = [];
-  // User-uploaded archive memories come first, matching LittleArchiveSection
-  for (const m of [...archiveMemories, ...giftContent.memories]) {
+  // User-uploaded archive memories come first; fallback to giftContent memories only if none uploaded
+  const sourceList = archiveMemories.length > 0 ? archiveMemories : giftContent.memories;
+  for (const m of sourceList) {
     const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
     if (!seenIds.has(m.id) && !seenMedia.has(mediaKey) && !deletedIds.has(m.id)) {
       seenIds.add(m.id);

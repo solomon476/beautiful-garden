@@ -78,20 +78,12 @@ export const LittleArchiveSection: React.FC = () => {
     if (cached.length > 0) {
       return cached;
     }
-    return giftContent.memories.map((gm) => ({
-      id: gm.id,
-      contributorId: DEFAULT_PROFILES.solomon.id,
-      contributorName: DEFAULT_PROFILES.solomon.displayName,
-      title: gm.title,
-      caption: gm.caption,
-      description: gm.caption,
-      photoUrl: gm.photoUrl || '/assets/memories/photo-holding-hands.jpg',
-      dateTaken: gm.date,
-      isShared: true,
-      createdAt: '2026-11-01T12:00:00.000Z',
-    }));
+    return [];
   });
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = memoryArchiveService.getCachedMemories();
+    return cached.length === 0;
+  });
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
 
   // Filter state
@@ -204,23 +196,26 @@ export const LittleArchiveSection: React.FC = () => {
           combined.push(m);
         }
       }
-      for (const gm of giftContent.memories) {
-        const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
-        if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
-          seenIds.add(gm.id);
-          seenMedia.add(mediaKey);
-          combined.push({
-            id: gm.id,
-            contributorId: DEFAULT_PROFILES.solomon.id,
-            contributorName: DEFAULT_PROFILES.solomon.displayName,
-            title: gm.title,
-            caption: gm.caption,
-            description: gm.caption,
-            photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
-            dateTaken: gm.date,
-            isShared: true,
-            createdAt: '2026-11-01T12:00:00.000Z',
-          });
+      // Only include fallback sample memories if zero memories have been uploaded yet
+      if (combined.length === 0) {
+        for (const gm of giftContent.memories) {
+          const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
+          if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
+            seenIds.add(gm.id);
+            seenMedia.add(mediaKey);
+            combined.push({
+              id: gm.id,
+              contributorId: DEFAULT_PROFILES.solomon.id,
+              contributorName: DEFAULT_PROFILES.solomon.displayName,
+              title: gm.title,
+              caption: gm.caption,
+              description: gm.caption,
+              photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
+              dateTaken: gm.date,
+              isShared: true,
+              createdAt: '2026-11-01T12:00:00.000Z',
+            });
+          }
         }
       }
       setMemories(combined);

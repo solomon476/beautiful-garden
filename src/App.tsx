@@ -77,8 +77,8 @@ export const App: React.FC = () => {
       <GardenHeader
         onScrollTo={scrollToSection}
         activeSection={activeSection}
-        onOpenOurGarden={(tab = 'garden') => {
-          setGardenInitialTab(tab);
+        onOpenOurGarden={() => {
+          setGardenInitialTab('garden');
           setIsOurGardenOpen(true);
         }}
       />
