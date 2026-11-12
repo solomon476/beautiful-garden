@@ -15,9 +15,7 @@ import {
   Globe,
   Flower2,
   ArrowLeft,
-  RotateCw,
 } from 'lucide-react';
-import { forceAppSync } from '../../utils/appSync';
 import { GardenDashboardOverview } from './GardenDashboardOverview';
 import { LettersSection } from './LettersSection';
 import { SoundGardenSection } from './SoundGardenSection';
@@ -267,20 +265,6 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
                 <span>Add to Garden</span>
               </button>
             )}
-
-            {/* 1-Tap App Sync & Cache Buster Button */}
-            <button
-              type="button"
-              onClick={() => {
-                soundEngine.playSparkle();
-                forceAppSync();
-              }}
-              className="p-1.5 sm:p-2 rounded-full bg-white/[0.08] hover:bg-white/[0.18] text-pink-200 hover:text-white border border-pink-400/30 transition-all active:scale-90"
-              title="Sync & Update App"
-              aria-label="Sync and update app"
-            >
-              <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-300" />
-            </button>
 
             {/* Notification Bell Dropdown */}
             <GardenNotificationBell

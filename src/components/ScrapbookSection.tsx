@@ -144,7 +144,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
         senderId: user.id,
         senderName: user.displayName,
         recipientId: partner.id,
-        entityId: `like-${id}-${user.id}-${Date.now()}`,
+        entityId: id,
       });
 
       // Immediate confirmation toast to self

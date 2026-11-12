@@ -5,6 +5,7 @@ import { notificationService } from '../../services/notificationService';
 import { authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { GardenNotification } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { extractMemoryIdFromNotification } from '../../utils/notificationHelpers';
 
 interface LiveNotificationToastProps {
   onOpenTab: (tab: string) => void;
@@ -88,6 +89,14 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
     setIsVisible(false);
     const currentUser = authService.getCurrentUser();
     notificationService.markAsRead(activeToast.id, currentUser.id);
+
+    // If it's a memory / photo like notification, take them directly to the liked moment!
+    const memoryId = extractMemoryIdFromNotification(activeToast);
+    if (memoryId) {
+      sessionStorage.setItem('pending_open_memory_id', memoryId);
+      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+    }
+
     onOpenTab(activeToast.targetTab || 'garden');
   };
 

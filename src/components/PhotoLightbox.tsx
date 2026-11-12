@@ -90,7 +90,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         senderId: user.id,
         senderName: user.displayName,
         recipientId: partner.id,
-        entityId: `like-${memory.id}-${user.id}-${Date.now()}`,
+        entityId: memory.id,
       });
       // Show instant confirmation toast to self
       setLikeToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);

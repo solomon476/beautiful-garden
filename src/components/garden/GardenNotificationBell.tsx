@@ -16,6 +16,7 @@ import {
 import { notificationService } from '../../services/notificationService';
 import type { GardenNotification, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { extractMemoryIdFromNotification } from '../../utils/notificationHelpers';
 
 interface GardenNotificationBellProps {
   currentUser: UserProfile;
@@ -72,6 +73,14 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
     soundEngine.playSparkle();
     notificationService.markAsRead(notif.id, currentUser.id);
     setIsOpen(false);
+
+    // If it's a memory / photo like notification, take them directly to the liked moment!
+    const memoryId = extractMemoryIdFromNotification(notif);
+    if (memoryId) {
+      sessionStorage.setItem('pending_open_memory_id', memoryId);
+      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+    }
+
     if (notif.targetTab) {
       onSelectTab(notif.targetTab);
     }

@@ -818,12 +818,12 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
           <form onSubmit={handleSaveSong}>
             <div className={styles.sectionTitle}>
               <Music className={`w-4 h-4 ${styles.sectionIcon}`} />
-              <span>Music & Audio Keepsake</span>
+              <span>Soundtrack & Melody Keepsake</span>
             </div>
 
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label>Song Title *</label>
+                <label>Track / Melody Name *</label>
                 <div className={styles.inputWrapper}>
                   <Music className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
@@ -831,21 +831,21 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                     required
                     value={songTitle}
                     onChange={(e) => setSongTitle(e.target.value)}
-                    placeholder="e.g. Flying or Perfect"
+                    placeholder="e.g. Walk In The Rain, Golden Hour, or a song you love ♫"
                     className={styles.inputWithPrefix}
                   />
                 </div>
               </div>
 
               <div className={styles.formGroup}>
-                <label>Artist / Creator</label>
+                <label>Artist or Dedicated By</label>
                 <div className={styles.inputWrapper}>
                   <PenLine className={`w-4 h-4 ${styles.inputPrefixIcon}`} />
                   <input
                     type="text"
                     value={songArtist}
                     onChange={(e) => setSongArtist(e.target.value)}
-                    placeholder={`e.g. Ed Sheeran or ${currentUser.displayName}`}
+                    placeholder={`e.g. Solomon 🌿, Ed Sheeran, or our favorite artist`}
                     className={styles.inputWithPrefix}
                   />
                 </div>
@@ -860,7 +860,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                   type="url"
                   value={songMusicUrl}
                   onChange={(e) => handleSongMusicUrlChange(e.target.value)}
-                  placeholder="https://open.spotify.com/track/..."
+                  placeholder="Paste track link (e.g. https://open.spotify.com/track/...)"
                   className={styles.inputWithPrefix}
                 />
               </div>
@@ -868,7 +868,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
 
             <div className={styles.sectionTitle}>
               <MessageCircle className={`w-4 h-4 ${styles.sectionIcon}`} />
-              <span>A Sweet Note / Message</span>
+              <span>A Sweet Dedication / Memory Note</span>
             </div>
 
             <div className={styles.formGroup}>
@@ -877,7 +877,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                   rows={2}
                   value={songMessage}
                   onChange={(e) => setSongMessage(e.target.value)}
-                  placeholder="The song that reminds me of our unforgettable moments..."
+                  placeholder="Why this melody belongs in our garden... or what it makes you feel ✨"
                 />
               </div>
             </div>

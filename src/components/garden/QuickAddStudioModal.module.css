@@ -307,29 +307,37 @@
 
 .inputPrefixIcon {
   position: absolute;
-  left: 17px;
+  left: 15px;
   color: #ffb2e8;
   pointer-events: none;
   filter: drop-shadow(0 0 6px var(--pink));
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
 }
 
 .inputSuffixIcon {
   position: absolute;
-  right: 17px;
+  right: 15px;
   color: var(--muted);
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
 }
 
+.momentContainer input.inputWithPrefix,
 .inputWithPrefix {
   padding-left: 48px !important;
 }
 
+.momentContainer input.inputWithSuffix,
 .inputWithSuffix {
   padding-right: 46px !important;
 }

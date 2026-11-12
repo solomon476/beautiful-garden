@@ -91,6 +91,7 @@ export const LittleArchiveSection: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
+  const [lastLikedMemoryId, setLastLikedMemoryId] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
@@ -134,12 +135,13 @@ export const LittleArchiveSection: React.FC = () => {
         senderId: user.id,
         senderName: user.displayName,
         recipientId: partner.id,
-        entityId: `like-${id}-${user.id}-${Date.now()}`,
+        entityId: id,
       });
 
       // Immediate confirmation to self
-      setLikeNotificationToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
-      setTimeout(() => setLikeNotificationToast(null), 3800);
+      setLastLikedMemoryId(id);
+      setLikeNotificationToast(`❤️ You liked "${displayTitle}"! Tap to view ✨`);
+      setTimeout(() => setLikeNotificationToast(null), 4000);
     }
   };
 
@@ -241,6 +243,39 @@ export const LittleArchiveSection: React.FC = () => {
       window.removeEventListener('garden-memories-updated', handleUpdate);
     };
   }, []);
+
+  // Listen for direct navigation to a specific liked or referenced memory
+  useEffect(() => {
+    const openTargetMemory = (targetId: string) => {
+      if (!targetId || memories.length === 0) return;
+      const found = memories.find((m) => m.id === targetId);
+      if (found) {
+        sessionStorage.removeItem('pending_open_memory_id');
+        soundEngine.playSparkle();
+        setLightboxMemory(found);
+        setTimeout(() => {
+          const el = document.getElementById(`archive-card-${found.id}`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 350);
+      }
+    };
+
+    // Check if notification clicked earlier left a pending memory ID
+    const pendingId = sessionStorage.getItem('pending_open_memory_id');
+    if (pendingId && memories.length > 0) {
+      openTargetMemory(pendingId);
+    }
+
+    const handleOpenMemoryEvent = (e: CustomEvent<{ memoryId: string }>) => {
+      const targetId = e.detail?.memoryId;
+      if (targetId) {
+        openTargetMemory(targetId);
+      }
+    };
+
+    window.addEventListener('garden-open-memory' as any, handleOpenMemoryEvent);
+    return () => window.removeEventListener('garden-open-memory' as any, handleOpenMemoryEvent);
+  }, [memories]);
 
   const handleCloseLightbox = () => {
     if (soundtrackAudioRef.current) {
@@ -549,8 +584,22 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className={styles.archiveSection}>
       {likeNotificationToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle pointer-events-none">
-          {likeNotificationToast}
+        <div
+          onClick={() => {
+            if (lastLikedMemoryId) {
+              const found = memories.find((m) => m.id === lastLikedMemoryId);
+              if (found) {
+                soundEngine.playSparkle();
+                setLightboxMemory(found);
+              }
+            }
+          }}
+          className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 hover:bg-pink-500 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+          role="button"
+          title="Tap to view liked memory"
+        >
+          <span>{likeNotificationToast}</span>
+          <span className="text-[10px] opacity-80 underline ml-1">Open ↗</span>
         </div>
       )}
 
@@ -702,6 +751,7 @@ export const LittleArchiveSection: React.FC = () => {
             return (
               <div
                 key={mem.id}
+                id={`archive-card-${mem.id}`}
                 className="archive-card group"
                 onClick={() => {
                   soundEngine.playSparkle();
@@ -890,6 +940,7 @@ export const LittleArchiveSection: React.FC = () => {
             return (
               <div
                 key={mem.id}
+                id={`archive-card-${mem.id}`}
                 className="keepsake-album-card group cursor-pointer"
                 onClick={() => {
                   soundEngine.playSparkle();

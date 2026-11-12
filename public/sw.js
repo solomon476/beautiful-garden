@@ -1,4 +1,4 @@
-const CACHE_NAME = 'perfect-time-v6';
+const CACHE_NAME = 'perfect-time-v7';
 
 // Core shell assets for instant load (DO NOT precache HTML so navigation is always fresh)
 const STATIC_ASSETS = [
