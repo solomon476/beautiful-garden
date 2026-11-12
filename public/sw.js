@@ -1,15 +1,19 @@
-const CACHE_NAME = 'perfect-time-v4';
+const CACHE_NAME = 'perfect-time-v6';
 
-// Core shell assets for instant load
+// Core shell assets for instant load (DO NOT precache HTML so navigation is always fresh)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
   '/icon.svg',
 ];
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -40,12 +44,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Do not intercept non-GET, API, Supabase, or external streams
+  // Do not intercept non-GET, API, Supabase, version.json, or external streams
   if (
     event.request.method !== 'GET' ||
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('spotify.com') ||
-    url.pathname.startsWith('/api')
+    url.pathname.startsWith('/api') ||
+    url.pathname === '/version.json'
   ) {
     return;
   }

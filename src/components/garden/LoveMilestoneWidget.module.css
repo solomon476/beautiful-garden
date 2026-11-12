@@ -6,17 +6,7 @@
 .widgetContainer {
   position: relative;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-@media (min-width: 768px) {
-  .widgetContainer {
-    grid-template-columns: 1fr 1.1fr;
-    gap: 1.25rem;
-  }
+  margin-bottom: 0.75rem;
 }
 
 /* Card Common Styling */

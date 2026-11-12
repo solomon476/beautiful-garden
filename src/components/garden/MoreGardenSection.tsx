@@ -12,7 +12,9 @@ import {
   Camera,
   KeyRound,
   ShieldCheck,
+  RotateCw,
 } from 'lucide-react';
+import { forceAppSync } from '../../utils/appSync';
 import { soundEngine } from '../../utils/audio';
 import { authService } from '../../services/authService';
 import type { UserProfile } from '../../types/garden';
@@ -136,6 +138,34 @@ export const MoreGardenSection: React.FC<MoreGardenSectionProps> = ({
             <span>Switch Account</span>
           </button>
         </div>
+      </div>
+
+      {/* App Version & 1-Tap Sync Card */}
+      <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg my-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-400/30 flex items-center justify-center text-pink-300 shrink-0">
+            <RotateCw className="w-5 h-5 text-pink-300" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
+              <span>Sanctuary Sync & Updates</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 border border-pink-400/40 font-mono">v4.2</span>
+            </h4>
+            <p className="text-xs text-pink-200/70">
+              Tap anytime to force-refresh & clear mobile cache immediately
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            soundEngine.playSparkle();
+            forceAppSync();
+          }}
+          className="self-end sm:self-center px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/25 active:scale-95 transition-all shrink-0 cursor-pointer"
+        >
+          Sync Now 🔄
+        </button>
       </div>
 
       {/* 8 Features Grid */}

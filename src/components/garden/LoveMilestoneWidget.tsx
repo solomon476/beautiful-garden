@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Heart,
-  Calendar,
-  Sparkles,
   MapPin,
   Clock,
   ArrowRight,
-  Edit3,
-  Check,
-  X,
   Compass,
   Gift,
   PartyPopper,
+  Bell,
 } from 'lucide-react';
 import { hangoutService } from '../../services/gardenService';
 import {
@@ -25,9 +20,6 @@ import styles from './LoveMilestoneWidget.module.css';
 interface LoveMilestoneWidgetProps {
   onSelectTab: (tab: any) => void;
 }
-
-const STORAGE_KEY_ANNIVERSARY = 'perfect_time_anniversary_date';
-const DEFAULT_ANNIVERSARY = '2024-10-24'; // Solomon & Noella's Journey Start Date
 
 export function parseHangoutDate(dateStr?: string): Date | null {
   if (!dateStr || typeof dateStr !== 'string') return null;
@@ -87,23 +79,11 @@ export function parseHangoutDate(dateStr?: string): Date | null {
 }
 
 export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSelectTab }) => {
-  // Anniversary state
-  const [anniversaryDate, setAnniversaryDate] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(STORAGE_KEY_ANNIVERSARY) || DEFAULT_ANNIVERSARY;
-    }
-    return DEFAULT_ANNIVERSARY;
-  });
-
-  const [isEditingAnniversary, setIsEditingAnniversary] = useState<boolean>(false);
-  const [tempAnniversaryDate, setTempAnniversaryDate] = useState<string>(anniversaryDate);
-
   // Hangout countdown state
   const [hangouts, setHangouts] = useState<HangoutEntry[]>([]);
   const [now, setNow] = useState<Date>(new Date());
 
-  // Countdown mode: 'date' (Hangout) vs 'celebrations' (Birthdays / Holidays)
-  // Default to 'celebrations' so users immediately see the live ticking countdown!
+  // Countdown mode: 'celebrations' (Birthdays / Holidays) vs 'date' (Hangout)
   const [countdownMode, setCountdownMode] = useState<'date' | 'celebrations'>('celebrations');
   const [selectedCelebrationId, setSelectedCelebrationId] = useState<string | null>(null);
 
@@ -132,41 +112,7 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     return () => window.removeEventListener('garden-hangouts-updated', handleUpdate);
   }, [loadHangouts]);
 
-  // Calculate Days Together
-  const milestoneData = useMemo(() => {
-    const start = new Date(anniversaryDate + 'T00:00:00');
-    const diffMs = now.getTime() - start.getTime();
-    const totalDays = Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-
-    // Next 100-day milestone
-    const next100 = Math.ceil((totalDays + 1) / 100) * 100;
-    const daysUntilNext100 = next100 - totalDays;
-
-    // Next yearly anniversary
-    const currentYear = now.getFullYear();
-    let nextAnniv = new Date(start);
-    nextAnniv.setFullYear(currentYear);
-    if (nextAnniv.getTime() <= now.getTime()) {
-      nextAnniv.setFullYear(currentYear + 1);
-    }
-    const daysUntilAnniversary = Math.ceil(
-      (nextAnniv.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    return {
-      totalDays,
-      next100,
-      daysUntilNext100,
-      daysUntilAnniversary,
-      formattedStart: start.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-    };
-  }, [anniversaryDate, now]);
-
-  // Celebrations list
+  // Celebrations list (Chronologically sorted)
   const celebrations: UpcomingCelebration[] = useMemo(() => {
     return getUpcomingCelebrations(now);
   }, [now]);
@@ -179,6 +125,11 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     }
     return celebrations[0];
   }, [celebrations, selectedCelebrationId]);
+
+  // Check if any celebration has an active reminder (within 14 days or today)
+  const reminderCelebration = useMemo(() => {
+    return celebrations.find((c) => c.daysUntil <= 14);
+  }, [celebrations]);
 
   // Celebration countdown parts
   const celebrationCountdownParts = useMemo(() => {
@@ -216,7 +167,6 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     withResolvedDates.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
 
     if (withResolvedDates.length === 0) {
-      // If there are proposed hangouts with unparseable relative date, show the first proposed
       const fallback = valid[0];
       return fallback ? { hangout: fallback, parsedDate: null, diffMs: null } : null;
     }
@@ -229,17 +179,6 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
       diffMs,
     };
   }, [hangouts, now]);
-
-  // Handle save anniversary date
-  const handleSaveAnniversary = () => {
-    if (!tempAnniversaryDate) return;
-    soundEngine.playSparkle();
-    setAnniversaryDate(tempAnniversaryDate);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_ANNIVERSARY, tempAnniversaryDate);
-    }
-    setIsEditingAnniversary(false);
-  };
 
   // Format hangout countdown digits
   const hangoutCountdownParts = useMemo(() => {
@@ -269,100 +208,81 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
 
   return (
     <div className={styles.widgetContainer}>
-      {/* 1. DAYS TOGETHER MILESTONE CARD */}
-      <div className={styles.milestoneCard}>
-        <div className={styles.cardGlow} />
-
-        {/* Header */}
-        <div className={styles.cardHeader}>
-          <div className={styles.badge}>
-            <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400 animate-pulse" />
-            <span>Days Knowing Each Other ♡</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              soundEngine.playSparkle();
-              setTempAnniversaryDate(anniversaryDate);
-              setIsEditingAnniversary(true);
-            }}
-            className={styles.editButton}
-            title="Set The Day We First Connected"
-            aria-label="Set first connected date"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-pink-200" />
-          </button>
-        </div>
-
-        {/* Counter Body */}
-        <div>
-          <div className={styles.counterBody}>
-            <span className={styles.counterLabel}>Day</span>
-            <span className={styles.counterNumber}>{milestoneData.totalDays}</span>
-            <span className={styles.counterUnit}>of Knowing Each Other ♡</span>
-          </div>
-
-          <p className={styles.quoteText}>
-            “Having you as my closest friend makes every day a whole lot brighter ✨”
-          </p>
-        </div>
-
-        {/* Footer: Milestones Indicator */}
-        <div className={styles.milestoneFooter}>
-          <div className={styles.milestoneNext}>
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>
-              Next: Day {milestoneData.next100} in {milestoneData.daysUntilNext100} days
-            </span>
-          </div>
-          <span className="text-[11px] opacity-75">Since {milestoneData.formattedStart}</span>
-        </div>
-      </div>
-
-      {/* 2. NEXT DATE & CELEBRATIONS COUNTDOWN CARD */}
+      {/* CELEBRATIONS & SPECIAL OCCASIONS COUNTDOWN CARD */}
       <div className={styles.countdownCard}>
         <div className={styles.countdownGlow} />
 
-        {/* Header with Mode Switcher (Hangout vs Celebrations) */}
+        {/* 1. Card Top Bar with Title, Mode Switcher & Date Badge */}
         <div className={styles.cardHeader}>
-          <div className={styles.modeSwitcher}>
-            <button
-              type="button"
-              onClick={() => {
-                soundEngine.playSparkle();
-                setCountdownMode('date');
-              }}
-              className={`${styles.modeBtn} ${countdownMode === 'date' ? styles.modeBtnActive : ''}`}
-            >
-              <Compass className="w-3 h-3 text-purple-300" />
-              <span>Next Hangout</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                soundEngine.playSparkle();
-                setCountdownMode('celebrations');
-              }}
-              className={`${styles.modeBtn} ${countdownMode === 'celebrations' ? styles.modeBtnActive : ''}`}
-            >
-              <Gift className="w-3 h-3 text-pink-300" />
-              <span>Birthdays & Holidays</span>
-            </button>
+          <div className="flex items-center gap-2">
+            <div className={styles.modeSwitcher}>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  setCountdownMode('celebrations');
+                }}
+                className={`${styles.modeBtn} ${countdownMode === 'celebrations' ? styles.modeBtnActive : ''}`}
+              >
+                <Gift className="w-3.5 h-3.5 text-pink-300" />
+                <span>Birthdays & Holidays</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playSparkle();
+                  setCountdownMode('date');
+                }}
+                className={`${styles.modeBtn} ${countdownMode === 'date' ? styles.modeBtnActive : ''}`}
+              >
+                <Compass className="w-3.5 h-3.5 text-purple-300" />
+                <span>Next Hangout</span>
+              </button>
+            </div>
           </div>
 
-          {countdownMode === 'date' && nextHangoutData?.hangout.status && (
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-              {nextHangoutData.hangout.status === 'confirmed' ? '✨ Confirmed' : '💡 Proposed'}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {countdownMode === 'celebrations' && (
+              <span className="text-[11px] font-mono font-bold tracking-wide px-2.5 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/35 shadow-sm">
+                {activeCelebration.formattedDate}
+              </span>
+            )}
 
-          {countdownMode === 'celebrations' && (
-            <span className="text-[10px] font-mono font-bold tracking-wide px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-200 border border-pink-400/30">
-              {activeCelebration.formattedDate}
-            </span>
-          )}
+            {countdownMode === 'date' && nextHangoutData?.hangout.status && (
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                {nextHangoutData.hangout.status === 'confirmed' ? '✨ Confirmed' : '💡 Proposed'}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* 2. Proactive Notification Reminder Banner (if an event is within 14 days) */}
+        {reminderCelebration && (
+          <div className="mb-3 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-pink-500/20 border border-pink-400/30 flex items-center justify-between gap-2 shadow-inner">
+            <div className="flex items-center gap-1.5 text-xs text-pink-200 min-w-0">
+              <Bell className="w-3.5 h-3.5 text-amber-300 animate-bounce shrink-0" />
+              <span className="truncate">
+                {reminderCelebration.isToday ? (
+                  <strong className="text-amber-200">TODAY is {reminderCelebration.title}! 🎉</strong>
+                ) : (
+                  <>
+                    <strong className="text-pink-100">{reminderCelebration.title}</strong> is in{' '}
+                    <span className="text-amber-300 font-bold">{reminderCelebration.daysUntil} days</span> ✨
+                  </>
+                )}
+              </span>
+            </div>
+            {activeCelebration.id !== reminderCelebration.id && (
+              <button
+                type="button"
+                onClick={() => handleSelectCelebration(reminderCelebration.id)}
+                className="text-[10px] font-semibold text-pink-300 hover:text-white underline shrink-0 cursor-pointer"
+              >
+                View
+              </button>
+            )}
+          </div>
+        )}
 
         {/* MODE A: CELEBRATIONS (Birthdays & Holidays) */}
         {countdownMode === 'celebrations' && (
@@ -407,7 +327,7 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
             <div className={styles.dateInfoBox}>
               <div className="min-w-0 flex-1 pr-2">
                 <h4 className={styles.dateTitle}>
-                  <span>{activeCelebration.emoji}</span>
+                  <span className="text-base">{activeCelebration.emoji}</span>
                   <span className="truncate">{activeCelebration.title}</span>
                 </h4>
                 <div className={styles.dateMeta}>
@@ -494,7 +414,6 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
         )}
 
         {countdownMode === 'date' && nextHangoutData && !hangoutCountdownParts && (
-          /* When date is entered in natural speech but not parsed as exact Unix timestamp */
           <div className="space-y-3">
             <div className="p-3 rounded-2xl bg-purple-950/40 border border-purple-400/20 text-center">
               <h4 className="text-sm font-bold text-white flex items-center justify-center gap-1.5">
@@ -523,13 +442,12 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
         )}
 
         {countdownMode === 'date' && !nextHangoutData && (
-          /* Empty Hangouts State: spotlights the next holiday/birthday */
           <div className={styles.emptyDateContainer}>
             <div className="w-9 h-9 rounded-2xl bg-white/5 border border-purple-400/20 flex items-center justify-center text-pink-300 text-base shadow-inner">
               🌷
             </div>
             <div>
-              <h4 className={styles.emptyTitle}>No Upcoming Date Scheduled</h4>
+              <h4 className={styles.emptyTitle}>No Upcoming Hangout Scheduled</h4>
               <p className={styles.emptyText}>
                 Next celebration is {activeCelebration.title} ({activeCelebration.daysUntil} days away). Propose a sweet adventure!
               </p>
@@ -548,7 +466,7 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
           </div>
         )}
 
-        {/* ALWAYS-VISIBLE CELEBRATIONS RADAR CHIPS (Noella's Bday, Solomon's Bday, Christmas, etc.) */}
+        {/* 3. ALWAYS-VISIBLE CELEBRATIONS RADAR CHIPS (Noella, Solomon, Christmas, New Year, Valentine's) */}
         <div className={styles.celebrationsChips} title="Upcoming Birthdays & Special Days">
           {celebrations.map((c) => {
             const isSelected = countdownMode === 'celebrations' && activeCelebration.id === c.id;
@@ -563,12 +481,12 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
                 <span>{c.emoji}</span>
                 <span>
                   {c.id === 'noella-bday'
-                    ? 'Noella'
+                    ? "Noella's Birthday"
                     : c.id === 'solomon-bday'
-                    ? 'Solomon'
-                    : c.title.split(' ')[0]}
+                    ? "Solomon's Birthday"
+                    : c.title.replace(/ 🎂| 🎄| 🥂| 🌹/g, '')}
                 </span>
-                <span className="text-[10px] opacity-75 font-mono">
+                <span className="text-[10px] opacity-80 font-mono font-semibold">
                   {c.isToday ? 'Today! 🎉' : `${c.daysUntil}d`}
                 </span>
               </button>
@@ -576,74 +494,6 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
           })}
         </div>
       </div>
-
-      {/* 3. ANNIVERSARY DATE PICKER POPOVER MODAL */}
-      {isEditingAnniversary && (
-        <div
-          className={styles.popoverOverlay}
-          onClick={() => setIsEditingAnniversary(false)}
-        >
-          <div
-            className={styles.popoverCard}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="anniversary-modal-title"
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-pink-400/20">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-pink-400" />
-                <h3 id="anniversary-modal-title" className="font-serif font-bold text-base text-white">
-                  The Day We First Connected 🌸
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsEditingAnniversary(false)}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed font-light">
-              Choose the day we first met or started talking. The counter cherishes every precious day of having each other in our lives!
-            </p>
-
-            <div className="space-y-1.5">
-              <label htmlFor="anniversary-date-input" className="text-xs font-semibold text-pink-200">
-                Connection Date:
-              </label>
-              <input
-                id="anniversary-date-input"
-                type="date"
-                value={tempAnniversaryDate}
-                onChange={(e) => setTempAnniversaryDate(e.target.value)}
-                className={styles.dateInput}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsEditingAnniversary(false)}
-                className="px-4 py-2 rounded-full text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveAnniversary}
-                className="px-5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 shadow-md shadow-pink-500/30 flex items-center gap-1.5 transition-all"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Save Date ♡</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
