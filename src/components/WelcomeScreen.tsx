@@ -12,6 +12,16 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onEnter }) => {
     // Initiate audio on direct user touch
     await soundEngine.start();
     soundEngine.playSparkle();
+
+    // Politely prompt for browser/system notifications on first user tap
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch {
+        // Ignore fallback
+      }
+    }
+
     onEnter();
   };
 
