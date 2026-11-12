@@ -33,6 +33,8 @@ import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
 import { GardenBinModal } from './GardenBinModal';
+import { notificationService } from '../../services/notificationService';
+import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
 import styles from './LittleArchiveSection.module.css';
 
 export const formatMemoryDisplayTitle = (
@@ -107,6 +109,8 @@ export const LittleArchiveSection: React.FC = () => {
     return memoryArchiveService.getDeletedMemories(authService.getCurrentUser().id).length;
   });
   const [undoBanner, setUndoBanner] = useState<{ id: string; title: string } | null>(null);
+  const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
+  const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
@@ -119,6 +123,29 @@ export const LittleArchiveSection: React.FC = () => {
       ...prev,
       [id]: (prev[id] || getInitialLikes(id)) + (isLiked ? 1 : -1),
     }));
+
+    if (isLiked) {
+      const mem = memories.find((m) => m.id === id);
+      const displayTitle = mem ? formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken) : 'Memory';
+      const partner = authService.getPartner();
+      const user = authService.getCurrentUser();
+
+      // Realtime notification to partner
+      notificationService.sendNotification({
+        type: 'memory',
+        title: '❤️ Loved a Memory',
+        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        targetTab: 'archive',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        entityId: `like-${id}-${user.id}-${Date.now()}`,
+      });
+
+      // Immediate confirmation to self
+      setLikeNotificationToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setTimeout(() => setLikeNotificationToast(null), 3800);
+    }
   };
 
   const getInitialLikes = (id: string) => {
@@ -137,7 +164,6 @@ export const LittleArchiveSection: React.FC = () => {
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [title, setTitle] = useState<string>('');
   const [caption, setCaption] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const [cloudVideoUrl, setCloudVideoUrl] = useState<string | undefined>(undefined);
@@ -230,7 +256,6 @@ export const LittleArchiveSection: React.FC = () => {
     soundEngine.playSparkle();
     setTitle('');
     setCaption('');
-    setDescription('');
     setPhotoUrl('');
     setVideoUrl(undefined);
     setCloudVideoUrl(undefined);
@@ -257,8 +282,19 @@ export const LittleArchiveSection: React.FC = () => {
       setPhotoUrl(compressedDataUrl);
       setVideoUrl(undefined);
       setMediaType('photo');
-      if (!title) {
-        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+
+      // AI Romantic title and caption suggestion if user hasn't typed one or name is machine numbers
+      if (!title || isRawMachineName(title) || isRawMachineName(file.name)) {
+        setIsGeneratingAi(true);
+        try {
+          const suggestion = await generateRomanticMetadata(compressedDataUrl, file.name);
+          setTitle(suggestion.title);
+          if (!caption) setCaption(suggestion.caption);
+        } catch {
+          setTitle('A Stolen Sweet Moment ♡');
+        } finally {
+          setIsGeneratingAi(false);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -303,14 +339,39 @@ export const LittleArchiveSection: React.FC = () => {
         setCloudVideoUrl(undefined);
       }
 
-      if (!title) {
-        setTitle(file.name.replace(/\.[^/.]+$/, ''));
+      // AI Romantic title and caption suggestion if user hasn't typed one or name is machine numbers
+      if (!title || isRawMachineName(title) || isRawMachineName(file.name)) {
+        setIsGeneratingAi(true);
+        try {
+          const suggestion = await generateRomanticMetadata(thumbnailUrl, file.name);
+          setTitle(suggestion.title);
+          if (!caption) setCaption(suggestion.caption);
+        } catch {
+          setTitle('A Stolen Sweet Moment ♡');
+        } finally {
+          setIsGeneratingAi(false);
+        }
       }
     } catch (err) {
       console.error('[VideoUpload] Failed to process video:', err);
       setErrorMsg('Failed to process video file. Please try another video format (MP4, MOV, WebM).');
     } finally {
       setIsProcessingMedia(false);
+    }
+  };
+
+  const handleGenerateAiSuggestion = async () => {
+    soundEngine.playSparkle();
+    setIsGeneratingAi(true);
+    try {
+      const suggestion = await generateRomanticMetadata(photoUrl || undefined, title);
+      setTitle(suggestion.title);
+      setCaption(suggestion.caption);
+    } catch {
+      setTitle('A Stolen Sweet Moment ♡');
+      setCaption('A quiet moment that made time stop just for a little while.');
+    } finally {
+      setIsGeneratingAi(false);
     }
   };
 
@@ -324,22 +385,28 @@ export const LittleArchiveSection: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSaving) return; // Prevent double submit
-    if (!title.trim()) {
-      setErrorMsg('Please provide a title for this moment.');
-      return;
-    }
+
     if (!photoUrl.trim() && !videoUrl) {
       setErrorMsg('Please select a photo or video from your phone.');
       return;
+    }
+
+    // Never save raw machine numbers as title or comment
+    let finalTitle = title.trim();
+    let finalCaption = caption.trim();
+    if (!finalTitle || isRawMachineName(finalTitle)) {
+      const suggestion = await generateRomanticMetadata(photoUrl || undefined, finalTitle);
+      finalTitle = suggestion.title;
+      if (!finalCaption) finalCaption = suggestion.caption;
     }
 
     try {
       setIsSaving(true);
       setErrorMsg(null);
       const newEntry = await memoryArchiveService.addMemory({
-        title,
-        caption,
-        description,
+        title: finalTitle,
+        caption: finalCaption,
+        description: finalCaption,
         photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
         videoUrl: cloudVideoUrl || videoUrl,
         videoMediaId,
@@ -429,6 +496,12 @@ export const LittleArchiveSection: React.FC = () => {
 
   return (
     <div className={styles.archiveSection}>
+      {likeNotificationToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle pointer-events-none">
+          {likeNotificationToast}
+        </div>
+      )}
+
       {/* 1. Top Banner Button — Matching Mockup Reference */}
       <div
         onClick={handleOpenAdd}
@@ -605,7 +678,6 @@ export const LittleArchiveSection: React.FC = () => {
         /* ================= Mini Grid Mode (Horizontal Split Glass Cards) ================= */
         <div className="archive-memory-grid">
           {filteredMemories.map((mem) => {
-            const isAddedByMe = mem.contributorId === currentUser.id;
             const displayTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
             const isLiked = Boolean(likedCards[mem.id]);
             const count = likeCounts[mem.id] || getInitialLikes(mem.id);
@@ -759,19 +831,6 @@ export const LittleArchiveSection: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      {isAddedByMe && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(mem);
-                          }}
-                          className="text-rose-300/70 hover:text-rose-300 p-0.5 cursor-pointer"
-                          title="Delete memory"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -798,7 +857,6 @@ export const LittleArchiveSection: React.FC = () => {
         /* ================= Keepsake Cards Mode (Full Notes Luxury View) ================= */
         <div className="space-y-6 max-w-xl mx-auto">
           {filteredMemories.map((mem) => {
-            const isAddedByMe = mem.contributorId === currentUser.id;
             const displayTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
             const isLiked = Boolean(likedCards[mem.id]);
             const count = likeCounts[mem.id] || getInitialLikes(mem.id);
@@ -905,21 +963,6 @@ export const LittleArchiveSection: React.FC = () => {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    {isAddedByMe && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(mem);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 font-medium flex items-center gap-1 transition-all"
-                        title="Delete memory"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
-                    )}
-
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1204,14 +1247,18 @@ export const LittleArchiveSection: React.FC = () => {
               )}
 
               <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-                <button
-                  type="button"
-                  onClick={() => handleDelete(lightboxMemory)}
-                  className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Move to Bin</span>
-                </button>
+                {lightboxMemory.contributorId === currentUser.id ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(lightboxMemory)}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Move to Bin</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
 
                 <button
                   type="button"
@@ -1396,15 +1443,27 @@ export const LittleArchiveSection: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-4">
               <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    <span>Title / Moment *</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={styles.formLabel}>
+                      <span>Title / Moment *</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiSuggestion}
+                      disabled={isGeneratingAi}
+                      className="text-[11px] font-medium text-pink-300 hover:text-pink-200 flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
+                      title="Generate romantic title & comment"
+                    >
+                      <Sparkles className={`w-3 h-3 text-amber-300 ${isGeneratingAi ? 'animate-spin' : ''}`} />
+                      <span>{isGeneratingAi ? 'Dreaming...' : '✨ Magic AI Caption'}</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Evening by the Shore"
+                    placeholder="e.g. A Stolen Sweet Moment ♡"
                     className={styles.formInput}
                   />
                 </div>

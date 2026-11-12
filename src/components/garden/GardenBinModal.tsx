@@ -108,7 +108,7 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-rose-600 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -151,11 +151,11 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="p-2.5 rounded-2xl bg-white/[0.05] border border-pink-400/25 hover:border-pink-300/40 transition-all flex items-center justify-between gap-3 group"
+                  className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.06] border border-pink-400/30 hover:border-pink-300/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
                 >
                   {/* Left: Thumbnail & Title */}
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-purple-950 border border-pink-300/30 shrink-0">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-purple-950 border border-pink-300/30 shrink-0">
                       <img
                         src={mem.photoUrl || '/assets/dreamy_night_garden.jpg'}
                         alt={displayTitle}
@@ -166,34 +166,34 @@ export const GardenBinModal: React.FC<GardenBinModalProps> = ({
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="font-serif font-bold text-xs text-white truncate" title={displayTitle}>
+                      <h4 className="font-serif font-bold text-sm text-white truncate" title={displayTitle}>
                         {displayTitle}
                       </h4>
-                      <p className="text-[10px] text-pink-200/70 italic truncate mt-0.5">
+                      <p className="text-xs text-pink-200/80 italic truncate mt-0.5">
                         “{mem.caption || mem.description || 'Memories kept in bloom'}”
                       </p>
-                      <span className="text-[9.5px] font-mono text-purple-300/80 block mt-1">
+                      <span className="text-[11px] font-mono text-purple-200/90 block mt-1">
                         Deleted: {formatDeletedDate(item.deletedAt)}
                       </span>
                     </div>
                   </div>
 
                   {/* Right: Actions */}
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/10">
                     <button
                       type="button"
                       onClick={() => handleRestore(item.id)}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/50 text-emerald-200 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-md"
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-lg shadow-emerald-500/20"
                       title="Restore memory back to album"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 text-emerald-300" />
-                      <span>Restore</span>
+                      <RotateCcw className="w-3.5 h-3.5 text-white" />
+                      <span>Restore to Archive ↺</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handlePermanentDelete(item.id, displayTitle)}
-                      className="p-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/30 text-rose-300 transition-all active:scale-95 cursor-pointer"
+                      className="p-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 hover:text-white border border-rose-400/30 transition-all active:scale-95 cursor-pointer"
                       title="Permanently Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

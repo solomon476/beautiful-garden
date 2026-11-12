@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
+import { authService } from '../services/gardenService';
+import { notificationService } from '../services/notificationService';
+import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
 
 interface PhotoLightboxProps {
   memory: MemoryItem | null;
@@ -40,6 +43,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   });
 
   const [isCoverMode, setIsCoverMode] = useState<boolean>(true);
+  const [likeToast, setLikeToast] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
@@ -72,6 +76,26 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
     setLikedPhotos(updatedLikes);
     setLikeCounts(updatedCounts);
+
+    if (newLiked) {
+      const user = authService.getCurrentUser();
+      const partner = authService.getPartner();
+      const displayTitle = formatMemoryDisplayTitle(memory.title, memory.caption, memory.date);
+      // Notify partner
+      notificationService.sendNotification({
+        type: 'memory',
+        title: '❤️ Loved a Memory',
+        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        targetTab: 'archive',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        entityId: `like-${memory.id}-${user.id}-${Date.now()}`,
+      });
+      // Show instant confirmation toast to self
+      setLikeToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setTimeout(() => setLikeToast(null), 3800);
+    }
 
     try {
       localStorage.setItem('garden_photo_liked', JSON.stringify(updatedLikes));
@@ -127,6 +151,11 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
           onClick={(e) => e.stopPropagation()}
         >
+          {likeToast && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/90 text-white text-xs font-medium backdrop-blur-md shadow-2xl border border-white/30 z-50 animate-bounce-subtle pointer-events-none">
+              {likeToast}
+            </div>
+          )}
           <div className="flex items-center gap-2.5 min-w-0 pr-2">
             <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
               <Film className="w-4 h-4" />
@@ -248,6 +277,12 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {likeToast && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 text-white text-xs font-medium backdrop-blur-md shadow-2xl border border-white/30 z-50 animate-bounce-subtle pointer-events-none">
+            {likeToast}
+          </div>
+        )}
+
         {/* Polaroid Picture or Video: Fills the full width with zero side empty margins */}
         <div className="polaroid-lightbox-image-wrapper relative group">
           {/* Sleek Round Floating Close Button — perfectly circular, unclipped, matching garden styling */}

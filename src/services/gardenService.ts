@@ -1229,6 +1229,12 @@ export const memoryArchiveService = {
     const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, DEFAULT_INITIAL_MEMORIES);
     const target = localActive.find((m) => m.id === id);
 
+    // Strict ownership: Neither partner can EVER delete a memory posted by the other!
+    if (target && target.contributorId && target.contributorId !== user.id) {
+      console.warn('[Archive] Unauthorized: You can only move memories you personally posted to the bin.');
+      return;
+    }
+
     // 2. Add ID to DELETED_MEMORY_IDS so it immediately disappears everywhere
     const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
     if (!deletedIds.includes(id)) {
@@ -1264,7 +1270,7 @@ export const memoryArchiveService = {
     // 5. Delete from cloud database if available
     if (isLiveSupabaseConfigured && supabase) {
       try {
-        await supabase.from('garden_memories').delete().eq('id', id);
+        await supabase.from('garden_memories').delete().eq('id', id).eq('contributor_id', user.id);
       } catch (err) {
         console.warn('[Archive] Cloud delete failed:', err);
       }
@@ -1286,7 +1292,13 @@ export const memoryArchiveService = {
     const targetUserId = userId || user.id;
     const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
     // Completely private! Solomon only sees items deleted by Solomon; Noella sees items deleted by Noella.
-    return allDeleted.filter((item) => item.deletedBy === targetUserId);
+    return allDeleted.filter(
+      (item) =>
+        item.deletedBy === targetUserId ||
+        (user.username && item.deletedBy === user.username) ||
+        (targetUserId === 'user-solomon-uuid' && item.deletedBy === 'solomon') ||
+        (targetUserId === 'user-noella-uuid' && (item.deletedBy === 'noella' || item.deletedBy === 'ella'))
+    );
   },
 
   getDeletedCount(userId?: string): number {

@@ -17,6 +17,7 @@ import { giftContent, type MemoryItem } from '../data/giftContent';
 import { PhotoLightbox } from './PhotoLightbox';
 import { soundEngine } from '../utils/audio';
 import { memoryArchiveService, authService } from '../services/gardenService';
+import { notificationService } from '../services/notificationService';
 import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
 
 interface ScrapbookSectionProps {
@@ -29,6 +30,7 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
   const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [likeToast, setLikeToast] = useState<string | null>(null);
 
   const loadArchiveMemories = async () => {
     try {
@@ -125,6 +127,29 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
       ...prev,
       [id]: (prev[id] || getInitialLikes(id)) + (isLiked ? 1 : -1),
     }));
+
+    if (isLiked) {
+      const mem = allMemories.find((m) => m.id === id);
+      const displayTitle = mem ? formatMemoryDisplayTitle(mem.title, mem.caption, mem.date) : 'Memory';
+      const partner = authService.getPartner();
+      const user = authService.getCurrentUser();
+
+      // Realtime notification to partner
+      notificationService.sendNotification({
+        type: 'memory',
+        title: '❤️ Loved a Memory',
+        message: `${user.displayName} loved "${displayTitle}" in Our Archive! ♡`,
+        targetTab: 'archive',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partner.id,
+        entityId: `like-${id}-${user.id}-${Date.now()}`,
+      });
+
+      // Immediate confirmation toast to self
+      setLikeToast(`❤️ You loved "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setTimeout(() => setLikeToast(null), 3800);
+    }
   };
 
   const getInitialLikes = (id: string) => {
@@ -141,6 +166,12 @@ export const ScrapbookSection: React.FC<ScrapbookSectionProps> = ({ onOpenArchiv
 
   return (
     <section id="memories" className="relative py-12 px-3 sm:px-4 z-10 max-w-5xl mx-auto">
+      {likeToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle pointer-events-none">
+          {likeToast}
+        </div>
+      )}
+
       {/* Top Banner Button — Matching Mockup Reference */}
       <div
         onClick={() => {
