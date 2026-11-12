@@ -12,16 +12,13 @@ import {
   Camera,
   KeyRound,
   ShieldCheck,
-  Trash2,
 } from 'lucide-react';
 import { soundEngine } from '../../utils/audio';
 import { authService } from '../../services/authService';
-import { memoryArchiveService } from '../../services/gardenService';
 import type { UserProfile } from '../../types/garden';
 import { ChangeProfilePhotoModal } from './ChangeProfilePhotoModal';
 import { ChangePasscodeModal } from './ChangePasscodeModal';
 import { AuthModal } from './AuthModal';
-import { GardenBinModal } from './GardenBinModal';
 import styles from './MoreGardenPanel.module.css';
 
 interface MoreGardenSectionProps {
@@ -37,23 +34,17 @@ export const MoreGardenSection: React.FC<MoreGardenSectionProps> = ({
   const [isChangePhotoOpen, setIsChangePhotoOpen] = useState(false);
   const [isChangePasscodeOpen, setIsChangePasscodeOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isBinOpen, setIsBinOpen] = useState(false);
-  const [deletedCount, setDeletedCount] = useState(() => memoryArchiveService.getDeletedCount());
 
   useEffect(() => {
     setCurrentUser(authService.getCurrentUser());
     const unsub = authService.subscribeUser((u) => {
       setCurrentUser(u);
-      setDeletedCount(memoryArchiveService.getDeletedCount(u.id));
     });
     const handleAvatarUpdate = () => setCurrentUser(authService.getCurrentUser());
-    const handleBinUpdate = () => setDeletedCount(memoryArchiveService.getDeletedCount());
     window.addEventListener('garden-profile-updated', handleAvatarUpdate);
-    window.addEventListener('garden-bin-updated', handleBinUpdate);
     return () => {
       unsub();
       window.removeEventListener('garden-profile-updated', handleAvatarUpdate);
-      window.removeEventListener('garden-bin-updated', handleBinUpdate);
     };
   }, []);
 
@@ -147,35 +138,6 @@ export const MoreGardenSection: React.FC<MoreGardenSectionProps> = ({
         </div>
       </div>
 
-      {/* Recycle Bin Card */}
-      <div
-        className={styles.recycleBin}
-        onClick={() => {
-          soundEngine.playSparkle();
-          setIsBinOpen(true);
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <div className={styles.recycleLeft}>
-          <div className={styles.recycleIcon}>
-            <Trash2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className={styles.recycleTitleRow}>
-              <span className={styles.recycleTitle}>Garden Recycle Bin</span>
-              <span className={styles.privateLabel}>Private 🔒</span>
-            </div>
-            <p className={styles.recycleDescription}>
-              {deletedCount > 0
-                ? `${deletedCount} deleted item${deletedCount > 1 ? 's' : ''} • Tap to view or restore`
-                : 'Restore or permanently delete photos'}
-            </p>
-          </div>
-        </div>
-        <span className={styles.recycleArrow}>›</span>
-      </div>
-
       {/* 8 Features Grid */}
       <div className={styles.gardenGrid}>
         {moreFeatures.map((feat) => {
@@ -222,11 +184,6 @@ export const MoreGardenSection: React.FC<MoreGardenSectionProps> = ({
           setCurrentUser(newUser);
           setIsAuthModalOpen(false);
         }}
-      />
-      <GardenBinModal
-        isOpen={isBinOpen}
-        onClose={() => setIsBinOpen(false)}
-        currentUser={currentUser}
       />
     </div>
   );

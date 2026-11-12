@@ -962,12 +962,16 @@ export const memoryArchiveService = {
             let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
             let description: string = d.description || '';
 
-            // Check if description is packed JSON containing video metadata
+            let musicUrl: string | undefined = undefined;
+            let musicTitle: string | undefined = undefined;
+            let musicArtist: string | undefined = undefined;
+
+            // Check if description is packed JSON containing video or soundtrack metadata
             if (
               description &&
               typeof description === 'string' &&
               description.startsWith('{') &&
-              description.includes('"videoUrl"')
+              (description.includes('"videoUrl"') || description.includes('"musicUrl"'))
             ) {
               try {
                 const parsed = JSON.parse(description);
@@ -981,6 +985,15 @@ export const memoryArchiveService = {
                 }
                 if (parsed.mediaType) {
                   mediaType = parsed.mediaType;
+                }
+                if (parsed.musicUrl) {
+                  musicUrl = parsed.musicUrl;
+                }
+                if (parsed.musicTitle) {
+                  musicTitle = parsed.musicTitle;
+                }
+                if (parsed.musicArtist) {
+                  musicArtist = parsed.musicArtist;
                 }
                 if (parsed.note !== undefined) {
                   description = parsed.note;
@@ -999,6 +1012,9 @@ export const memoryArchiveService = {
               videoUrl: videoUrl,
               videoMediaId: videoMediaId,
               mediaType: mediaType,
+              musicUrl: musicUrl,
+              musicTitle: musicTitle,
+              musicArtist: musicArtist,
               dateTaken: d.date_taken,
               isShared: d.is_shared,
               createdAt: d.created_at,
@@ -1037,7 +1053,15 @@ export const memoryArchiveService = {
             }
           }
 
-          return { ...c, videoUrl, videoMediaId, mediaType };
+          return {
+            ...c,
+            videoUrl,
+            videoMediaId,
+            mediaType,
+            musicUrl: c.musicUrl || l?.musicUrl,
+            musicTitle: c.musicTitle || l?.musicTitle,
+            musicArtist: c.musicArtist || l?.musicArtist,
+          };
         }));
 
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
@@ -1098,6 +1122,9 @@ export const memoryArchiveService = {
     mediaType?: 'photo' | 'video';
     voiceNoteUrl?: string;
     audioFileName?: string;
+    musicUrl?: string;
+    musicTitle?: string;
+    musicArtist?: string;
     dateTaken?: string;
     isShared?: boolean;
   }): Promise<MemoryEntry> {
@@ -1130,6 +1157,9 @@ export const memoryArchiveService = {
       mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
       voiceNoteUrl: memory.voiceNoteUrl,
       audioFileName: memory.audioFileName,
+      musicUrl: memory.musicUrl,
+      musicTitle: memory.musicTitle,
+      musicArtist: memory.musicArtist,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
       isShared: memory.isShared !== undefined ? memory.isShared : true,
       createdAt: new Date().toISOString(),
@@ -1138,7 +1168,13 @@ export const memoryArchiveService = {
     if (isLiveSupabaseConfigured && supabase) {
       try {
         let descriptionToSave = entry.description || entry.caption || '';
-        if (entry.mediaType === 'video' || entry.videoUrl || entry.videoMediaId) {
+        if (
+          entry.mediaType === 'video' ||
+          entry.videoUrl ||
+          entry.videoMediaId ||
+          entry.musicUrl ||
+          entry.musicTitle
+        ) {
           // If videoUrl is a local blob: URL, do not sync the dead blob URL to cloud!
           // Only sync remote URLs or base64 data URLs to cloud
           const syncableVideoUrl =
@@ -1150,7 +1186,10 @@ export const memoryArchiveService = {
             note: entry.description || entry.caption || '',
             videoUrl: syncableVideoUrl,
             videoMediaId: entry.videoMediaId,
-            mediaType: 'video',
+            mediaType: entry.mediaType,
+            musicUrl: entry.musicUrl,
+            musicTitle: entry.musicTitle,
+            musicArtist: entry.musicArtist,
           });
         }
 

@@ -3,12 +3,13 @@ import { createPortal } from 'react-dom';
 import {
   Camera,
   Plus,
-  Trash2,
   X,
   ZoomIn,
   Sparkles,
   Upload,
   Mic,
+  Music2,
+  Disc3,
   ChevronLeft,
   ChevronRight,
   Layers,
@@ -21,10 +22,11 @@ import {
   Calendar,
   Film,
   Play,
+  Pause,
   Loader2,
 } from 'lucide-react';
-import { memoryArchiveService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
-import type { MemoryEntry, UserProfile } from '../../types/garden';
+import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
+import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
 import { compressImage, extractVideoThumbnail } from '../../utils/imageCompressor';
@@ -32,9 +34,9 @@ import { mediaStorage } from '../../utils/mediaStorage';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
-import { GardenBinModal } from './GardenBinModal';
 import { notificationService } from '../../services/notificationService';
 import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
+import { fetchSpotifyOEmbed, isSpotifyUrl } from '../../utils/spotify';
 import styles from './LittleArchiveSection.module.css';
 
 export const formatMemoryDisplayTitle = (
@@ -93,15 +95,22 @@ export const LittleArchiveSection: React.FC = () => {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<'all' | 'shared' | 'private'>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
-  const [isBinOpen, setIsBinOpen] = useState<boolean>(false);
-  const [binCount, setBinCount] = useState<number>(() => {
-    return memoryArchiveService.getDeletedMemories(authService.getCurrentUser().id).length;
-  });
-  const [undoBanner, setUndoBanner] = useState<{ id: string; title: string } | null>(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  // Soundtrack / Music state
+  const [musicUrl, setMusicUrl] = useState<string | undefined>(undefined);
+  const [musicTitle, setMusicTitle] = useState<string | undefined>(undefined);
+  const [musicArtist, setMusicArtist] = useState<string | undefined>(undefined);
+  const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+  const [availableSongs, setAvailableSongs] = useState<SongEntry[]>([]);
+  const [customSpotifyUrl, setCustomSpotifyUrl] = useState<string>('');
+  const [isCheckingSpotify, setIsCheckingSpotify] = useState<boolean>(false);
+  const [isPlayingSoundtrack, setIsPlayingSoundtrack] = useState<boolean>(false);
+  const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
+  const musicFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleToggleLike = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -219,27 +228,36 @@ export const LittleArchiveSection: React.FC = () => {
 
   useEffect(() => {
     loadMemories();
-    const updateBin = () => {
-      setBinCount(memoryArchiveService.getDeletedMemories(authService.getCurrentUser().id).length);
-    };
-    updateBin();
     const unsubscribe = authService.subscribeUser((u) => {
       setCurrentUser(u);
       loadMemories();
-      updateBin();
     });
     const handleUpdate = () => {
       loadMemories();
-      updateBin();
     };
     window.addEventListener('garden-memories-updated', handleUpdate);
-    window.addEventListener('garden-bin-updated', handleUpdate);
     return () => {
       unsubscribe();
       window.removeEventListener('garden-memories-updated', handleUpdate);
-      window.removeEventListener('garden-bin-updated', handleUpdate);
     };
   }, []);
+
+  const handleCloseLightbox = () => {
+    if (soundtrackAudioRef.current) {
+      soundtrackAudioRef.current.pause();
+    }
+    setIsPlayingSoundtrack(false);
+    setLightboxMemory(null);
+  };
+
+  const handleNavigateLightbox = (mem: MemoryEntry) => {
+    if (soundtrackAudioRef.current) {
+      soundtrackAudioRef.current.pause();
+    }
+    setIsPlayingSoundtrack(false);
+    soundEngine.playSparkle();
+    setLightboxMemory(mem);
+  };
 
   const handleOpenAdd = () => {
     soundEngine.playSparkle();
@@ -255,6 +273,11 @@ export const LittleArchiveSection: React.FC = () => {
     setVoiceNoteUrl(undefined);
     setAudioFileName(undefined);
     setShowRecorder(false);
+    setMusicUrl(undefined);
+    setMusicTitle(undefined);
+    setMusicArtist(undefined);
+    setShowMusicPicker(false);
+    setCustomSpotifyUrl('');
     setDateTaken('');
     setIsShared(true);
     setErrorMsg(null);
@@ -402,6 +425,9 @@ export const LittleArchiveSection: React.FC = () => {
         mediaType,
         voiceNoteUrl,
         audioFileName,
+        musicUrl,
+        musicTitle,
+        musicArtist,
         dateTaken: dateTaken || 'Special Day',
         isShared,
       });
@@ -422,28 +448,63 @@ export const LittleArchiveSection: React.FC = () => {
     }
   };
 
-  const handleDelete = async (memory: MemoryEntry) => {
-    const displayTitle = formatMemoryDisplayTitle(memory.title, memory.caption, memory.dateTaken);
-    if (window.confirm(`Move "${displayTitle}" to Recycle Bin? You can retrieve it anytime from the Recycle Bin button in this archive.`)) {
-      soundEngine.playSparkle();
-      setLightboxMemory(null);
-      // Instantly remove from state for real-time visual feedback
-      setMemories((prev) => prev.filter((m) => m.id !== memory.id));
-      await memoryArchiveService.deleteMemory(memory.id, memory);
-      setUndoBanner({ id: memory.id, title: displayTitle });
-      setTimeout(() => setUndoBanner((curr) => (curr?.id === memory.id ? null : curr)), 8000);
-      setBinCount(memoryArchiveService.getDeletedMemories(currentUser.id).length);
-      await loadMemories();
+  const handleOpenMusicPicker = async () => {
+    soundEngine.playSparkle();
+    setShowMusicPicker((prev) => !prev);
+    if (availableSongs.length === 0) {
+      try {
+        const songs = await soundGardenService.getSongs();
+        setAvailableSongs(songs);
+      } catch (e) {
+        console.warn('Could not load songs for picker:', e);
+      }
     }
   };
 
-  const handleUndoDelete = async () => {
-    if (!undoBanner) return;
+  const handleMusicFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      soundEngine.playSparkle();
+      const cleanName = file.name.replace(/\.[^/.]+$/, '');
+      const dataUrl = await mediaStorage.readFileAsDataUrl(file);
+      setMusicUrl(dataUrl);
+      setMusicTitle(cleanName);
+      setMusicArtist(currentUser.displayName);
+      setShowMusicPicker(false);
+    } catch (err) {
+      console.warn('[Archive] Could not read music file:', err);
+    }
+  };
+
+  const handleAttachSpotify = async () => {
+    if (!customSpotifyUrl.trim()) return;
+    setIsCheckingSpotify(true);
     soundEngine.playSparkle();
-    await memoryArchiveService.restoreMemory(undoBanner.id);
-    setUndoBanner(null);
-    setBinCount(memoryArchiveService.getDeletedMemories(currentUser.id).length);
-    await loadMemories();
+    try {
+      const oembed = await fetchSpotifyOEmbed(customSpotifyUrl.trim());
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle(oembed?.title || 'Spotify Soundtrack');
+      setMusicArtist(oembed?.artist || 'Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } catch {
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle('Spotify Soundtrack');
+      setMusicArtist('Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } finally {
+      setIsCheckingSpotify(false);
+    }
+  };
+
+  const handleSelectSoundGardenSong = (song: SongEntry) => {
+    soundEngine.playSparkle();
+    setMusicUrl(song.audioUrl || song.musicUrl);
+    setMusicTitle(song.title);
+    setMusicArtist(song.artist);
+    setShowMusicPicker(false);
   };
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
@@ -592,53 +653,7 @@ export const LittleArchiveSection: React.FC = () => {
           </button>
         </div>
 
-        {/* Recycle Bin Access Button */}
-        <button
-          type="button"
-          onClick={() => {
-            soundEngine.playSparkle();
-            setIsBinOpen(true);
-          }}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-rose-500/20 border border-white/15 hover:border-rose-400/40 text-pink-200 hover:text-white text-xs transition-all active:scale-95 cursor-pointer shadow-sm"
-          title="Garden Recycle Bin — Retrieve deleted memories"
-        >
-          <Trash2 className="w-3.5 h-3.5 text-rose-300" />
-          <span className="hidden sm:inline">Recycle Bin</span>
-          {binCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-mono font-bold">
-              {binCount}
-            </span>
-          )}
-        </button>
       </div>
-
-      {/* Instant Undo Delete Banner */}
-      {undoBanner && (
-        <div className="my-3 p-3 rounded-2xl bg-rose-500/20 border border-rose-400/40 backdrop-blur-md flex items-center justify-between text-xs text-white animate-fade-in shadow-lg">
-          <div className="flex items-center gap-2 truncate pr-2">
-            <span className="text-base">🗑️</span>
-            <span className="truncate">
-              Moved <strong>"{undoBanner.title}"</strong> to Recycle Bin.
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleUndoDelete}
-              className="px-3 py-1 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-md"
-            >
-              <span>Undo ↺</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setUndoBanner(null)}
-              className="p-1 rounded-full text-white/60 hover:text-white cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 3. Memories Display */}
       {loading ? (
@@ -735,6 +750,17 @@ export const LittleArchiveSection: React.FC = () => {
                     <div className="archive-card-photo-count">
                       <ImageIcon className="w-2.5 h-2.5" />
                       <span>1</span>
+                    </div>
+                  )}
+
+                  {/* Soundtrack badge */}
+                  {(mem.musicTitle || mem.musicUrl) && (
+                    <div
+                      className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] text-pink-200 border border-pink-400/40 flex items-center gap-1 max-w-[85%] truncate z-10 shadow-sm"
+                      title={mem.musicTitle || 'Soundtrack'}
+                    >
+                      <Disc3 className="w-2.5 h-2.5 text-pink-300 shrink-0" />
+                      <span className="truncate">{mem.musicTitle || 'Soundtrack'}</span>
                     </div>
                   )}
                 </div>
@@ -940,6 +966,21 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
                 )}
 
+                {/* Soundtrack if attached */}
+                {(mem.musicTitle || mem.musicUrl) && (
+                  <div className="my-2 p-3 rounded-2xl bg-pink-500/10 border border-pink-400/25 flex items-center gap-2.5 text-xs text-pink-200">
+                    <div className="w-7 h-7 rounded-full bg-pink-500/20 border border-pink-400/30 flex items-center justify-center shrink-0">
+                      <Disc3 className="w-4 h-4 text-pink-300" />
+                    </div>
+                    <div className="truncate">
+                      <span className="font-semibold text-white truncate block">{mem.musicTitle || 'Soundtrack of this moment'}</span>
+                      {mem.musicArtist && (
+                        <span className="text-[11px] text-pink-300/70 truncate block">{mem.musicArtist}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-3 border-t border-pink-300/20 text-xs">
                   <button
@@ -1005,7 +1046,7 @@ export const LittleArchiveSection: React.FC = () => {
                   }
                 : { zIndex: 5000 }
             }
-            onClick={() => setLightboxMemory(null)}
+            onClick={handleCloseLightbox}
           >
           {lightboxMemory.videoUrl ? (
             /* Immersive Full-Screen Cinema Video Player */
@@ -1040,7 +1081,7 @@ export const LittleArchiveSection: React.FC = () => {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setLightboxMemory(null)}
+                    onClick={handleCloseLightbox}
                     className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
                     aria-label="Close video view"
                   >
@@ -1074,7 +1115,7 @@ export const LittleArchiveSection: React.FC = () => {
 
               {/* Floating Bottom Navigation & Romantic Caption */}
               <div
-                className="relative z-30 p-3 sm:p-5 space-y-2"
+                className="relative z-30 p-3 sm:p-5 space-y-2.5"
                 style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -1095,60 +1136,107 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
                 )}
 
-                {/* Bottom Navigation & Safe Action Row */}
-                <div className="flex items-center justify-between max-w-lg mx-auto pt-1 gap-2">
-                  {lightboxMemory.contributorId === currentUser.id ? (
+                {/* Soundtrack if attached to video */}
+                {lightboxMemory.musicUrl && (
+                  <div className="max-w-md mx-auto">
+                    {isSpotifyUrl(lightboxMemory.musicUrl) ? (
+                      <a
+                        href={lightboxMemory.musicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-xs text-white hover:bg-emerald-500/25 transition-all shadow-md"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Music2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                          <div className="truncate">
+                            <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                            <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Spotify'}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 shrink-0">
+                          Open Spotify ↗
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-pink-500/15 border border-pink-400/30 text-xs text-white shadow-md">
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div className={`w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0 ${isPlayingSoundtrack ? 'ring-2 ring-pink-400/60' : ''}`}>
+                            <Disc3 className={`w-4 h-4 text-pink-300 ${isPlayingSoundtrack ? 'animate-spin' : ''}`} />
+                          </div>
+                          <div className="truncate">
+                            <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                            <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Garden Soundtrack'}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundEngine.playSparkle();
+                            if (soundtrackAudioRef.current) {
+                              if (isPlayingSoundtrack) {
+                                soundtrackAudioRef.current.pause();
+                                setIsPlayingSoundtrack(false);
+                              } else {
+                                soundtrackAudioRef.current.play().catch(() => {});
+                                setIsPlayingSoundtrack(true);
+                              }
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                        >
+                          {isPlayingSoundtrack ? (
+                            <>
+                              <Pause className="w-3.5 h-3.5 fill-white" />
+                              <span>Pause</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3.5 h-3.5 fill-white" />
+                              <span>Play Music ♫</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Bottom Navigation Row — Permanent Kept Keepsake */}
+                {filteredMemories.length > 1 && (
+                  <div className="flex items-center justify-center max-w-lg mx-auto pt-1 gap-2 text-xs text-white/90">
                     <button
                       type="button"
-                      onClick={() => handleDelete(lightboxMemory)}
-                      className="px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/35 text-rose-300 text-xs flex items-center gap-1.5 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md shrink-0"
-                      title="Move video to Recycle Bin"
+                      disabled={currentLightboxIdx <= 0}
+                      onClick={() => {
+                        if (currentLightboxIdx > 0) {
+                          handleNavigateLightbox(filteredMemories[currentLightboxIdx - 1]);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Move to Bin</span>
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Previous</span>
                     </button>
-                  ) : (
-                    <div className="w-2" />
-                  )}
 
-                  {filteredMemories.length > 1 && (
-                    <div className="flex items-center gap-2 text-xs text-white/90">
-                      <button
-                        type="button"
-                        disabled={currentLightboxIdx <= 0}
-                        onClick={() => {
-                          if (currentLightboxIdx > 0) {
-                            soundEngine.playSparkle();
-                            setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span>Previous</span>
-                      </button>
+                    <span className="font-mono text-[11px] text-pink-300">
+                      {currentLightboxIdx + 1} of {filteredMemories.length}
+                    </span>
 
-                      <span className="font-mono text-[11px] text-pink-300">
-                        {currentLightboxIdx + 1} of {filteredMemories.length}
-                      </span>
-
-                      <button
-                        type="button"
-                        disabled={currentLightboxIdx >= filteredMemories.length - 1}
-                        onClick={() => {
-                          if (currentLightboxIdx < filteredMemories.length - 1) {
-                            soundEngine.playSparkle();
-                            setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
-                      >
-                        <span>Next</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    <button
+                      type="button"
+                      disabled={currentLightboxIdx >= filteredMemories.length - 1}
+                      onClick={() => {
+                        if (currentLightboxIdx < filteredMemories.length - 1) {
+                          handleNavigateLightbox(filteredMemories[currentLightboxIdx + 1]);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 border border-white/20 backdrop-blur-md active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -1166,8 +1254,9 @@ export const LittleArchiveSection: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setLightboxMemory(null)}
+                  onClick={handleCloseLightbox}
                   className={styles.modalCloseBtn}
+                  aria-label="Close"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1196,6 +1285,82 @@ export const LittleArchiveSection: React.FC = () => {
                 />
               )}
 
+              {/* Soundtrack Player if attached to photo */}
+              {lightboxMemory.musicUrl && (
+                <div className="w-full">
+                  {isSpotifyUrl(lightboxMemory.musicUrl) ? (
+                    <a
+                      href={lightboxMemory.musicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-xs text-white hover:bg-emerald-500/25 transition-all shadow-md"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Music2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                        <div className="truncate">
+                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                          <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Spotify'}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 shrink-0">
+                        Open Spotify ↗
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="flex items-center justify-between p-2.5 rounded-2xl bg-pink-500/15 border border-pink-400/30 text-xs text-white shadow-md">
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className={`w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0 ${isPlayingSoundtrack ? 'ring-2 ring-pink-400/60' : ''}`}>
+                          <Disc3 className={`w-4 h-4 text-pink-300 ${isPlayingSoundtrack ? 'animate-spin' : ''}`} />
+                        </div>
+                        <div className="truncate">
+                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack of this moment'}</span>
+                          <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Garden Soundtrack'}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundEngine.playSparkle();
+                          if (soundtrackAudioRef.current) {
+                            if (isPlayingSoundtrack) {
+                              soundtrackAudioRef.current.pause();
+                              setIsPlayingSoundtrack(false);
+                            } else {
+                              soundtrackAudioRef.current.play().catch(() => {});
+                              setIsPlayingSoundtrack(true);
+                            }
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                      >
+                        {isPlayingSoundtrack ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 fill-white" />
+                            <span>Pause</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-white" />
+                            <span>Play Music ♫</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Hidden audio element for local/custom audio soundtrack playback */}
+              {lightboxMemory.musicUrl && !isSpotifyUrl(lightboxMemory.musicUrl) && (
+                <audio
+                  ref={soundtrackAudioRef}
+                  src={lightboxMemory.musicUrl}
+                  onEnded={() => setIsPlayingSoundtrack(false)}
+                  onError={() => setIsPlayingSoundtrack(false)}
+                  className="hidden"
+                />
+              )}
+
               {/* Gallery Navigation Controls */}
               {filteredMemories.length > 1 && (
                 <div className={styles.lightboxNavRow}>
@@ -1204,8 +1369,7 @@ export const LittleArchiveSection: React.FC = () => {
                     disabled={currentLightboxIdx <= 0}
                     onClick={() => {
                       if (currentLightboxIdx > 0) {
-                        soundEngine.playSparkle();
-                        setLightboxMemory(filteredMemories[currentLightboxIdx - 1]);
+                        handleNavigateLightbox(filteredMemories[currentLightboxIdx - 1]);
                       }
                     }}
                     className={styles.lightboxNavBtn}
@@ -1223,8 +1387,7 @@ export const LittleArchiveSection: React.FC = () => {
                     disabled={currentLightboxIdx >= filteredMemories.length - 1}
                     onClick={() => {
                       if (currentLightboxIdx < filteredMemories.length - 1) {
-                        soundEngine.playSparkle();
-                        setLightboxMemory(filteredMemories[currentLightboxIdx + 1]);
+                        handleNavigateLightbox(filteredMemories[currentLightboxIdx + 1]);
                       }
                     }}
                     className={styles.lightboxNavBtn}
@@ -1235,23 +1398,11 @@ export const LittleArchiveSection: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-                {lightboxMemory.contributorId === currentUser.id ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(lightboxMemory)}
-                    className="px-3.5 py-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-rose-300 hover:bg-rose-500/25 flex items-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Move to Bin</span>
-                  </button>
-                ) : (
-                  <div />
-                )}
-
+              {/* Footer Row — Clean Close Button (No Delete) */}
+              <div className="flex items-center justify-end pt-2 border-t border-white/10 text-xs">
                 <button
                   type="button"
-                  onClick={() => setLightboxMemory(null)}
+                  onClick={handleCloseLightbox}
                   className={styles.cancelBtn}
                 >
                   Close
@@ -1332,7 +1483,18 @@ export const LittleArchiveSection: React.FC = () => {
                 }`}
               >
                 <Mic className="w-4 h-4" />
-                <span>Record Voice Note</span>
+                <span>Voice Note</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenMusicPicker}
+                className={`${styles.uploadChoiceBtn} ${
+                  musicUrl || showMusicPicker ? styles.uploadChoiceBtnActive : ''
+                }`}
+              >
+                <Music2 className="w-4 h-4" />
+                <span>Soundtrack 🎵</span>
               </button>
             </div>
 
@@ -1352,6 +1514,14 @@ export const LittleArchiveSection: React.FC = () => {
               onChange={handleVideoUpload}
             />
 
+            <input
+              ref={musicFileInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={handleMusicFileUpload}
+            />
+
             {/* Processing Video Spinner */}
             {isProcessingMedia && (
               <div className="p-4 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center justify-center gap-3 text-xs text-pink-200 animate-pulse">
@@ -1366,6 +1536,77 @@ export const LittleArchiveSection: React.FC = () => {
                 onRecorded={handleVoiceNoteRecorded}
                 onCancel={() => setShowRecorder(false)}
               />
+            )}
+
+            {/* Music / Soundtrack Picker Panel */}
+            {showMusicPicker && (
+              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-pink-400/30 space-y-3 animate-fade-in text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-pink-200 flex items-center gap-1.5">
+                    <Music2 className="w-4 h-4 text-pink-300" />
+                    <span>Pair this Memory with Music 🎵</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMusicPicker(false)}
+                    className="text-pink-300/70 hover:text-white p-1"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => musicFileInputRef.current?.click()}
+                    className="p-2.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 text-white flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 text-center font-medium"
+                  >
+                    <Upload className="w-4 h-4 text-pink-300 shrink-0" />
+                    <span className="truncate">Upload Song from Phone ♫</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="url"
+                      value={customSpotifyUrl}
+                      onChange={(e) => setCustomSpotifyUrl(e.target.value)}
+                      placeholder="Paste Spotify track link..."
+                      className="flex-1 bg-black/40 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-400"
+                    />
+                    <button
+                      type="button"
+                      disabled={isCheckingSpotify || !customSpotifyUrl.trim()}
+                      onClick={handleAttachSpotify}
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-medium cursor-pointer shrink-0 transition-all text-xs"
+                    >
+                      {isCheckingSpotify ? '...' : 'Attach'}
+                    </button>
+                  </div>
+                </div>
+
+                {availableSongs.length > 0 && (
+                  <div className="pt-2 border-t border-white/10 space-y-1.5">
+                    <div className="text-[11px] font-mono text-pink-200/70">Or choose from Sound Garden:</div>
+                    <div className="max-h-36 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                      {availableSongs.map((song) => (
+                        <div
+                          key={song.id}
+                          onClick={() => handleSelectSoundGardenSong(song)}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-pink-500/20 cursor-pointer border border-transparent hover:border-pink-400/30 transition-all text-xs"
+                        >
+                          <div className="truncate pr-2">
+                            <span className="text-white font-medium truncate block">{song.title}</span>
+                            <span className="text-[10px] text-pink-200/60 truncate block">{song.artist}</span>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 shrink-0 font-mono">
+                            Select ♫
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Video Preview */}
@@ -1423,6 +1664,40 @@ export const LittleArchiveSection: React.FC = () => {
                   type="button"
                   onClick={() => setVoiceNoteUrl(undefined)}
                   className="text-slate-400 hover:text-rose-300 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            {/* Soundtrack Preview Pill */}
+            {musicUrl && (
+              <div className="p-3 rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-between text-xs text-pink-200 animate-fade-in shadow-sm">
+                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0">
+                    <Disc3 className="w-4 h-4 text-pink-300 animate-spin" />
+                  </div>
+                  <div className="truncate">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-white truncate">{musicTitle || 'Attached Soundtrack'}</span>
+                      {isSpotifyUrl(musicUrl) && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 font-mono">
+                          Spotify
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-pink-300/70 truncate block">{musicArtist || 'Soundtrack of this moment'}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setMusicUrl(undefined);
+                    setMusicTitle(undefined);
+                    setMusicArtist(undefined);
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-slate-300 hover:text-rose-300 hover:bg-rose-500/20 cursor-pointer shrink-0 transition-colors"
                 >
                   Remove
                 </button>
@@ -1545,16 +1820,6 @@ export const LittleArchiveSection: React.FC = () => {
         );
         return typeof document !== 'undefined' ? createPortal(addModalContent, document.body) : addModalContent;
       })()}
-
-      {/* Garden Recycle Bin Modal — Easily retrieve deleted memories */}
-      <GardenBinModal
-        isOpen={isBinOpen}
-        onClose={() => {
-          setIsBinOpen(false);
-          loadMemories();
-        }}
-        currentUser={currentUser}
-      />
     </div>
   );
 };
