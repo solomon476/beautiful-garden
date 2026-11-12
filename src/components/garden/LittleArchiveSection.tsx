@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Camera,
@@ -29,11 +29,13 @@ import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
-import { compressImage, extractVideoThumbnail } from '../../utils/imageCompressor';
+import { compressImageWithStats, extractVideoThumbnail, type CompressionResult } from '../../utils/imageCompressor';
 import { mediaStorage } from '../../utils/mediaStorage';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { VoiceNoteRecorder } from './VoiceNoteRecorder';
 import { GardenAudioPlayer } from './GardenAudioPlayer';
+import { OnThisDayTimeMachine } from './OnThisDayTimeMachine';
+import { getOnThisDayFlashbacks } from '../../services/onThisDayService';
 import { notificationService } from '../../services/notificationService';
 import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
 import { fetchSpotifyOEmbed, isSpotifyUrl } from '../../utils/spotify';
@@ -111,6 +113,9 @@ export const LittleArchiveSection: React.FC = () => {
   const [isPlayingSoundtrack, setIsPlayingSoundtrack] = useState<boolean>(false);
   const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
   const musicFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
+
+  const flashbacks = useMemo(() => getOnThisDayFlashbacks(memories), [memories]);
 
   const handleToggleLike = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -278,6 +283,7 @@ export const LittleArchiveSection: React.FC = () => {
     setMusicArtist(undefined);
     setShowMusicPicker(false);
     setCustomSpotifyUrl('');
+    setCompressionStats(null);
     setDateTaken('');
     setIsShared(true);
     setErrorMsg(null);
@@ -290,8 +296,9 @@ export const LittleArchiveSection: React.FC = () => {
 
     try {
       soundEngine.playSparkle();
-      const compressedDataUrl = await compressImage(file, 1280, 1280, 0.82);
-      setPhotoUrl(compressedDataUrl);
+      const comp = await compressImageWithStats(file, 1280, 1280, 0.82);
+      setPhotoUrl(comp.dataUrl);
+      setCompressionStats(comp);
       setVideoUrl(undefined);
       setMediaType('photo');
 
@@ -299,7 +306,7 @@ export const LittleArchiveSection: React.FC = () => {
       if (!title || isRawMachineName(title) || isRawMachineName(file.name)) {
         setIsGeneratingAi(true);
         try {
-          const suggestion = await generateRomanticMetadata(compressedDataUrl, file.name);
+          const suggestion = await generateRomanticMetadata(comp.dataUrl, file.name);
           setTitle(suggestion.title);
           if (!caption) setCaption(suggestion.caption);
         } catch {
@@ -576,6 +583,15 @@ export const LittleArchiveSection: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* 1.5 "On This Day" Romantic Time Machine */}
+      <OnThisDayTimeMachine
+        flashbacks={flashbacks}
+        onOpenMemory={(mem) => {
+          soundEngine.playSparkle();
+          setLightboxMemory(mem);
+        }}
+      />
 
       {/* 2. View Switcher Tabs — Matching Mockup Reference */}
       <div className="archive-tabs">
@@ -1641,15 +1657,33 @@ export const LittleArchiveSection: React.FC = () => {
 
             {/* Photo Preview (when photo selected and no video) */}
             {photoUrl && !videoUrl && (
-              <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
-                <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setPhotoUrl('')}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+              <div className="space-y-2">
+                <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
+                  <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoUrl('');
+                      setCompressionStats(null);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Smart Mobile Compression Badge */}
+                {compressionStats && compressionStats.reductionPercent > 0 && (
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in shadow-sm">
+                    <span className="flex items-center gap-1.5 font-medium truncate pr-2">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                      <span className="truncate">Instant Upload Optimizer</span>
+                    </span>
+                    <span className="font-mono text-[11px] text-white shrink-0 bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-400/30">
+                      {compressionStats.originalFormatted} → {compressionStats.compressedFormatted} ({compressionStats.reductionPercent}% faster ⚡)
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 

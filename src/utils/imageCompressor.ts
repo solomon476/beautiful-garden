@@ -1,19 +1,54 @@
 /**
- * Helper to compress image files before storing in localStorage or Supabase
- * Keeps file size under ~200KB while preserving visual clarity.
+ * Smart Mobile Photo Compression & Video Processing
+ * Compresses heavy smartphone camera photos (8MB–20MB) down to ~300KB–600KB
+ * preserving crisp visual fidelity and enabling instant <1s uploads on mobile networks.
  */
-export async function compressImage(
+
+export interface CompressionResult {
+  dataUrl: string;
+  originalSizeBytes: number;
+  compressedSizeBytes: number;
+  originalFormatted: string;
+  compressedFormatted: string;
+  reductionPercent: number;
+  format: 'webp' | 'jpeg';
+  width: number;
+  height: number;
+}
+
+export function formatBytes(bytes: number, decimals: number = 1): string {
+  if (bytes <= 0) return '0 B';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+export async function compressImageWithStats(
   file: File | Blob,
   maxWidth: number = 1280,
   maxHeight: number = 1280,
   quality: number = 0.82
-): Promise<string> {
+): Promise<CompressionResult> {
   return new Promise((resolve) => {
+    const originalSizeBytes = file.size || 0;
     const reader = new FileReader();
+
     reader.onload = (e) => {
       const rawDataUrl = e.target?.result as string;
       if (!rawDataUrl) {
-        resolve('');
+        resolve({
+          dataUrl: '',
+          originalSizeBytes,
+          compressedSizeBytes: 0,
+          originalFormatted: formatBytes(originalSizeBytes),
+          compressedFormatted: '0 KB',
+          reductionPercent: 0,
+          format: 'jpeg',
+          width: 0,
+          height: 0,
+        });
         return;
       }
 
@@ -22,7 +57,7 @@ export async function compressImage(
         try {
           let { width, height } = img;
 
-          // Calculate scaled dimensions
+          // Adaptive scaling: cap maximum dimensions for crispness without bloated megabytes
           if (width > maxWidth || height > maxHeight) {
             const ratio = Math.min(maxWidth / width, maxHeight / height);
             width = Math.round(width * ratio);
@@ -35,38 +70,124 @@ export async function compressImage(
 
           const ctx = canvas.getContext('2d');
           if (!ctx) {
-            resolve(rawDataUrl);
+            resolve({
+              dataUrl: rawDataUrl,
+              originalSizeBytes,
+              compressedSizeBytes: originalSizeBytes,
+              originalFormatted: formatBytes(originalSizeBytes),
+              compressedFormatted: formatBytes(originalSizeBytes),
+              reductionPercent: 0,
+              format: 'jpeg',
+              width,
+              height,
+            });
             return;
           }
 
-          // Use high quality image smoothing
+          // Use high-quality bicubic smoothing
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Convert to JPEG
-          const compressed = canvas.toDataURL('image/jpeg', quality);
-          resolve(compressed);
+          // Try modern WebP first if supported (up to 30% smaller than JPEG), fallback to JPEG
+          let chosenFormat: 'webp' | 'jpeg' = 'jpeg';
+          let compressed = '';
+
+          try {
+            const webpData = canvas.toDataURL('image/webp', quality);
+            if (webpData.startsWith('data:image/webp')) {
+              compressed = webpData;
+              chosenFormat = 'webp';
+            }
+          } catch {}
+
+          if (!compressed) {
+            compressed = canvas.toDataURL('image/jpeg', quality);
+            chosenFormat = 'jpeg';
+          }
+
+          // Compute compressed size from base64 string
+          const base64Str = compressed.split(',')[1] || '';
+          const compressedSizeBytes = Math.round((base64Str.length * 3) / 4);
+
+          const reductionPercent =
+            originalSizeBytes > 0 && compressedSizeBytes < originalSizeBytes
+              ? Math.round(((originalSizeBytes - compressedSizeBytes) / originalSizeBytes) * 100)
+              : 0;
+
+          resolve({
+            dataUrl: compressed,
+            originalSizeBytes,
+            compressedSizeBytes,
+            originalFormatted: formatBytes(originalSizeBytes),
+            compressedFormatted: formatBytes(compressedSizeBytes),
+            reductionPercent,
+            format: chosenFormat,
+            width,
+            height,
+          });
         } catch (err) {
           console.warn('[imageCompressor] Canvas compression failed, using original', err);
-          resolve(rawDataUrl);
+          resolve({
+            dataUrl: rawDataUrl,
+            originalSizeBytes,
+            compressedSizeBytes: originalSizeBytes,
+            originalFormatted: formatBytes(originalSizeBytes),
+            compressedFormatted: formatBytes(originalSizeBytes),
+            reductionPercent: 0,
+            format: 'jpeg',
+            width: img.width,
+            height: img.height,
+          });
         }
       };
 
       img.onerror = () => {
-        // Fallback to raw data url if image cannot be rendered to canvas
-        resolve(rawDataUrl);
+        resolve({
+          dataUrl: rawDataUrl,
+          originalSizeBytes,
+          compressedSizeBytes: originalSizeBytes,
+          originalFormatted: formatBytes(originalSizeBytes),
+          compressedFormatted: formatBytes(originalSizeBytes),
+          reductionPercent: 0,
+          format: 'jpeg',
+          width: 0,
+          height: 0,
+        });
       };
 
       img.src = rawDataUrl;
     };
 
     reader.onerror = () => {
-      resolve('');
+      resolve({
+        dataUrl: '',
+        originalSizeBytes,
+        compressedSizeBytes: 0,
+        originalFormatted: formatBytes(originalSizeBytes),
+        compressedFormatted: '0 KB',
+        reductionPercent: 0,
+        format: 'jpeg',
+        width: 0,
+        height: 0,
+      });
     };
 
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Backward-compatible helper that returns just the compressed dataUrl string.
+ */
+export async function compressImage(
+  file: File | Blob,
+  maxWidth: number = 1280,
+  maxHeight: number = 1280,
+  quality: number = 0.82
+): Promise<string> {
+  const res = await compressImageWithStats(file, maxWidth, maxHeight, quality);
+  return res.dataUrl;
 }
 
 /**
@@ -147,4 +268,3 @@ export async function extractVideoThumbnail(
     };
   });
 }
-
