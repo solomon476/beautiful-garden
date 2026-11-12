@@ -1,16 +1,30 @@
 {
   "name": "Perfect Time 🌷 — A Private Garden",
   "short_name": "Perfect Time",
-  "description": "A private garden of memories, little surprises, and appreciation.",
+  "description": "A private garden of memories, letters, and appreciation for Solomon & Noella.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0b0e1e",
   "theme_color": "#0b0e1e",
   "orientation": "portrait-primary",
+  "categories": ["lifestyle", "social"],
   "icons": [
     {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }

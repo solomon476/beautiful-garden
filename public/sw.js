@@ -1,18 +1,120 @@
+const CACHE_NAME = 'perfect-time-v3';
+
+// Core shell assets for instant load
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png',
+  '/icon.svg',
+];
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS).catch((err) => {
+        console.warn('[SW] Precache non-critical failure:', err);
+      });
+    })
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
+// Stale-while-revalidate or Network-first strategy
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Do not intercept non-GET, API, Supabase, or external streams
+  if (
+    event.request.method !== 'GET' ||
+    url.hostname.includes('supabase.co') ||
+    url.hostname.includes('spotify.com') ||
+    url.pathname.startsWith('/api')
+  ) {
+    return;
+  }
+
+  // For static assets (images, icons, css, js), use cache-first with network fallback
+  if (
+    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2)$/i) ||
+    STATIC_ASSETS.includes(url.pathname)
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-first for navigation/HTML
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request).then((res) => res || caches.match('/')))
+  );
+});
+
+// Push notification event for OS-level lock screen notifications
+self.addEventListener('push', (event) => {
+  let title = 'Perfect Time 🌷';
+  let body = 'A sweet whisper in our private garden ♡';
+  let targetUrl = '/';
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      title = data.title || title;
+      body = data.body || body;
+      targetUrl = data.url || targetUrl;
+    } catch {
+      body = event.data.text() || body;
+    }
+  }
+
+  const options = {
+    body,
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: targetUrl },
+    vibrate: [200, 100, 200],
+    renotify: true,
+    tag: 'perfect-time-notification',
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Click notification to open app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const urlToOpen = event.notification.data?.url || '/';
+
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
@@ -22,4 +124,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-

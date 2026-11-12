@@ -10,6 +10,7 @@ import { FinalLetterSection } from './components/FinalLetterSection';
 import { OurGardenModal } from './components/garden/OurGardenModal';
 import { MobileBottomNav } from './components/garden/MobileBottomNav';
 import { LiveNotificationToast } from './components/garden/LiveNotificationToast';
+import { PwaInstallPrompt } from './components/garden/PwaInstallPrompt';
 import { giftContent } from './data/giftContent';
 import { Sparkles } from 'lucide-react';
 
@@ -183,6 +184,9 @@ export const App: React.FC = () => {
           }}
         />
       )}
+
+      {/* PWA Home Screen Install & Lock Screen Alerts Prompt */}
+      <PwaInstallPrompt />
     </div>
   );
 };
