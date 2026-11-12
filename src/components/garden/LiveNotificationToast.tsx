@@ -47,15 +47,22 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
     // Check after short delay to allow syncCloudNotifications to complete
     const timer = setTimeout(checkUnread, 1200);
     const unsub = notificationService.subscribe(checkUnread);
+    const unsubUser = authService.subscribeUser(() => {
+      checkUnread();
+    });
 
     return () => {
       window.removeEventListener('garden-toast-notification' as any, handleToastEvent);
       clearTimeout(timer);
       unsub();
+      unsubUser();
     };
   }, []);
 
   const showToast = (notif: GardenNotification) => {
+    const currentUser = authService.getCurrentUser();
+    if (!notif || notif.senderId === currentUser.id || notif.recipientId !== currentUser.id) return;
+
     setActiveToast(notif);
     setIsVisible(true);
     try {
