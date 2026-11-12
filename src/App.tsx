@@ -9,6 +9,7 @@ import { HiddenSurpriseSection } from './components/HiddenSurpriseSection';
 import { FinalLetterSection } from './components/FinalLetterSection';
 import { OurGardenModal } from './components/garden/OurGardenModal';
 import { MobileBottomNav } from './components/garden/MobileBottomNav';
+import { LiveNotificationToast } from './components/garden/LiveNotificationToast';
 import { giftContent } from './data/giftContent';
 import { Sparkles } from 'lucide-react';
 
@@ -75,7 +76,18 @@ export const App: React.FC = () => {
       <GardenHeader
         onScrollTo={scrollToSection}
         activeSection={activeSection}
-        onOpenOurGarden={() => setIsOurGardenOpen(true)}
+        onOpenOurGarden={(tab = 'garden') => {
+          setGardenInitialTab(tab);
+          setIsOurGardenOpen(true);
+        }}
+      />
+
+      {/* Floating Live Notification Toast (Pops for new & unread messages) */}
+      <LiveNotificationToast
+        onOpenTab={(tab) => {
+          setGardenInitialTab(tab);
+          setIsOurGardenOpen(true);
+        }}
       />
 
       {/* Our Garden Collaborative Suite Modal */}

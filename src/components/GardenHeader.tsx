@@ -3,11 +3,12 @@ import { Volume2, VolumeX, Heart, Disc3, Sparkles } from 'lucide-react';
 import { soundEngine } from '../utils/audio';
 import { notificationService } from '../services/notificationService';
 import { authService } from '../services/gardenService';
+import { GardenNotificationBell } from './garden/GardenNotificationBell';
 
 interface GardenHeaderProps {
   onScrollTo: (sectionId: string) => void;
   activeSection: string;
-  onOpenOurGarden: () => void;
+  onOpenOurGarden: (tab?: string) => void;
 }
 
 export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSection, onOpenOurGarden }) => {
@@ -101,29 +102,39 @@ export const GardenHeader: React.FC<GardenHeaderProps> = ({ onScrollTo, activeSe
 
           {/* Dedicated Our Garden Access */}
           <button
-            onClick={onOpenOurGarden}
+            onClick={() => onOpenOurGarden('garden')}
             className="relative flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 hover:scale-105 active:scale-95 transition-all shadow-sm shadow-pink-500/10 ml-1"
           >
             <Sparkles className="w-3 h-3 text-pink-300" />
             <span>Our Garden 🌿</span>
             {unreadCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse shadow-sm shadow-pink-500" />
+              <span className="px-1.5 py-0.2 rounded-full bg-pink-500 text-white text-[9px] font-bold animate-pulse shadow-sm shadow-pink-500">
+                {unreadCount}
+              </span>
             )}
           </button>
         </nav>
 
-        {/* Background Music Toggle & Track Switcher + Mobile Garden Access */}
+        {/* Background Music Toggle & Track Switcher + Mobile Garden Access + Bell */}
         <div className="flex items-center gap-1.5">
+          {/* Dedicated Live Notification Bell */}
+          <GardenNotificationBell
+            currentUser={authService.getCurrentUser()}
+            onSelectTab={(tab) => onOpenOurGarden(tab)}
+          />
+
           {/* Mobile-Only Garden Access Button */}
           <button
-            onClick={onOpenOurGarden}
+            onClick={() => onOpenOurGarden('garden')}
             className="mobile-garden-btn sm:hidden relative flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-pink-500/25 to-purple-500/25 text-pink-200 border border-pink-400/40 active:scale-95 transition-all"
             aria-label="Open Our Garden"
           >
             <Sparkles className="w-3 h-3 text-pink-300" />
             <span className="text-[11px]">Garden 🌿</span>
             {unreadCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse shadow-sm shadow-pink-500" />
+              <span className="px-1.5 py-0.2 rounded-full bg-pink-500 text-white text-[9px] font-bold animate-pulse shadow-sm shadow-pink-500">
+                {unreadCount}
+              </span>
             )}
           </button>
 

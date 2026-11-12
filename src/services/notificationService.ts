@@ -8,6 +8,19 @@ const READ_IDS_KEY = 'perfect_time_read_notification_ids_v2';
 const CLEARED_AT_KEY = 'perfect_time_notifications_cleared_at';
 const DELETED_IDS_KEY = 'perfect_time_deleted_notif_ids';
 const V2_INIT_KEY = 'perfect_time_notifs_fresh_v2';
+const CLEARED_AT_FIX_KEY = 'pt_cleared_at_fix_v3';
+
+// Clear legacy clearedAt timestamp if it was prematurely set by older build
+if (typeof window !== 'undefined') {
+  try {
+    if (!localStorage.getItem(CLEARED_AT_FIX_KEY)) {
+      localStorage.setItem(CLEARED_AT_FIX_KEY, 'true');
+      localStorage.removeItem(CLEARED_AT_KEY);
+      localStorage.removeItem(`${CLEARED_AT_KEY}_${DEFAULT_PROFILES.solomon.id}`);
+      localStorage.removeItem(`${CLEARED_AT_KEY}_${DEFAULT_PROFILES.noella.id}`);
+    }
+  } catch {}
+}
 
 export function deduplicateNotifications(list: GardenNotification[]): GardenNotification[] {
   const seenIds = new Set<string>();
@@ -116,11 +129,9 @@ function loadNotifications(): GardenNotification[] {
   try {
     const isFreshV2 = localStorage.getItem(V2_INIT_KEY);
     if (!isFreshV2) {
-      // Clear out all historical seed and repetitive notifications for a clean slate
+      // Clear out all historical seed notifications for clean slate
       localStorage.setItem(V2_INIT_KEY, 'true');
       localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-      setClearedAt(DEFAULT_PROFILES.solomon.id, Date.now());
-      setClearedAt(DEFAULT_PROFILES.noella.id, Date.now());
       return [];
     }
 
@@ -148,6 +159,38 @@ const listeners = new Set<() => void>();
 let realtimeChannel: any = null;
 let isChannelSubscribed = false;
 let realtimeSubscribersCount = 0;
+
+function triggerSystemNotification(title: string, body: string, targetTab?: string): void {
+  if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const url = window.location.origin + (targetTab ? `/?tab=${targetTab}` : '');
+  const options: NotificationOptions = {
+    body,
+    icon: '/icon.svg',
+    badge: '/icon.svg',
+    data: { url },
+  };
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then((reg) => {
+        reg.showNotification(title, options);
+      })
+      .catch(() => {
+        try {
+          new Notification(title, options);
+        } catch (e) {
+          console.warn('System notification fallback failed:', e);
+        }
+      });
+  } else {
+    try {
+      new Notification(title, options);
+    } catch (e) {
+      console.warn('System notification fallback failed:', e);
+    }
+  }
+}
 
 export const notificationService = {
   subscribe(callback: () => void): () => void {
@@ -298,18 +341,13 @@ export const notificationService = {
         // Audio autoplay policy fallback
       }
 
-      // Trigger browser banner if permitted
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(notif.title, {
-            body: notif.message,
-            icon: '/icon.svg',
-            badge: '/icon.svg',
-          });
-        } catch (err) {
-          console.warn('Browser push notification failed', err);
-        }
+      // Trigger in-app live toast pop
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('garden-toast-notification', { detail: entry }));
       }
+
+      // Trigger browser/system banner if permitted
+      triggerSystemNotification(notif.title, notif.message, notif.targetTab);
 
       this.notifyListeners();
     }
@@ -618,18 +656,8 @@ export const notificationService = {
       }
     }
 
-    // Trigger local Browser Notification if supported and granted
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(params.title, {
-          body: params.message,
-          icon: '/icon.svg',
-          badge: '/icon.svg',
-        });
-      } catch (err) {
-        console.warn('Browser notification failed', err);
-      }
-    }
+    // Trigger system notification if supported and granted
+    triggerSystemNotification(params.title, params.message, params.targetTab);
   },
 
   markAsRead(id: string, userId?: string): void {
