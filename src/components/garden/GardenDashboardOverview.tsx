@@ -399,44 +399,6 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             <span className="font-serif font-bold text-[11px] leading-tight block">World</span>
           </button>
         </div>
-
-        {/* 6. Mobile Quick Add Studio Shortcut Pills */}
-        <div className="pt-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-            <button
-              type="button"
-              onClick={() => onOpenAddStudio && onOpenAddStudio('photo')}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-200 text-[11px] font-semibold shrink-0"
-            >
-              <Camera className="w-3 h-3 text-pink-300" />
-              <span>+ Photo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenAddStudio && onOpenAddStudio('date')}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-500/20 border border-teal-400/40 text-teal-200 text-[11px] font-semibold shrink-0"
-            >
-              <CalendarDays className="w-3 h-3 text-teal-300" />
-              <span>+ Date</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenAddStudio && onOpenAddStudio('song')}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-200 text-[11px] font-semibold shrink-0"
-            >
-              <Music2 className="w-3 h-3 text-purple-300" />
-              <span>+ Music</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenAddStudio && onOpenAddStudio('letter')}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-200 text-[11px] font-semibold shrink-0"
-            >
-              <PenLine className="w-3 h-3 text-rose-300" />
-              <span>+ Letter</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* ============================================================== */}

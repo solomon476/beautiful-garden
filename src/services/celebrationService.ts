@@ -20,8 +20,8 @@ export const SPECIAL_CELEBRATIONS: SpecialCelebration[] = [
   {
     id: 'noella-bday',
     title: "Noella's Birthday 🎂",
-    subtitle: "Celebrating the queen of my heart Noella ♡",
-    emoji: '👑',
+    subtitle: "Celebrating my favorite person in the world Noella ✨",
+    emoji: '🌸',
     month: 8, // September
     day: 11,
     person: 'noella',
@@ -30,7 +30,7 @@ export const SPECIAL_CELEBRATIONS: SpecialCelebration[] = [
   {
     id: 'solomon-bday',
     title: "Solomon's Birthday 🎂",
-    subtitle: "A day to celebrate Solomon with all my love ✨",
+    subtitle: "Celebrating Solomon's special day and good times ✨",
     emoji: '🎉',
     month: 4, // May
     day: 25,
@@ -50,7 +50,7 @@ export const SPECIAL_CELEBRATIONS: SpecialCelebration[] = [
   {
     id: 'new-year',
     title: "New Year's Eve 🥂",
-    subtitle: "Stepping hand-in-hand into another beautiful year ♡",
+    subtitle: "Stepping into another bright and beautiful year together ✨",
     emoji: '🥂',
     month: 11, // December
     day: 31,
@@ -60,7 +60,7 @@ export const SPECIAL_CELEBRATIONS: SpecialCelebration[] = [
   {
     id: 'valentines',
     title: "Valentine's Day 🌹",
-    subtitle: "Every day with you is Valentine’s, but today is extra sweet ♡",
+    subtitle: "A sweet day to celebrate someone very special ✨",
     emoji: '🌹',
     month: 1, // February
     day: 14,
@@ -107,3 +107,4 @@ export function getUpcomingCelebrations(refDate: Date = new Date()): UpcomingCel
     return a.daysUntil - b.daysUntil;
   });
 }
+

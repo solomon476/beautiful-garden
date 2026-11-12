@@ -805,9 +805,9 @@ export const LittleArchiveSection: React.FC = () => {
                   {/* Note Caption Preview */}
                   <p
                     className="archive-card-note line-clamp-2"
-                    title={mem.caption || mem.description || 'A timeless moment in our love story.'}
+                    title={mem.caption || mem.description || 'A timeless moment in our story.'}
                   >
-                    “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
+                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
                   </p>
 
                   {/* Date */}
@@ -958,10 +958,10 @@ export const LittleArchiveSection: React.FC = () => {
                   {displayTitle}
                 </h3>
 
-                {/* Complete Unclipped Romantic Note */}
+                {/* Complete Unclipped Note */}
                 <div className="p-4 rounded-2xl bg-white/[0.06] border border-pink-300/30 my-2">
                   <p className="keepsake-album-text">
-                    “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
+                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
                   </p>
                 </div>
 

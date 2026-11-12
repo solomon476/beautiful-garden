@@ -1,4 +1,4 @@
-const CACHE_NAME = 'perfect-time-v3';
+const CACHE_NAME = 'perfect-time-v4';
 
 // Core shell assets for instant load
 const STATIC_ASSETS = [
@@ -50,11 +50,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets (images, icons, css, js), use cache-first with network fallback
-  if (
-    url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2)$/i) ||
-    STATIC_ASSETS.includes(url.pathname)
-  ) {
+  // 1. Always NETWORK-FIRST for HTML / page navigation so fresh deploys load immediately on mobile!
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((res) => res || caches.match('/index.html') || caches.match('/')))
+    );
+    return;
+  }
+
+  // 2. For static assets (images, icons, css, js), use cache-first with network fallback
+  if (url.pathname.match(/\.(png|jpg|jpeg|svg|webp|gif|ico|css|js|woff2)$/i)) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
@@ -70,9 +83,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for navigation/HTML
+  // Default fallback
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request).then((res) => res || caches.match('/')))
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 

@@ -103,7 +103,8 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
   const [now, setNow] = useState<Date>(new Date());
 
   // Countdown mode: 'date' (Hangout) vs 'celebrations' (Birthdays / Holidays)
-  const [countdownMode, setCountdownMode] = useState<'date' | 'celebrations'>('date');
+  // Default to 'celebrations' so users immediately see the live ticking countdown!
+  const [countdownMode, setCountdownMode] = useState<'date' | 'celebrations'>('celebrations');
   const [selectedCelebrationId, setSelectedCelebrationId] = useState<string | null>(null);
 
   // Tick every second for live countdown
@@ -276,7 +277,7 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
         <div className={styles.cardHeader}>
           <div className={styles.badge}>
             <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400 animate-pulse" />
-            <span>Days Together</span>
+            <span>Days Knowing Each Other ♡</span>
           </div>
 
           <button
@@ -287,8 +288,8 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
               setIsEditingAnniversary(true);
             }}
             className={styles.editButton}
-            title="Set Our Anniversary / First Date"
-            aria-label="Set anniversary date"
+            title="Set The Day We First Connected"
+            aria-label="Set first connected date"
           >
             <Edit3 className="w-3.5 h-3.5 text-pink-200" />
           </button>
@@ -299,11 +300,11 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
           <div className={styles.counterBody}>
             <span className={styles.counterLabel}>Day</span>
             <span className={styles.counterNumber}>{milestoneData.totalDays}</span>
-            <span className={styles.counterUnit}>of Our Story ♡</span>
+            <span className={styles.counterUnit}>of Knowing Each Other ♡</span>
           </div>
 
           <p className={styles.quoteText}>
-            “Every single sunrise by your side is a treasured blessing.”
+            “Having you as my closest friend makes every day a whole lot brighter ✨”
           </p>
         </div>
 
@@ -593,7 +594,7 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-pink-400" />
                 <h3 id="anniversary-modal-title" className="font-serif font-bold text-base text-white">
-                  Our Special Beginning Date
+                  The Day We First Connected 🌸
                 </h3>
               </div>
               <button
@@ -607,12 +608,12 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed font-light">
-              Choose the day your story began together (first date, anniversary, or official start). The counter will track every precious day you share!
+              Choose the day we first met or started talking. The counter cherishes every precious day of having each other in our lives!
             </p>
 
             <div className="space-y-1.5">
               <label htmlFor="anniversary-date-input" className="text-xs font-semibold text-pink-200">
-                Start Date:
+                Connection Date:
               </label>
               <input
                 id="anniversary-date-input"

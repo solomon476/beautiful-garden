@@ -198,7 +198,7 @@ export const OnThisDayTimeMachine: React.FC<OnThisDayTimeMachineProps> = ({
               </h4>
 
               <p className="text-xs text-white/80 line-clamp-2 leading-relaxed italic">
-                “{mem.caption || mem.description || 'A timeless moment in our love story.'}” ♡
+                “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
               </p>
 
               <div className="pt-1 flex items-center justify-between">
