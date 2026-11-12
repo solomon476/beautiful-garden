@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, RefreshCw } from 'lucide-react';
+import { Mic, Square, RefreshCw } from 'lucide-react';
 import { mediaStorage } from '../../utils/mediaStorage';
 import { soundEngine } from '../../utils/audio';
+import { GardenAudioPlayer } from './GardenAudioPlayer';
 
 interface VoiceNoteRecorderProps {
   onRecorded: (dataUrl: string, durationSeconds: number, fileName: string) => void;
@@ -13,22 +14,17 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<any>(null);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
-      }
-      if (audioElementRef.current) {
-        audioElementRef.current.pause();
       }
     };
   }, []);
@@ -92,31 +88,9 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
     }
   };
 
-  const togglePlayback = () => {
-    if (!audioUrl) return;
-
-    if (!audioElementRef.current) {
-      audioElementRef.current = new Audio(audioUrl);
-      audioElementRef.current.onended = () => setIsPlaying(false);
-    }
-
-    if (isPlaying) {
-      audioElementRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioElementRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
   const handleReset = () => {
-    if (audioElementRef.current) {
-      audioElementRef.current.pause();
-      audioElementRef.current = null;
-    }
     setAudioUrl(null);
     setDuration(0);
-    setIsPlaying(false);
     setErrorMsg(null);
     onReset?.();
   };
@@ -162,45 +136,50 @@ export const VoiceNoteRecorder: React.FC<VoiceNoteRecorderProps> = ({ onRecorded
             </span>
           </div>
 
+          {/* Animated sound wave equalizer during recording */}
+          <div className="flex items-center gap-1 h-6">
+            {[40, 75, 90, 60, 100, 80, 50, 95, 70, 85, 45, 90].map((h, i) => (
+              <div
+                key={i}
+                className="w-1 bg-gradient-to-t from-rose-500 to-pink-300 rounded-full animate-pulse"
+                style={{
+                  height: `${h}%`,
+                  animationDuration: `${0.35 + (i % 4) * 0.12}s`,
+                }}
+              />
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={stopRecording}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition-all"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 active:scale-95 transition-all cursor-pointer"
           >
             <Square className="w-3.5 h-3.5 fill-white" />
             <span>Stop Recording</span>
           </button>
         </div>
       ) : audioUrl ? (
-        <div className="p-3.5 rounded-2xl bg-pink-500/15 border border-pink-400/40 space-y-2.5 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={togglePlayback}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
-                aria-label={isPlaying ? 'Pause voice note' : 'Play voice note'}
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-              </button>
-              <div className="min-w-0">
-                <span className="font-serif text-sm text-pink-100 font-semibold block truncate">
-                  Voice Note Recorded ✨
-                </span>
-                <span className="text-[11px] text-pink-300/80 font-mono block">
-                  Duration: {formatTime(duration)} • Attached & ready to save
-                </span>
-              </div>
-            </div>
+        <div className="space-y-2.5 animate-fade-in">
+          <GardenAudioPlayer
+            src={audioUrl}
+            title="Voice Note Recorded ✨"
+            subtitle={`Duration: ${formatTime(duration)} • Attached & ready to pin`}
+            isVoiceNote={true}
+          />
 
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <span className="text-[11px] font-mono text-emerald-300 flex items-center gap-1">
+              <span>✓ Voice memo ready</span>
+            </span>
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-pink-200 text-xs font-mono transition-all cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 text-pink-200 text-xs font-mono transition-all cursor-pointer active:scale-95"
               title="Record again"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Re-record</span>
+              <span>Record Again ↺</span>
             </button>
           </div>
         </div>
