@@ -930,9 +930,27 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
+export const PERMANENTLY_EXCLUDED_MEMORY_IDS = new Set<string>([
+  'mem-1',
+  'mem-6',
+  'mem-solomon-del-test',
+  'mem-solomon-real-1',
+  'mem-1794412387784-01sm',
+  'mem-1794412389282-703c',
+]);
+
+export const isExcludedMemory = (m?: { id?: string; title?: string; photoUrl?: string }): boolean => {
+  if (!m) return true;
+  if (m.id && PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id)) return true;
+  if (m.title && m.title.trim().toLowerCase().includes('signature noella energy')) return true;
+  if (m.photoUrl && (m.photoUrl.includes('photo-balcony.jpg') || m.photoUrl.includes('photo-balcony-peace.jpg'))) return true;
+  return false;
+};
+
 export const memoryArchiveService = {
   getDeletedMemoryIds(): string[] {
-    return loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    const userDeleted = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    return Array.from(new Set([...userDeleted, ...PERMANENTLY_EXCLUDED_MEMORY_IDS]));
   },
 
   getCachedMemories(): MemoryEntry[] {
@@ -941,7 +959,7 @@ export const memoryArchiveService = {
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     return localAll
-      .filter((m) => !deletedIds.has(m.id))
+      .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
       .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
   },
 
@@ -953,7 +971,7 @@ export const memoryArchiveService = {
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     const localVisible = localAll
-      .filter((m) => !deletedIds.has(m.id))
+      .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
       .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
 
     if (isLiveSupabaseConfigured && supabase) {
@@ -1029,7 +1047,7 @@ export const memoryArchiveService = {
               createdAt: d.created_at,
             };
           })
-          .filter((d) => !deletedIds.has(d.id));
+          .filter((d) => !deletedIds.has(d.id) && !isExcludedMemory(d));
 
         // Filter cloud entries by privacy (private memories only visible to contributor)
         const visibleCloudEntries = cloudEntries.filter((d) =>
@@ -1075,25 +1093,27 @@ export const memoryArchiveService = {
 
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
         const resolvedLocalEntries = await Promise.all(
-          localVisible.filter((m) => !cloudIds.has(m.id)).map(async (l) => {
-            let videoUrl = l.videoUrl;
-            if (l.videoMediaId) {
-              try {
-                const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
-                if (idbUrl) videoUrl = idbUrl;
-              } catch {}
-            }
-            if (videoUrl && videoUrl.startsWith('data:video/')) {
-              try {
-                const blob = mediaStorage.dataUrlToBlob(videoUrl);
-                videoUrl = URL.createObjectURL(blob);
-              } catch {}
-            }
-            return { ...l, videoUrl };
-          })
+          localVisible
+            .filter((m) => !cloudIds.has(m.id) && !m.id.startsWith('mem-') && !isExcludedMemory(m))
+            .map(async (l) => {
+              let videoUrl = l.videoUrl;
+              if (l.videoMediaId) {
+                try {
+                  const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+                  if (idbUrl) videoUrl = idbUrl;
+                } catch {}
+              }
+              if (videoUrl && videoUrl.startsWith('data:video/')) {
+                try {
+                  const blob = mediaStorage.dataUrlToBlob(videoUrl);
+                  videoUrl = URL.createObjectURL(blob);
+                } catch {}
+              }
+              return { ...l, videoUrl };
+            })
         );
 
-        const fullEntries = [...resolvedLocalEntries, ...mergedCloudEntries];
+        const fullEntries = [...resolvedLocalEntries, ...mergedCloudEntries].filter((m) => !isExcludedMemory(m));
         // Cache to local storage so subsequent opens are instant with ZERO delay or placeholder flicker!
         saveLocal(STORAGE_KEYS.MEMORIES, fullEntries);
         return fullEntries;
@@ -1102,7 +1122,9 @@ export const memoryArchiveService = {
 
     // Fallback: local only with resolved IndexedDB video URLs
     return Promise.all(
-      localVisible.map(async (l) => {
+      localVisible
+        .filter((l) => !isExcludedMemory(l))
+        .map(async (l) => {
         let videoUrl = l.videoUrl;
         if (l.videoMediaId) {
           try {

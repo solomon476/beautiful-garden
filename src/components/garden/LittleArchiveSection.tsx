@@ -25,7 +25,7 @@ import {
   Pause,
   Loader2,
 } from 'lucide-react';
-import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
+import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
@@ -192,6 +192,7 @@ export const LittleArchiveSection: React.FC = () => {
       const seenMedia = new Set<string>();
       const combined: MemoryEntry[] = [];
       for (const m of list) {
+        if (isExcludedMemory(m)) continue;
         const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
         if (!seenIds.has(m.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(m.id);
@@ -202,6 +203,7 @@ export const LittleArchiveSection: React.FC = () => {
       // Only include fallback sample memories if zero memories have been uploaded yet
       if (combined.length === 0) {
         for (const gm of giftContent.memories) {
+          if (isExcludedMemory(gm)) continue;
           const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
           if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
             seenIds.add(gm.id);
@@ -221,7 +223,7 @@ export const LittleArchiveSection: React.FC = () => {
           }
         }
       }
-      setMemories(combined);
+      setMemories(combined.filter((m) => !isExcludedMemory(m)));
     } catch (err) {
       console.error(err);
     } finally {
@@ -547,7 +549,7 @@ export const LittleArchiveSection: React.FC = () => {
 
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
   const filteredMemories = memories
-    .filter((m) => !deletedIds.has(m.id))
+    .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
     .filter((m) => {
       if (activeFilter === 'all') return true;
       if (activeFilter === 'shared') return m.isShared;
@@ -1390,6 +1392,9 @@ export const LittleArchiveSection: React.FC = () => {
                   src={lightboxMemory.photoUrl}
                   alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   className={styles.lightboxMainImage}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
+                  }}
                 />
               </div>
 

@@ -174,17 +174,6 @@ export const giftContent: GiftConfig = {
       altText: "Warm sunny portrait looking directly into the camera",
       objectPosition: "center center",
     },
-    {
-      id: "mem-6",
-      title: "Signature Noella Energy",
-      date: "Balcony Sunshine",
-      caption: "Double peace signs, wild smile, and 100% unapologetic energy. You're easily one of my favorite people to be around.",
-      tag: "Iconic",
-      accentColor: "#a855f7",
-      photoUrl: "/assets/memories/photo-balcony-peace.jpg",
-      altText: "Playful balcony portrait posing with double peace signs",
-      objectPosition: "center center",
-    },
   ],
   flowerNotes: [
     {
