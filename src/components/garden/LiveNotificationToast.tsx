@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import confetti from 'canvas-confetti';
-import { Sparkles, X, ExternalLink, Camera, PenLine, Headphones, Heart, Calendar } from 'lucide-react';
+import { Sparkles, X, ExternalLink, Camera, PenLine, Headphones, Heart, Calendar, MessageSquare } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { GardenNotification } from '../../types/garden';
@@ -122,6 +122,15 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
       window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
     }
 
+    // If it's a Question of the Day notification, take them directly to the question!
+    if (activeToast.type === 'question' || activeToast.title.includes('Question of the Day') || activeToast.title.includes('Daily Question')) {
+      const qId = activeToast.entityId;
+      sessionStorage.setItem('pending_open_daily_question', qId || 'true');
+      window.dispatchEvent(new CustomEvent('garden-open-daily-question', { detail: { questionId: qId } }));
+      onOpenTab('garden');
+      return;
+    }
+
     onOpenTab(activeToast.targetTab || 'garden');
   };
 
@@ -144,6 +153,8 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
         return <Headphones className="w-4 h-4 text-purple-300" />;
       case 'date':
         return <Calendar className="w-4 h-4 text-teal-300" />;
+      case 'question':
+        return <MessageSquare className="w-4 h-4 text-fuchsia-300" />;
       default:
         return <Heart className="w-4 h-4 text-pink-300" />;
     }

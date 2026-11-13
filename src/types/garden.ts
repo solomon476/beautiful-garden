@@ -116,7 +116,7 @@ export interface HangoutEntry {
 
 export interface GardenNotification {
   id: string;
-  type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood';
+  type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood' | 'question';
   title: string;
   message: string;
   targetTab: string;

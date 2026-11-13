@@ -183,9 +183,6 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
         {/* 2.5 Love Milestone & Next Date Countdown Widget */}
         <LoveMilestoneWidget onSelectTab={onSelectTab} />
 
-        {/* 2.6 Daily Question Micro-Widget */}
-        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
-
         {/* 3. Responsive Two-Column Feature Card Grid */}
         <div className="grid grid-cols-2 gap-2.5">
           {/* Card 1: Petal Notes */}
@@ -403,6 +400,9 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             <span className="font-serif font-bold text-[11px] leading-tight block">World</span>
           </button>
         </div>
+
+        {/* 6. Daily Question of the Day Micro-Widget (Moved down as requested) */}
+        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
       </div>
 
       {/* ============================================================== */}
@@ -453,9 +453,6 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
 
         {/* 1.5 Love Milestone & Next Date Countdown Widget */}
         <LoveMilestoneWidget onSelectTab={onSelectTab} />
-
-        {/* 1.6 Daily Question Micro-Widget */}
-        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
 
       {/* ============================================================== */}
       {/* 2. EIGHT MAIN KEEPSAKE FEATURE CARDS (4x2 Balanced Grid)       */}
@@ -695,6 +692,11 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             )}
           </div>
         </div>
+      </div>
+
+      {/* 4.5 Question of the Day Section */}
+      <div className="max-w-2xl mx-auto">
+        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
       </div>
       </div>
 

@@ -1816,7 +1816,7 @@ export const LittleArchiveSection: React.FC = () => {
                     setPhotoUrl('');
                     setVideoDuration(undefined);
                   }}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                  className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
                   title="Remove video"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1835,7 +1835,8 @@ export const LittleArchiveSection: React.FC = () => {
                       setPhotoUrl('');
                       setCompressionStats(null);
                     }}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
+                    title="Remove photo"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
