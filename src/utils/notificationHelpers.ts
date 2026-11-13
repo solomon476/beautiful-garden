@@ -13,3 +13,4 @@ export function extractMemoryIdFromNotification(notif?: { type?: string; entityI
   
   return notif.entityId;
 }
+
