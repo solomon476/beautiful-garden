@@ -1102,18 +1102,6 @@ export const SoundGardenSection: React.FC = () => {
 
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(song);
-                          }}
-                          className={styles.shelfDeleteBtn}
-                          title="Delete track"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          type="button"
                           onClick={() => setSelectedSong(song)}
                           className={styles.shelfMenuBtn}
                           title="Track details"
@@ -1248,16 +1236,6 @@ export const SoundGardenSection: React.FC = () => {
                       className={styles.detailsBtn}
                     >
                       <span>Details</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(song)}
-                      className={styles.cardDeleteBtn}
-                      title="Delete track from Sound Garden"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
