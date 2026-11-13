@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import { soundGardenService, authService } from '../../services/gardenService';
 import { notificationService } from '../../services/notificationService';
-import { chatService } from '../../services/chatService';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
@@ -364,16 +363,6 @@ export const SoundGardenSection: React.FC = () => {
         senderName: user.displayName,
         recipientId: partnerUser.id,
         entityId: song.id,
-      });
-
-      // Automatic event bubble in Whispers Chat
-      chatService.postEventMessage({
-        eventType: 'song',
-        title: 'Loved a Song',
-        content: `🎶 ${user.displayName} loved "${song.title} - ${song.artist}" in Sound Garden ✨`,
-        actorId: user.id,
-        actorName: user.displayName,
-        linkTab: 'sound',
       });
 
       // Immediate confirmation toast to self (matches Archive)

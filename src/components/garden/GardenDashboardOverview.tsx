@@ -19,7 +19,6 @@ import type { UserProfile } from '../../types/garden';
 import { UserSwitcher } from './UserSwitcher';
 import type { QuickAddType } from './QuickAddStudioModal';
 import { LoveMilestoneWidget } from './LoveMilestoneWidget';
-import { QuestionOfTheDayWidget } from './QuestionOfTheDayWidget';
 import styles from './GardenDashboardOverview.module.css';
 
 interface GardenDashboardOverviewProps {
@@ -400,9 +399,6 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             <span className="font-serif font-bold text-[11px] leading-tight block">World</span>
           </button>
         </div>
-
-        {/* 6. Daily Question of the Day Micro-Widget (Moved down as requested) */}
-        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
       </div>
 
       {/* ============================================================== */}
@@ -692,11 +688,6 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
             )}
           </div>
         </div>
-      </div>
-
-      {/* 4.5 Question of the Day Section */}
-      <div className="max-w-2xl mx-auto">
-        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
       </div>
       </div>
 

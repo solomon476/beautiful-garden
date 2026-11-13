@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Home,
   Sparkles,
   Music2,
   BookOpen,
-  MessageCircleHeart,
   Heart,
 } from 'lucide-react';
 import { soundEngine } from '../../utils/audio';
-import { chatService } from '../../services/chatService';
-import { authService } from '../../services/gardenService';
 
 interface MobileBottomNavProps {
-  currentView: 'home' | 'garden' | 'music' | 'archive' | 'chat' | 'more' | string;
-  onNavigate: (target: 'home' | 'garden' | 'music' | 'archive' | 'chat' | 'more' | string) => void;
+  currentView: 'home' | 'garden' | 'music' | 'archive' | 'more' | string;
+  onNavigate: (target: 'home' | 'garden' | 'music' | 'archive' | 'more' | string) => void;
   isGardenOpen: boolean;
 }
 
@@ -22,19 +19,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onNavigate,
   isGardenOpen,
 }) => {
-  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
-
-  useEffect(() => {
-    const user = authService.getCurrentUser();
-    setUnreadChatCount(chatService.getUnreadCount(user.id));
-
-    const unsub = chatService.subscribe(() => {
-      setUnreadChatCount(chatService.getUnreadCount(user.id));
-    });
-    return unsub;
-  }, []);
-
-  const handleNavClick = (target: 'home' | 'garden' | 'music' | 'archive' | 'chat' | 'more') => {
+  const handleNavClick = (target: 'home' | 'garden' | 'music' | 'archive' | 'more') => {
     soundEngine.playSparkle();
     onNavigate(target);
   };
@@ -63,13 +48,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       label: 'Archive',
       icon: BookOpen,
       isActive: isGardenOpen ? currentView === 'archive' : currentView === 'memories',
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: MessageCircleHeart,
-      isActive: isGardenOpen && currentView === 'chat',
-      badgeCount: unreadChatCount,
     },
     {
       id: 'more',
@@ -105,9 +83,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                 className={`w-5 h-5 ${isActive ? 'stroke-[2.2] text-[#8b25a8]' : 'text-[#65487d]'
                   }`}
               />
-              {Boolean(item.badgeCount && item.badgeCount > 0) && (
-                <span className="absolute -top-1 -right-1.5 w-2 h-2 rounded-full bg-pink-500 animate-pulse border border-white" />
-              )}
               {isActive && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#8b25a8]" />
               )}
