@@ -19,6 +19,7 @@ import type { UserProfile } from '../../types/garden';
 import { UserSwitcher } from './UserSwitcher';
 import type { QuickAddType } from './QuickAddStudioModal';
 import { LoveMilestoneWidget } from './LoveMilestoneWidget';
+import { QuestionOfTheDayWidget } from './QuestionOfTheDayWidget';
 import styles from './GardenDashboardOverview.module.css';
 
 interface GardenDashboardOverviewProps {
@@ -181,6 +182,9 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
 
         {/* 2.5 Love Milestone & Next Date Countdown Widget */}
         <LoveMilestoneWidget onSelectTab={onSelectTab} />
+
+        {/* 2.6 Daily Question Micro-Widget */}
+        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
 
         {/* 3. Responsive Two-Column Feature Card Grid */}
         <div className="grid grid-cols-2 gap-2.5">
@@ -449,6 +453,9 @@ export const GardenDashboardOverview: React.FC<GardenDashboardOverviewProps> = (
 
         {/* 1.5 Love Milestone & Next Date Countdown Widget */}
         <LoveMilestoneWidget onSelectTab={onSelectTab} />
+
+        {/* 1.6 Daily Question Micro-Widget */}
+        <QuestionOfTheDayWidget onSelectTab={onSelectTab} />
 
       {/* ============================================================== */}
       {/* 2. EIGHT MAIN KEEPSAKE FEATURE CARDS (4x2 Balanced Grid)       */}

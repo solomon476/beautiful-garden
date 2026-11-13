@@ -1348,6 +1348,29 @@ export const memoryArchiveService = {
     }
   },
 
+  async updateMemoryVoiceWhisper(id: string, voiceNoteUrl: string, audioFileName?: string): Promise<void> {
+    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const updated = all.map((m) => (m.id === id ? { ...m, voiceNoteUrl, audioFileName } : m));
+    saveLocal(STORAGE_KEYS.MEMORIES, updated);
+
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('garden_memories')
+          .update({
+            voice_note_url: voiceNoteUrl,
+          })
+          .eq('id', id);
+      } catch (err) {
+        console.warn('[Archive] Cloud voice note update failed:', err);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
+    }
+  },
+
   // -------------------------------------------------------------
   // Private Garden Recycle Bin Methods (Private per user)
   // -------------------------------------------------------------

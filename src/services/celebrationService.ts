@@ -108,3 +108,11 @@ export function getUpcomingCelebrations(refDate: Date = new Date()): UpcomingCel
   });
 }
 
+/**
+ * Returns today's celebration if today matches any special date
+ */
+export function getTodayCelebration(refDate: Date = new Date()): UpcomingCelebration | null {
+  const all = getUpcomingCelebrations(refDate);
+  return all.find((c) => c.isToday) || null;
+}
+

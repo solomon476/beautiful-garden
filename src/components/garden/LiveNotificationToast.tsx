@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import confetti from 'canvas-confetti';
 import { Sparkles, X, ExternalLink, Camera, PenLine, Headphones, Heart, Calendar } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { authService, DEFAULT_PROFILES } from '../../services/gardenService';
@@ -70,6 +71,23 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
       soundEngine.playSparkle();
     } catch {
       // Audio autoplay policy fallback
+    }
+
+    if (notif.type === 'petal') {
+      try {
+        confetti({
+          particleCount: 35,
+          spread: 85,
+          origin: { y: 0.15 },
+          colors: ['#f472b6', '#ec4899', '#fbcfe8', '#fda4af', '#f43f5e', '#ffb6c1'],
+          shapes: ['circle'],
+          scalar: 1.3,
+          ticks: 240,
+          gravity: 0.65,
+        });
+      } catch {
+        // ignore
+      }
     }
 
     // Auto-dismiss after 8 seconds

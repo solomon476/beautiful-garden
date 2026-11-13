@@ -178,6 +178,7 @@ export const LittleArchiveSection: React.FC = () => {
 
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
+  const [isRecordingWhisper, setIsRecordingWhisper] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -1187,14 +1188,74 @@ export const LittleArchiveSection: React.FC = () => {
                   </p>
                 )}
 
-                {lightboxMemory.voiceNoteUrl && (
-                  <div className="max-w-md mx-auto">
+                {/* Voice Whisper Section */}
+                {isRecordingWhisper ? (
+                  <div className="max-w-md mx-auto p-3 rounded-2xl bg-black/60 border border-pink-400/30 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono text-pink-200">
+                      <span>🎙️ Record Voice Whisper</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsRecordingWhisper(false)}
+                        className="text-pink-300 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <VoiceNoteRecorder
+                      onRecorded={async (dataUrl, _duration, fileName) => {
+                        soundEngine.playSparkle();
+                        if (!lightboxMemory) return;
+                        await memoryArchiveService.updateMemoryVoiceWhisper(lightboxMemory.id, dataUrl, fileName);
+                        setLightboxMemory({ ...lightboxMemory, voiceNoteUrl: dataUrl, audioFileName: fileName });
+                        setMemories((prev) =>
+                          prev.map((m) =>
+                            m.id === lightboxMemory.id ? { ...m, voiceNoteUrl: dataUrl, audioFileName: fileName } : m
+                          )
+                        );
+                        setIsRecordingWhisper(false);
+
+                        notificationService.sendNotification({
+                          type: 'memory',
+                          title: '🎙️ Added Voice Whisper',
+                          message: `${currentUser.displayName} attached a voice whisper to "${lightboxMemory.title}" ♡`,
+                          targetTab: 'archive',
+                          senderId: currentUser.id,
+                          senderName: currentUser.displayName,
+                          recipientId: partner.id,
+                          entityId: lightboxMemory.id,
+                        });
+                      }}
+                      onCancel={() => setIsRecordingWhisper(false)}
+                    />
+                  </div>
+                ) : lightboxMemory.voiceNoteUrl ? (
+                  <div className="max-w-md mx-auto space-y-1">
                     <GardenAudioPlayer
                       src={lightboxMemory.voiceNoteUrl}
                       title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
                       subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
                       isVoiceNote={true}
                     />
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => setIsRecordingWhisper(true)}
+                        className="text-[10px] text-pink-300/80 hover:text-pink-200 underline cursor-pointer"
+                      >
+                        Re-record whisper 🎙️
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-md mx-auto flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsRecordingWhisper(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-pink-500/25 border border-pink-400/30 text-pink-200 hover:text-white text-xs font-medium shadow-sm transition-all cursor-pointer active:scale-95"
+                    >
+                      <Mic className="w-3.5 h-3.5 text-pink-300" />
+                      <span>Add Voice Whisper 🎙️</span>
+                    </button>
                   </div>
                 )}
 
@@ -1338,13 +1399,75 @@ export const LittleArchiveSection: React.FC = () => {
                 </p>
               )}
 
-              {lightboxMemory.voiceNoteUrl && (
-                <GardenAudioPlayer
-                  src={lightboxMemory.voiceNoteUrl}
-                  title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
-                  subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
-                  isVoiceNote={true}
-                />
+              {/* Voice Whisper Section */}
+              {isRecordingWhisper ? (
+                <div className="p-3 rounded-2xl bg-white/[0.06] border border-pink-400/30 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono text-pink-200">
+                    <span>🎙️ Record Voice Whisper</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsRecordingWhisper(false)}
+                      className="text-pink-300 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <VoiceNoteRecorder
+                    onRecorded={async (dataUrl, _duration, fileName) => {
+                      soundEngine.playSparkle();
+                      if (!lightboxMemory) return;
+                      await memoryArchiveService.updateMemoryVoiceWhisper(lightboxMemory.id, dataUrl, fileName);
+                      setLightboxMemory({ ...lightboxMemory, voiceNoteUrl: dataUrl, audioFileName: fileName });
+                      setMemories((prev) =>
+                        prev.map((m) =>
+                          m.id === lightboxMemory.id ? { ...m, voiceNoteUrl: dataUrl, audioFileName: fileName } : m
+                        )
+                      );
+                      setIsRecordingWhisper(false);
+
+                      notificationService.sendNotification({
+                        type: 'memory',
+                        title: '🎙️ Added Voice Whisper',
+                        message: `${currentUser.displayName} attached a voice whisper to "${lightboxMemory.title}" ♡`,
+                        targetTab: 'archive',
+                        senderId: currentUser.id,
+                        senderName: currentUser.displayName,
+                        recipientId: partner.id,
+                        entityId: lightboxMemory.id,
+                      });
+                    }}
+                    onCancel={() => setIsRecordingWhisper(false)}
+                  />
+                </div>
+              ) : lightboxMemory.voiceNoteUrl ? (
+                <div className="space-y-1">
+                  <GardenAudioPlayer
+                    src={lightboxMemory.voiceNoteUrl}
+                    title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                    subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                    isVoiceNote={true}
+                  />
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setIsRecordingWhisper(true)}
+                      className="text-[10px] text-pink-300/80 hover:text-pink-200 underline cursor-pointer"
+                    >
+                      Re-record whisper 🎙️
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-1 flex items-center justify-start">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecordingWhisper(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-pink-500/20 border border-pink-400/30 text-pink-200 hover:text-white text-xs font-medium shadow-sm transition-all cursor-pointer active:scale-95"
+                  >
+                    <Mic className="w-3.5 h-3.5 text-pink-300" />
+                    <span>Add Voice Whisper 🎙️</span>
+                  </button>
+                </div>
               )}
 
               {/* Soundtrack Player if attached to photo */}

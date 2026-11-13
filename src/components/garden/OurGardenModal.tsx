@@ -34,8 +34,10 @@ import { runPrivacyAndSecurityAudit, type PrivacyTestResult } from '../../utils/
 import { soundEngine } from '../../utils/audio';
 import { UserSwitcher } from './UserSwitcher';
 import { GardenNotificationBell } from './GardenNotificationBell';
+import { ThinkingOfYouButton } from './ThinkingOfYouButton';
 import { QuickAddStudioModal, type QuickAddType } from './QuickAddStudioModal';
 import { MobileBottomNav } from './MobileBottomNav';
+import { CelebrationPopModal } from './CelebrationPopModal';
 
 interface OurGardenModalProps {
   isOpen: boolean;
@@ -266,6 +268,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
               </button>
             )}
 
+            {/* "Thinking of You" Send Blossom Button */}
+            <ThinkingOfYouButton currentUser={currentUser} />
+
             {/* Notification Bell Dropdown */}
             <GardenNotificationBell
               currentUser={currentUser}
@@ -453,6 +458,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           else if (type === 'letter') setActiveTab('letters');
         }}
       />
+      {/* Special Dates Celebration Pop Modal (Birthdays, Valentine's, Christmas, New Year) */}
+      <CelebrationPopModal />
     </div>
   );
 };
