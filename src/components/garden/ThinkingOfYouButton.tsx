@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { soundEngine } from '../../utils/audio';
 import { notificationService } from '../../services/notificationService';
 import { authService } from '../../services/gardenService';
+import { chatService } from '../../services/chatService';
 import type { UserProfile } from '../../types/garden';
 
 interface ThinkingOfYouButtonProps {
@@ -48,6 +49,16 @@ export const ThinkingOfYouButton: React.FC<ThinkingOfYouButtonProps> = ({ curren
       senderName: user.displayName,
       recipientId: partner.id,
       entityId: `petal-ping-${Date.now()}`,
+    });
+
+    // 2.5 Automatically drop a sweet event into Whispers Chat
+    chatService.postEventMessage({
+      eventType: 'petal',
+      title: 'Thinking of You',
+      content: `🌸 ${user.displayName} sent a shower of cherry blossoms! "Thinking of you" ♡`,
+      actorId: user.id,
+      actorName: user.displayName,
+      linkTab: 'garden',
     });
 
     // 3. Show self confirmation toast

@@ -37,6 +37,7 @@ import { GardenAudioPlayer } from './GardenAudioPlayer';
 import { OnThisDayTimeMachine } from './OnThisDayTimeMachine';
 import { getOnThisDayFlashbacks } from '../../services/onThisDayService';
 import { notificationService } from '../../services/notificationService';
+import { chatService } from '../../services/chatService';
 import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
 import { fetchSpotifyOEmbed, isSpotifyUrl } from '../../utils/spotify';
 import styles from './LittleArchiveSection.module.css';
@@ -136,6 +137,16 @@ export const LittleArchiveSection: React.FC = () => {
         senderName: user.displayName,
         recipientId: partner.id,
         entityId: id,
+      });
+
+      // Automatic event bubble in Whispers Chat
+      chatService.postEventMessage({
+        eventType: 'like',
+        title: 'Loved a Memory',
+        content: `💖 ${user.displayName} loved "${displayTitle}" in Our Archive ♡`,
+        actorId: user.id,
+        actorName: user.displayName,
+        linkTab: 'archive',
       });
 
       // Immediate confirmation to self

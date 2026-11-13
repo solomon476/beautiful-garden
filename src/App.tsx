@@ -174,6 +174,9 @@ export const App: React.FC = () => {
             } else if (target === 'archive') {
               setGardenInitialTab('archive');
               setIsOurGardenOpen(true);
+            } else if (target === 'chat') {
+              setGardenInitialTab('chat');
+              setIsOurGardenOpen(true);
             } else if (target === 'more') {
               setGardenInitialTab('more');
               setIsOurGardenOpen(true);

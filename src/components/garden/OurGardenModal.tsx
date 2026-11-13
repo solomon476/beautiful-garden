@@ -15,12 +15,14 @@ import {
   Globe,
   Flower2,
   ArrowLeft,
+  MessageCircleHeart,
 } from 'lucide-react';
 import { GardenDashboardOverview } from './GardenDashboardOverview';
 import { LettersSection } from './LettersSection';
 import { SoundGardenSection } from './SoundGardenSection';
 import { ExchangeShelfSection } from './ExchangeShelfSection';
 import { LittleArchiveSection } from './LittleArchiveSection';
+import { WhispersChatSection } from './WhispersChatSection';
 import { PetalNotesSpace } from './PetalNotesSpace';
 import { OurTimeSection } from './OurTimeSection';
 import { LittleQuestionsSection } from './LittleQuestionsSection';
@@ -51,6 +53,7 @@ type TabKey =
   | 'sound'
   | 'shelf'
   | 'archive'
+  | 'chat'
   | 'petals'
   | 'time'
   | 'questions'
@@ -66,6 +69,7 @@ const TABS: { id: TabKey; label: string; icon: any; color: string }[] = [
   { id: 'sound', label: 'Sound Garden', icon: Headphones, color: 'from-purple-500 to-indigo-400' },
   { id: 'shelf', label: 'Exchange Shelf', icon: Layers, color: 'from-amber-400 to-orange-400' },
   { id: 'archive', label: 'Our Archive', icon: Camera, color: 'from-pink-400 to-purple-400' },
+  { id: 'chat', label: 'Whispers Chat', icon: MessageCircleHeart, color: 'from-pink-500 to-purple-500' },
   { id: 'petals', label: 'Petal Notes', icon: Sparkles, color: 'from-rose-400 to-pink-500' },
   { id: 'time', label: 'Our Time', icon: CalendarDays, color: 'from-teal-400 to-emerald-400' },
   { id: 'questions', label: 'Questions', icon: HelpCircle, color: 'from-sky-400 to-indigo-400' },
@@ -344,6 +348,9 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           {activeTab === 'sound' && <SoundGardenSection />}
           {activeTab === 'shelf' && <ExchangeShelfSection />}
           {activeTab === 'archive' && <LittleArchiveSection />}
+          {activeTab === 'chat' && (
+            <WhispersChatSection onSelectTab={handleSelectTab} />
+          )}
           {activeTab === 'petals' && <PetalNotesSpace />}
           {activeTab === 'time' && <OurTimeSection />}
           {activeTab === 'questions' && <LittleQuestionsSection />}
@@ -436,6 +443,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
               handleSelectTab('sound');
             } else if (target === 'archive') {
               handleSelectTab('archive');
+            } else if (target === 'chat') {
+              handleSelectTab('chat');
             } else if (target === 'more') {
               handleSelectTab('more');
             } else {
