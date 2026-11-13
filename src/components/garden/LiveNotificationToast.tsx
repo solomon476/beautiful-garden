@@ -5,7 +5,7 @@ import { notificationService } from '../../services/notificationService';
 import { authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { GardenNotification } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { extractMemoryIdFromNotification } from '../../utils/notificationHelpers';
+import { extractMemoryIdFromNotification, extractSongIdFromNotification } from '../../utils/notificationHelpers';
 
 interface LiveNotificationToastProps {
   onOpenTab: (tab: string) => void;
@@ -95,6 +95,13 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
     if (memoryId) {
       sessionStorage.setItem('pending_open_memory_id', memoryId);
       window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+    }
+
+    // If it's a song like / recommendation notification, take them directly to the song!
+    const songId = extractSongIdFromNotification(activeToast);
+    if (songId) {
+      sessionStorage.setItem('pending_open_song_id', songId);
+      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
     }
 
     onOpenTab(activeToast.targetTab || 'garden');

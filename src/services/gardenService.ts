@@ -793,6 +793,15 @@ export const soundGardenService = {
     saveLocal(STORAGE_KEYS.SONGS, updated);
   },
 
+  async updateSongReaction(id: string, reaction: string): Promise<void> {
+    if (isLiveSupabaseConfigured && supabase) {
+      await supabase.from('songs').update({ reaction }).eq('id', id);
+    }
+    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
+    const updated = all.map((s) => (s.id === id ? { ...s, reaction } : s));
+    saveLocal(STORAGE_KEYS.SONGS, updated);
+  },
+
   async deleteSong(id: string): Promise<void> {
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('songs').delete().eq('id', id);

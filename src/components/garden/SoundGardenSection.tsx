@@ -28,6 +28,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { soundGardenService, authService } from '../../services/gardenService';
+import { notificationService } from '../../services/notificationService';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
@@ -70,6 +71,16 @@ export const SoundGardenSection: React.FC = () => {
   const initialAddParam = searchParams?.get('add');
   const [isAdding, setIsAdding] = useState<boolean>(Boolean(initialAddParam));
   const [selectedSong, setSelectedSong] = useState<SongEntry | null>(null);
+  const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
+  const [lastLikedSongId, setLastLikedSongId] = useState<string | null>(null);
+  const [likedSongIds, setLikedSongIds] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('perfect_time_liked_songs');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   // Form state
   const [title, setTitle] = useState<string>('');
@@ -296,18 +307,117 @@ export const SoundGardenSection: React.FC = () => {
     }
   };
 
-  const handleToggleReaction = async (song: SongEntry) => {
-    soundEngine.playSparkle();
-    const reactions = ['Love it! 💖', 'My Vibe ✨', 'Always in my head 🎶', 'Heartfelt 🌷'];
-    const currentIdx = reactions.findIndex((r) => r.includes(song.reaction?.replace(/[^\w\s]/gi, '').trim() || ''));
-    const nextReaction = reactions[(currentIdx + 1) % reactions.length];
+  const isSongLiked = (song: SongEntry | null): boolean => {
+    if (!song) return false;
+    if (likedSongIds[song.id] !== undefined) return likedSongIds[song.id];
+    return Boolean(
+      song.reaction &&
+        (song.reaction.includes('Love') ||
+          song.reaction.includes('💖') ||
+          song.reaction.includes('❤️') ||
+          song.reaction.includes('Heartfelt'))
+    );
+  };
 
-    const updated = songs.map((s) => (s.id === song.id ? { ...s, reaction: nextReaction } : s));
-    setSongs(updated);
+  const handleToggleLike = async (song: SongEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundEngine.playSparkle();
+
+    const currentlyLiked = isSongLiked(song);
+    const willBeLiked = !currentlyLiked;
+
+    const nextReaction = willBeLiked ? 'Love it! 💖' : 'My Vibe ✨';
+
+    // 1. Update likedSongIds state and save to localStorage
+    const updatedLiked = { ...likedSongIds, [song.id]: willBeLiked };
+    setLikedSongIds(updatedLiked);
+    try {
+      localStorage.setItem('perfect_time_liked_songs', JSON.stringify(updatedLiked));
+    } catch {
+      // ignore
+    }
+
+    // 2. Update in songs state
+    const updatedSongs = songs.map((s) => (s.id === song.id ? { ...s, reaction: nextReaction } : s));
+    setSongs(updatedSongs);
     if (selectedSong?.id === song.id) {
       setSelectedSong({ ...selectedSong, reaction: nextReaction });
     }
+
+    // 3. Persist reaction to database / service
+    soundGardenService.updateSongReaction(song.id, nextReaction).catch((err) => {
+      console.warn('Failed to update song reaction in service:', err);
+    });
+
+    // 4. Realtime notification to partner & immediate confirmation toast to self (exact Archive behavior)
+    if (willBeLiked) {
+      const partnerUser = authService.getPartner();
+      const user = authService.getCurrentUser();
+
+      notificationService.sendNotification({
+        type: 'song',
+        title: '❤️ Loved a Song',
+        message: `${user.displayName} loved "${song.title} - ${song.artist}" in Sound Garden! 🎶`,
+        targetTab: 'sound',
+        senderId: user.id,
+        senderName: user.displayName,
+        recipientId: partnerUser.id,
+        entityId: song.id,
+      });
+
+      // Immediate confirmation toast to self (matches Archive)
+      setLastLikedSongId(song.id);
+      setLikeNotificationToast(`❤️ You loved "${song.title}"! Tap to view 🎶`);
+      setTimeout(() => setLikeNotificationToast(null), 4000);
+    }
   };
+
+
+  const handleOpenLikedSongDirectly = (songId: string) => {
+    const songIndex = songs.findIndex((s) => s.id === songId);
+    if (songIndex !== -1) {
+      const foundSong = songs[songIndex];
+      setNowPlayingIndex(songIndex);
+      setSelectedSong(foundSong);
+      setIsPlaying(true);
+      soundEngine.playSparkle();
+
+      setTimeout(() => {
+        const cardEl = document.getElementById(`song-card-${songId}`);
+        if (cardEl) {
+          cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cardEl.classList.add('ring-2', 'ring-pink-400', 'ring-offset-2');
+          setTimeout(() => {
+            cardEl.classList.remove('ring-2', 'ring-pink-400', 'ring-offset-2');
+          }, 2500);
+        }
+      }, 150);
+    }
+  };
+
+  // Listen for direct navigation events from notifications
+  useEffect(() => {
+    const handleDirectOpen = (e: CustomEvent<{ songId: string }>) => {
+      const targetId = e.detail?.songId;
+      if (targetId) {
+        handleOpenLikedSongDirectly(targetId);
+      }
+    };
+
+    window.addEventListener('garden-open-song' as any, handleDirectOpen);
+
+    const pendingId = sessionStorage.getItem('pending_open_song_id');
+    if (pendingId) {
+      sessionStorage.removeItem('pending_open_song_id');
+      setTimeout(() => {
+        handleOpenLikedSongDirectly(pendingId);
+      }, 350);
+    }
+
+    return () => {
+      window.removeEventListener('garden-open-song' as any, handleDirectOpen);
+    };
+  }, [songs]);
 
   const currentNowPlaying = songs[nowPlayingIndex] || songs[0] || null;
 
@@ -515,6 +625,23 @@ export const SoundGardenSection: React.FC = () => {
 
   return (
     <div className={styles.soundGarden}>
+      {/* Realtime Like Confirmation Toast (Matches Archive Design & Tap Behavior) */}
+      {likeNotificationToast && (
+        <div
+          onClick={() => {
+            if (lastLikedSongId) {
+              handleOpenLikedSongDirectly(lastLikedSongId);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          className="fixed top-18 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-pink-600/90 to-purple-600/90 backdrop-blur-md text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg border border-pink-400/40 animate-fade-in flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+        >
+          <span>{likeNotificationToast}</span>
+          <span className="text-[10px] opacity-80 underline ml-1">Open ↗</span>
+        </div>
+      )}
+
       {/* 1. Panoramic Themed Hero Banner matching target visual */}
       <section className={styles.sgHero}>
         <div className={styles.heroLeftArtwork}>
@@ -953,6 +1080,15 @@ export const SoundGardenSection: React.FC = () => {
                       <div className={styles.shelfTrackActions}>
                         <button
                           type="button"
+                          onClick={(e) => handleToggleLike(song, e)}
+                          className={styles.shelfPlayBtn}
+                          title={isSongLiked(song) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
+                        >
+                          <Heart className={`w-3.5 h-3.5 transition-transform active:scale-125 ${isSongLiked(song) ? 'fill-pink-400 text-pink-400' : 'text-pink-300'}`} />
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => handlePlayTrack(idx)}
                           className={styles.shelfPlayBtn}
                           title={isPlayingThis ? 'Pause' : 'Play'}
@@ -1007,7 +1143,7 @@ export const SoundGardenSection: React.FC = () => {
                 : '/assets/garden/card_sound.jpg');
 
             return (
-              <div key={song.id} className={styles.sgTrackCard}>
+              <div key={song.id} id={`song-card-${song.id}`} className={styles.sgTrackCard}>
                 <div className={styles.cardTop}>
                   <div
                     onClick={() => handlePlayTrack(idx)}
@@ -1085,12 +1221,12 @@ export const SoundGardenSection: React.FC = () => {
                   <div className={styles.cardActions}>
                     <button
                       type="button"
-                      onClick={() => handleToggleReaction(song)}
-                      className={styles.reactionBtn}
-                      title="Click to cycle reaction"
+                      onClick={(e) => handleToggleLike(song, e)}
+                      className={`${styles.reactionBtn} ${isSongLiked(song) ? styles.reactionBtnActive : ''}`}
+                      title={isSongLiked(song) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
                     >
-                      <Heart className="w-3 h-3 fill-pink-400 text-pink-400" />
-                      <span>{song.reaction || 'Love it! 💖'}</span>
+                      <Heart className={`w-3 h-3 transition-transform active:scale-125 ${isSongLiked(song) ? 'fill-pink-400 text-pink-400' : 'text-pink-300'}`} />
+                      <span>{song.reaction || (isSongLiked(song) ? 'Love it! 💖' : 'Love')}</span>
                     </button>
 
                     {isSpotifyUrl(song.musicUrl) && (
@@ -1231,11 +1367,11 @@ export const SoundGardenSection: React.FC = () => {
           <div className={styles.playerRightControls}>
             <button
               type="button"
-              onClick={() => handleToggleReaction(currentNowPlaying)}
+              onClick={(e) => currentNowPlaying && handleToggleLike(currentNowPlaying, e)}
               className={styles.playerHeartBtn}
-              title="Heart reaction"
+              title={isSongLiked(currentNowPlaying) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
             >
-              <Heart className={`w-4 h-4 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
+              <Heart className={`w-4 h-4 transition-transform active:scale-125 ${isSongLiked(currentNowPlaying) ? 'fill-pink-400 text-pink-400' : 'text-white/70'}`} />
             </button>
 
             <div className={`${styles.volumeBarContainer} ${styles.desktopOnlyControl}`}>
@@ -1291,11 +1427,11 @@ export const SoundGardenSection: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => handleToggleReaction(currentNowPlaying)}
+                onClick={(e) => currentNowPlaying && handleToggleLike(currentNowPlaying, e)}
                 className={styles.maximizedHeartBtn}
-                title="Heart reaction"
+                title={isSongLiked(currentNowPlaying) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
               >
-                <Heart className={`w-5 h-5 ${currentNowPlaying.reaction ? 'fill-pink-400 text-pink-400' : ''}`} />
+                <Heart className={`w-5 h-5 transition-transform active:scale-125 ${isSongLiked(currentNowPlaying) ? 'fill-pink-400 text-pink-400' : 'text-white/70'}`} />
               </button>
             </div>
 
@@ -1480,8 +1616,18 @@ export const SoundGardenSection: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-1 min-w-0">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-white truncate">{selectedSong.title}</h3>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-white truncate">{selectedSong.title}</h3>
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleLike(selectedSong, e)}
+                    className="p-1.5 rounded-full hover:bg-white/10 text-pink-300 transition-all active:scale-95 cursor-pointer shrink-0"
+                    title={isSongLiked(selectedSong) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
+                  >
+                    <Heart className={`w-5 h-5 transition-transform active:scale-125 ${isSongLiked(selectedSong) ? 'fill-pink-400 text-pink-400' : 'text-pink-300/70'}`} />
+                  </button>
+                </div>
                 <p className="text-xs sm:text-sm text-purple-200/90 font-medium">{selectedSong.artist}</p>
                 <span
                   className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border ${

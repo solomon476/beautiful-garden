@@ -16,7 +16,7 @@ import {
 import { notificationService } from '../../services/notificationService';
 import type { GardenNotification, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { extractMemoryIdFromNotification } from '../../utils/notificationHelpers';
+import { extractMemoryIdFromNotification, extractSongIdFromNotification } from '../../utils/notificationHelpers';
 
 interface GardenNotificationBellProps {
   currentUser: UserProfile;
@@ -79,6 +79,13 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
     if (memoryId) {
       sessionStorage.setItem('pending_open_memory_id', memoryId);
       window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+    }
+
+    // If it's a song like / recommendation notification, take them directly to the song!
+    const songId = extractSongIdFromNotification(notif);
+    if (songId) {
+      sessionStorage.setItem('pending_open_song_id', songId);
+      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
     }
 
     if (notif.targetTab) {
