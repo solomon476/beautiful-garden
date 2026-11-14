@@ -75,18 +75,26 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
     notificationService.markAsRead(notif.id, currentUser.id);
     setIsOpen(false);
 
-    // If it's a memory / photo like notification, take them directly to the liked moment!
+    // If it's a memory / photo like or comment notification, take them directly to the liked moment!
     const memoryId = extractMemoryIdFromNotification(notif);
     if (memoryId) {
       sessionStorage.setItem('pending_open_memory_id', memoryId);
-      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+      const isComment = notif.title.includes('Note') || notif.message.includes('wrote') || notif.message.includes('commented');
+      if (isComment) {
+        sessionStorage.setItem('pending_open_memory_comments', memoryId);
+      }
+      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId, openComments: isComment } }));
     }
 
-    // If it's a song like / recommendation notification, take them directly to the song!
+    // If it's a song like / recommendation or note notification, take them directly to the song!
     const songId = extractSongIdFromNotification(notif);
     if (songId) {
       sessionStorage.setItem('pending_open_song_id', songId);
-      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
+      const isComment = notif.title.includes('Note') || notif.message.includes('wrote') || notif.message.includes('commented');
+      if (isComment) {
+        sessionStorage.setItem('pending_open_song_comments', songId);
+      }
+      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId, openComments: isComment } }));
     }
 
     // If it's a Question of the Day notification, take them directly to the question!

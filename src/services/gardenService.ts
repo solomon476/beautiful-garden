@@ -3,6 +3,7 @@ import { notificationService } from './notificationService';
 import { authService, AUTHORIZED_PROFILES } from './authService';
 import { mediaStorage } from '../utils/mediaStorage';
 import { isSpotifyUrl, getCleanSpotifyUrl, fetchSpotifyOEmbed } from '../utils/spotify';
+import { commentService } from './commentService';
 export { authService };
 export const DEFAULT_PROFILES = AUTHORIZED_PROFILES;
 export type { UserProfile } from '../types/garden';
@@ -661,6 +662,17 @@ export const soundGardenService = {
               d.title?.toLowerCase().includes('voice memo') ||
               (isAudioData && !rawUrl.startsWith('http')));
 
+          let rawMsg = d.message || '';
+          if (rawMsg && typeof rawMsg === 'string' && rawMsg.startsWith('{') && rawMsg.includes('"comments"')) {
+            try {
+              const parsed = JSON.parse(rawMsg);
+              if (parsed.comments && Array.isArray(parsed.comments)) {
+                commentService.mergeCloudComments(d.id, 'song', parsed.comments);
+              }
+              if (parsed.note !== undefined) rawMsg = parsed.note;
+            } catch {}
+          }
+
           return {
             id: d.id,
             addedBy: d.added_by,
@@ -670,7 +682,7 @@ export const soundGardenService = {
             musicUrl: isAudioData ? undefined : (rawUrl || undefined),
             audioUrl: isAudioData ? rawUrl : (d.audio_url || undefined),
             isVoiceNote: isVoice,
-            message: d.message || '',
+            message: rawMsg,
             status: d.status as SongStatus,
             createdAt: d.created_at,
             coverUrl:
@@ -1024,6 +1036,9 @@ export const memoryArchiveService = {
                 }
                 if (parsed.note !== undefined) {
                   description = parsed.note;
+                }
+                if (parsed.comments && Array.isArray(parsed.comments)) {
+                  commentService.mergeCloudComments(d.id, 'memory', parsed.comments);
                 }
               } catch {}
             }

@@ -24,11 +24,14 @@ import {
   Send,
   Search,
   MessageSquare,
+  MessageCircle,
   Maximize2,
   ChevronDown,
 } from 'lucide-react';
 import { soundGardenService, authService } from '../../services/gardenService';
 import { notificationService } from '../../services/notificationService';
+import { commentService } from '../../services/commentService';
+import { KeepsakeCommentsModal } from './KeepsakeCommentsModal';
 import type { SongEntry, SongStatus, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
 import { mediaStorage } from '../../utils/mediaStorage';
@@ -73,6 +76,8 @@ export const SoundGardenSection: React.FC = () => {
   const [selectedSong, setSelectedSong] = useState<SongEntry | null>(null);
   const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
   const [lastLikedSongId, setLastLikedSongId] = useState<string | null>(null);
+  const [activeCommentsSong, setActiveCommentsSong] = useState<SongEntry | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [likedSongIds, setLikedSongIds] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('perfect_time_liked_songs');
@@ -373,12 +378,32 @@ export const SoundGardenSection: React.FC = () => {
   };
 
 
-  const handleOpenLikedSongDirectly = (songId: string) => {
+  // Subscribe to real-time track comment counts
+  useEffect(() => {
+    const updateCounts = () => {
+      const counts: Record<string, number> = {};
+      for (const s of songs) {
+        counts[s.id] = commentService.getCommentCount(s.id);
+      }
+      setCommentCounts(counts);
+    };
+
+    updateCounts();
+    const unsub = commentService.subscribe(updateCounts);
+    return () => unsub();
+  }, [songs]);
+
+  const handleOpenLikedSongDirectly = (songId: string, openComments: boolean = false) => {
     const songIndex = songs.findIndex((s) => s.id === songId);
     if (songIndex !== -1) {
       const foundSong = songs[songIndex];
       setNowPlayingIndex(songIndex);
-      setSelectedSong(foundSong);
+      if (openComments || sessionStorage.getItem('pending_open_song_comments')) {
+        sessionStorage.removeItem('pending_open_song_comments');
+        setActiveCommentsSong(foundSong);
+      } else {
+        setSelectedSong(foundSong);
+      }
       setIsPlaying(true);
       soundEngine.playSparkle();
 
@@ -397,10 +422,10 @@ export const SoundGardenSection: React.FC = () => {
 
   // Listen for direct navigation events from notifications
   useEffect(() => {
-    const handleDirectOpen = (e: CustomEvent<{ songId: string }>) => {
+    const handleDirectOpen = (e: CustomEvent<{ songId: string; openComments?: boolean }>) => {
       const targetId = e.detail?.songId;
       if (targetId) {
-        handleOpenLikedSongDirectly(targetId);
+        handleOpenLikedSongDirectly(targetId, Boolean(e.detail?.openComments));
       }
     };
 
@@ -1080,6 +1105,20 @@ export const SoundGardenSection: React.FC = () => {
                       <div className={styles.shelfTrackActions}>
                         <button
                           type="button"
+                          onClick={() => setActiveCommentsSong(song)}
+                          className={styles.shelfPlayBtn}
+                          title="Track Notes"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-purple-300" />
+                          {(commentCounts[song.id] ?? 0) > 0 && (
+                            <span className="text-[10px] font-bold text-pink-300 ml-0.5">
+                              {commentCounts[song.id]}
+                            </span>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={(e) => handleToggleLike(song, e)}
                           className={styles.shelfPlayBtn}
                           title={isSongLiked(song) ? 'Loved ♡ Tap to unlike' : 'Love this track'}
@@ -1207,6 +1246,18 @@ export const SoundGardenSection: React.FC = () => {
                   </div>
 
                   <div className={styles.cardActions}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveCommentsSong(song)}
+                      className={`${styles.reactionBtn} hover:border-purple-400/50`}
+                      title="Track Notes"
+                    >
+                      <MessageCircle className="w-3 h-3 text-purple-300" />
+                      <span>
+                        Notes{(commentCounts[song.id] ?? 0) > 0 ? ` (${commentCounts[song.id]})` : ''}
+                      </span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={(e) => handleToggleLike(song, e)}
@@ -1666,6 +1717,27 @@ export const SoundGardenSection: React.FC = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Track Notes Button in Detail Modal */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const s = selectedSong;
+                  setSelectedSong(null);
+                  setActiveCommentsSong(s);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-purple-900/40 to-pink-900/40 hover:from-purple-900/60 hover:to-pink-900/60 border border-pink-400/30 text-white text-xs font-medium transition-all active:scale-95 cursor-pointer shadow-sm"
+              >
+                <span className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-pink-300" />
+                  <span>Track Notes ({commentCounts[selectedSong.id] ?? commentService.getCommentCount(selectedSong.id)})</span>
+                </span>
+                <span className="text-[11px] text-pink-300 font-mono flex items-center gap-1">
+                  <span>View & Whisper →</span>
+                </span>
+              </button>
             </div>
 
             <div className="pt-4 border-t border-purple-400/20 flex items-center justify-between gap-3">
@@ -2181,6 +2253,19 @@ export const SoundGardenSection: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Track Notes Modal */}
+      {activeCommentsSong && (
+        <KeepsakeCommentsModal
+          isOpen={Boolean(activeCommentsSong)}
+          onClose={() => setActiveCommentsSong(null)}
+          targetId={activeCommentsSong.id}
+          targetType="song"
+          title={activeCommentsSong.title}
+          subtitle={`By ${activeCommentsSong.artist}`}
+          coverUrl={activeCommentsSong.coverUrl}
+        />
       )}
     </div>
   );
