@@ -26,8 +26,6 @@ import {
   Loader2,
 } from 'lucide-react';
 import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory } from '../../services/gardenService';
-import { commentService } from '../../services/commentService';
-import { KeepsakeCommentsModal } from './KeepsakeCommentsModal';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
@@ -96,8 +94,6 @@ export const LittleArchiveSection: React.FC = () => {
   const [lastLikedMemoryId, setLastLikedMemoryId] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  const [activeCommentsMemory, setActiveCommentsMemory] = useState<MemoryEntry | null>(null);
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   // Soundtrack / Music state
   const [musicUrl, setMusicUrl] = useState<string | undefined>(undefined);
@@ -153,6 +149,12 @@ export const LittleArchiveSection: React.FC = () => {
     let hash = 0;
     for (let i = 0; i < id.length; i++) hash = (hash << 5) - hash + id.charCodeAt(i);
     return Math.abs(hash % 35) + 15;
+  };
+
+  const getInitialComments = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash << 3) - hash + id.charCodeAt(i);
+    return Math.abs(hash % 8) + 1;
   };
 
   // Form state
@@ -245,35 +247,15 @@ export const LittleArchiveSection: React.FC = () => {
     };
   }, []);
 
-  // Subscribe to real-time comment counts
-  useEffect(() => {
-    const updateCounts = () => {
-      const counts: Record<string, number> = {};
-      for (const m of memories) {
-        counts[m.id] = commentService.getCommentCount(m.id);
-      }
-      setCommentCounts(counts);
-    };
-
-    updateCounts();
-    const unsub = commentService.subscribe(updateCounts);
-    return () => unsub();
-  }, [memories]);
-
   // Listen for direct navigation to a specific liked or referenced memory
   useEffect(() => {
-    const openTargetMemory = (targetId: string, openComments: boolean = false) => {
+    const openTargetMemory = (targetId: string) => {
       if (!targetId || memories.length === 0) return;
       const found = memories.find((m) => m.id === targetId);
       if (found) {
         sessionStorage.removeItem('pending_open_memory_id');
         soundEngine.playSparkle();
-        if (openComments || sessionStorage.getItem('pending_open_memory_comments')) {
-          sessionStorage.removeItem('pending_open_memory_comments');
-          setActiveCommentsMemory(found);
-        } else {
-          setLightboxMemory(found);
-        }
+        setLightboxMemory(found);
         setTimeout(() => {
           const el = document.getElementById(`archive-card-${found.id}`);
           el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -287,10 +269,10 @@ export const LittleArchiveSection: React.FC = () => {
       openTargetMemory(pendingId);
     }
 
-    const handleOpenMemoryEvent = (e: CustomEvent<{ memoryId: string; openComments?: boolean }>) => {
+    const handleOpenMemoryEvent = (e: CustomEvent<{ memoryId: string }>) => {
       const targetId = e.detail?.memoryId;
       if (targetId) {
-        openTargetMemory(targetId, Boolean(e.detail?.openComments));
+        openTargetMemory(targetId);
       }
     };
 
@@ -766,6 +748,7 @@ export const LittleArchiveSection: React.FC = () => {
             const displayTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
             const isLiked = Boolean(likedCards[mem.id]);
             const count = likeCounts[mem.id] || getInitialLikes(mem.id);
+            const comments = getInitialComments(mem.id);
             const categoryTag = (mem as any).category || (mem.isShared ? 'Moment' : 'Private');
 
             return (
@@ -917,13 +900,12 @@ export const LittleArchiveSection: React.FC = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           soundEngine.playSparkle();
-                          setActiveCommentsMemory(mem);
+                          setLightboxMemory(mem);
                         }}
                         className="archive-card-stat-btn text-purple-300 hover:text-purple-200"
-                        title="View Keepsake Notes"
                       >
                         <MessageCircle className="w-3 h-3" />
-                        <span>{commentCounts[mem.id] ?? commentService.getCommentCount(mem.id)}</span>
+                        <span>{comments}</span>
                       </button>
                     </div>
 
@@ -1076,19 +1058,6 @@ export const LittleArchiveSection: React.FC = () => {
                   </button>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        soundEngine.playSparkle();
-                        setActiveCommentsMemory(mem);
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 font-medium flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-                      title="View Keepsake Notes"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 text-purple-300" />
-                      <span>Notes ({commentCounts[mem.id] ?? commentService.getCommentCount(mem.id)})</span>
-                    </button>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1582,25 +1551,6 @@ export const LittleArchiveSection: React.FC = () => {
                 />
               )}
 
-              {/* Keepsake Notes Quick Bar */}
-              <div className="pt-2 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setActiveCommentsMemory(lightboxMemory)}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-purple-900/40 to-pink-900/40 hover:from-purple-900/60 hover:to-pink-900/60 border border-pink-400/30 text-white text-xs font-medium transition-all active:scale-95 cursor-pointer shadow-sm"
-                  title="View Keepsake Notes"
-                >
-                  <span className="flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-pink-300" />
-                    <span>Keepsake Notes ({commentCounts[lightboxMemory.id] ?? commentService.getCommentCount(lightboxMemory.id)})</span>
-                  </span>
-                  <span className="text-[11px] text-pink-300 font-mono flex items-center gap-1">
-                    <span>Open thread</span>
-                    <span>→</span>
-                  </span>
-                </button>
-              </div>
-
               {/* Gallery Navigation Controls */}
               {filteredMemories.length > 1 && (
                 <div className={styles.lightboxNavRow}>
@@ -2079,23 +2029,6 @@ export const LittleArchiveSection: React.FC = () => {
         );
         return typeof document !== 'undefined' ? createPortal(addModalContent, document.body) : addModalContent;
       })()}
-
-      {/* Keepsake Notes Modal for Memories */}
-      {activeCommentsMemory && (
-        <KeepsakeCommentsModal
-          isOpen={Boolean(activeCommentsMemory)}
-          onClose={() => setActiveCommentsMemory(null)}
-          targetId={activeCommentsMemory.id}
-          targetType="memory"
-          title={formatMemoryDisplayTitle(
-            activeCommentsMemory.title,
-            activeCommentsMemory.caption,
-            activeCommentsMemory.dateTaken
-          )}
-          subtitle={activeCommentsMemory.dateTaken || 'Treasured Keepsake ♡'}
-          coverUrl={activeCommentsMemory.photoUrl}
-        />
-      )}
     </div>
   );
 };

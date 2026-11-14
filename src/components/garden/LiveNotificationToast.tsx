@@ -108,26 +108,18 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
     const currentUser = authService.getCurrentUser();
     notificationService.markAsRead(activeToast.id, currentUser.id);
 
-    // If it's a memory / photo like or comment notification, take them directly to the liked moment!
+    // If it's a memory / photo like notification, take them directly to the liked moment!
     const memoryId = extractMemoryIdFromNotification(activeToast);
     if (memoryId) {
       sessionStorage.setItem('pending_open_memory_id', memoryId);
-      const isComment = activeToast.title.includes('Note') || activeToast.message.includes('wrote') || activeToast.message.includes('commented');
-      if (isComment) {
-        sessionStorage.setItem('pending_open_memory_comments', memoryId);
-      }
-      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId, openComments: isComment } }));
+      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
     }
 
-    // If it's a song like / recommendation or note notification, take them directly to the song!
+    // If it's a song like / recommendation notification, take them directly to the song!
     const songId = extractSongIdFromNotification(activeToast);
     if (songId) {
       sessionStorage.setItem('pending_open_song_id', songId);
-      const isComment = activeToast.title.includes('Note') || activeToast.message.includes('wrote') || activeToast.message.includes('commented');
-      if (isComment) {
-        sessionStorage.setItem('pending_open_song_comments', songId);
-      }
-      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId, openComments: isComment } }));
+      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
     }
 
     // If it's a Question of the Day notification, take them directly to the question!

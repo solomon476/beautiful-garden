@@ -2,7 +2,6 @@ import type { GardenNotification } from '../types/garden';
 import { AUTHORIZED_PROFILES as DEFAULT_PROFILES } from './authService';
 import { supabase, isLiveSupabaseConfigured } from './supabaseClient';
 import { soundEngine } from '../utils/audio';
-import { commentService } from './commentService';
 
 const STORAGE_KEY = 'perfect_time_notifications_v2';
 const READ_IDS_KEY = 'perfect_time_read_notification_ids_v2';
@@ -258,14 +257,6 @@ export const notificationService = {
         if (!payload) return;
         if (payload.recipientId === currentUserId) {
           this.handleIncomingNotification(payload);
-        }
-      });
-
-      // 1.5. Listen for instant cross-device comment broadcasts
-      realtimeChannel.on('broadcast', { event: 'garden_comment' }, ({ payload }: any) => {
-        if (!payload) return;
-        if (payload.authorId !== currentUserId) {
-          commentService.mergeCloudComments(payload.targetId, payload.targetType, [payload]);
         }
       });
 
