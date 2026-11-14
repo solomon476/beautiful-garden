@@ -25,7 +25,6 @@ import {
   Pause,
   Loader2,
   Lock,
-  Edit3,
 } from 'lucide-react';
 import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
@@ -110,45 +109,6 @@ export const LittleArchiveSection: React.FC = () => {
   const musicFileInputRef = useRef<HTMLInputElement | null>(null);
   const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
 
-  // Edit Memory & Privacy state
-  const [editingMemory, setEditingMemory] = useState<MemoryEntry | null>(null);
-  const [editTitle, setEditTitle] = useState<string>('');
-  const [editCaption, setEditCaption] = useState<string>('');
-  const [editIsShared, setEditIsShared] = useState<boolean>(true);
-  const [activeMenuMemoryId, setActiveMenuMemoryId] = useState<string | null>(null);
-
-  const handleOpenEditMemory = (mem: MemoryEntry, forceShared?: boolean) => {
-    soundEngine.playSparkle();
-    setEditingMemory(mem);
-    setEditTitle(mem.title || '');
-    setEditCaption(mem.caption || mem.description || '');
-    setEditIsShared(forceShared !== undefined ? forceShared : (mem.isShared !== undefined ? mem.isShared : true));
-    setActiveMenuMemoryId(null);
-  };
-
-  const handleSaveEditMemory = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!editingMemory) return;
-
-    try {
-      soundEngine.playSparkle();
-      const updated = await memoryArchiveService.updateMemory(editingMemory.id, {
-        title: editTitle,
-        caption: editCaption,
-        isShared: editIsShared,
-      });
-
-      setMemories((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-      if (lightboxMemory?.id === updated.id) {
-        setLightboxMemory(updated);
-      }
-      setEditingMemory(null);
-    } catch (err: any) {
-      console.error('Failed to update memory:', err);
-      alert(err?.message || 'Could not update memory.');
-    }
-  };
-
   const handleToggleMemoryPrivacy = async (mem: MemoryEntry, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (mem.contributorId && mem.contributorId !== currentUser.id) return;
@@ -161,7 +121,6 @@ export const LittleArchiveSection: React.FC = () => {
       if (lightboxMemory?.id === updated.id) {
         setLightboxMemory(updated);
       }
-      setActiveMenuMemoryId(null);
     } catch (err: any) {
       console.error('Failed to toggle memory privacy:', err);
       alert(err?.message || 'Could not change privacy.');
@@ -898,10 +857,10 @@ export const LittleArchiveSection: React.FC = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleOpenEditMemory(mem, true);
+                          handleToggleMemoryPrivacy(mem, e);
                         }}
                         className="archive-card-category bg-pink-500/20 text-pink-200 border border-pink-400/40 hover:bg-pink-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                        title="Private moment — tap to edit or switch to public for both of us 🌸"
+                        title="Private moment — tap to bloom for both of us 🌸"
                       >
                         <Lock className="w-2.5 h-2.5 text-pink-300" />
                         <span>Private 🔒 (Tap to Share)</span>
@@ -912,83 +871,18 @@ export const LittleArchiveSection: React.FC = () => {
                       </span>
                     )}
 
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (mem.contributorId === currentUser.id) {
-                            setActiveMenuMemoryId(activeMenuMemoryId === mem.id ? null : mem.id);
-                          } else {
-                            soundEngine.playSparkle();
-                            setLightboxMemory(mem);
-                          }
-                        }}
-                        className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors"
-                        title={mem.contributorId === currentUser.id ? "Options" : "View memory"}
-                      >
-                        <MoreHorizontal className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Dropdown menu for memory owner */}
-                      {activeMenuMemoryId === mem.id && (
-                        <div
-                          className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-white/20 shadow-2xl py-1 z-30 text-xs animate-scale-up"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleMemoryPrivacy(mem);
-                            }}
-                            className="w-full px-3 py-2 text-left text-pink-200 hover:bg-pink-500/20 flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            {mem.isShared ? (
-                              <>
-                                <Lock className="w-3.5 h-3.5 text-pink-300" />
-                                <span>Make Private 🔒</span>
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="w-3.5 h-3.5 text-pink-300" />
-                                <span>Bloom for Both of Us 🌸</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenEditMemory(mem);
-                            }}
-                            className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 text-purple-300" />
-                            <span>Edit Moment ✏️</span>
-                          </button>
-
-                          <div className="h-px bg-white/10 my-0.5" />
-
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              setActiveMenuMemoryId(null);
-                              if (window.confirm('Move this moment to the Garden Bin?')) {
-                                await memoryArchiveService.deleteMemory(mem.id, mem);
-                                setMemories((prev) => prev.filter((m) => m.id !== mem.id));
-                              }
-                            }}
-                            className="w-full px-3 py-2 text-left text-rose-300 hover:bg-rose-500/20 flex items-center gap-2 cursor-pointer transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5 text-rose-400" />
-                            <span>Move to Bin 🗑️</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundEngine.playSparkle();
+                        setLightboxMemory(mem);
+                      }}
+                      className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors"
+                      title="View memory"
+                    >
+                      <MoreHorizontal className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Title in Caveat Cursive Font */}
@@ -1116,15 +1010,21 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={(e) => {
-                      if (mem.contributorId === currentUser.id && !mem.isShared) {
+                      if (mem.contributorId === currentUser.id) {
                         e.stopPropagation();
-                        handleOpenEditMemory(mem, true);
+                        handleToggleMemoryPrivacy(mem, e);
                       }
                     }}
                     className={`absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20 z-10 ${
-                      mem.contributorId === currentUser.id && !mem.isShared ? 'cursor-pointer hover:bg-pink-500/40 hover:scale-105 active:scale-95 transition-all' : ''
+                      mem.contributorId === currentUser.id ? 'cursor-pointer hover:bg-pink-500/40 hover:scale-105 active:scale-95 transition-all' : ''
                     }`}
-                    title={mem.contributorId === currentUser.id && !mem.isShared ? 'Private draft — tap to edit or switch to public for both of us 🌸' : undefined}
+                    title={
+                      mem.contributorId === currentUser.id
+                        ? mem.isShared
+                          ? 'Shared keepsake — tap to make private 🔒'
+                          : 'Private keepsake — tap to bloom for both of us 🌸'
+                        : undefined
+                    }
                   >
                     {mem.isShared ? 'Shared ♡' : 'Private 🔒 (Tap to Share)'}
                   </button>
@@ -1322,15 +1222,6 @@ export const LittleArchiveSection: React.FC = () => {
                           <span>🔒</span>
                         </button>
                       )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditMemory(lightboxMemory)}
-                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all cursor-pointer active:scale-90"
-                        title="Edit title & words"
-                      >
-                        <Edit3 className="w-4 h-4 text-pink-300" />
-                      </button>
                     </>
                   )}
 
@@ -1594,15 +1485,6 @@ export const LittleArchiveSection: React.FC = () => {
                           <span>🔒</span>
                         </button>
                       )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditMemory(lightboxMemory)}
-                        className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 transition-all cursor-pointer active:scale-90"
-                        title="Edit moment title & words"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-pink-300" />
-                      </button>
                     </>
                   )}
 
@@ -2258,136 +2140,6 @@ export const LittleArchiveSection: React.FC = () => {
         </div>
         );
         return typeof document !== 'undefined' ? createPortal(addModalContent, document.body) : addModalContent;
-      })()}
-
-      {/* 5. Edit Memory & Privacy Modal */}
-      {editingMemory && (() => {
-        const editModalContent = (
-          <div
-            className={styles.modalBackdrop}
-            style={{ zIndex: 99999 }}
-            onClick={() => setEditingMemory(null)}
-          >
-            <div
-              className={styles.addModalCard}
-              style={{ maxWidth: '520px' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={styles.modalHeader}>
-                <div className={styles.modalHeaderTitleGroup}>
-                  <span className="p-2 rounded-xl bg-pink-500/15 border border-pink-400/30 text-pink-300">
-                    <Edit3 className="w-4 h-4 text-pink-300" />
-                  </span>
-                  <div>
-                    <h4 className="font-serif text-lg sm:text-xl font-bold text-white tracking-tight">
-                      Edit Moment & Privacy
-                    </h4>
-                    <p className="text-[11px] text-pink-200/70 font-mono uppercase tracking-wider">
-                      Adjust your words or switch between private & public
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setEditingMemory(null)}
-                  className={styles.modalCloseBtn}
-                  aria-label="Cancel"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSaveEditMemory} className="p-4 sm:p-6 space-y-4">
-                {/* Media Thumbnail Preview */}
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.04] border border-white/10">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/20 shadow-md">
-                    <img
-                      src={editingMemory.photoUrl}
-                      alt={editingMemory.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] font-mono text-pink-300">
-                      {editingMemory.mediaType === 'video' ? '🎬 Video Moment' : '📷 Photo Moment'}
-                    </span>
-                    <p className="text-xs text-white/90 truncate font-medium">
-                      {editingMemory.title || 'Treasured Keepsake'}
-                    </p>
-                    <span className="text-[10px] text-purple-200/60 font-mono">
-                      {editingMemory.dateTaken || 'Special Day'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Title Input */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono font-medium text-pink-200/80 uppercase tracking-wider">
-                    Moment Title
-                  </label>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    placeholder="e.g. Under the Full Moon"
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 focus:border-pink-400 text-white text-sm outline-none transition-all placeholder-white/30"
-                  />
-                </div>
-
-                {/* Caption / Feelings Input */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono font-medium text-pink-200/80 uppercase tracking-wider">
-                    Moment Words & Feelings ♡
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={editCaption}
-                    onChange={(e) => setEditCaption(e.target.value)}
-                    placeholder="Write what was in your heart during this moment..."
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 focus:border-pink-400 text-white text-sm outline-none transition-all placeholder-white/30 resize-none"
-                  />
-                </div>
-
-                {/* Privacy Toggle */}
-                <div>
-                  <DecoratedPrivacyToggle
-                    isShared={editIsShared}
-                    onToggle={setEditIsShared}
-                    partnerName={partner.displayName}
-                    sharedTitle={`Shared in Sanctuary with ${partner.displayName}`}
-                    sharedSubtitle="Visible to both of us in our garden album 🌸"
-                    privateTitle="Keep as Private Draft"
-                    privateSubtitle="Only visible when logged into your account 🔐"
-                  />
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setEditingMemory(null)}
-                    className="px-4 py-2 rounded-full text-xs font-medium text-purple-200 hover:text-white transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold shadow-lg shadow-pink-500/25 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-pink-200" />
-                    <span>
-                      {editIsShared
-                        ? 'Bloom & Share with Partner ✨'
-                        : 'Save as Private Keepsake 🔒'}
-                    </span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        );
-        return typeof document !== 'undefined' ? createPortal(editModalContent, document.body) : editModalContent;
       })()}
     </div>
   );

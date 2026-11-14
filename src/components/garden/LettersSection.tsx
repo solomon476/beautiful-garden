@@ -3,8 +3,6 @@ import {
   PenLine,
   Lock,
   Globe2,
-  Trash2,
-  Edit3,
   X,
   Sparkles,
   Clock,
@@ -26,7 +24,6 @@ export const LettersSection: React.FC = () => {
 
   // Form State
   const [isComposing, setIsComposing] = useState<boolean>(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState<string>('');
   const [body, setBody] = useState<string>('');
   const [isShared, setIsShared] = useState<boolean>(false);
@@ -58,23 +55,11 @@ export const LettersSection: React.FC = () => {
 
   const handleStartCompose = () => {
     soundEngine.playSparkle();
-    setEditingId(null);
     setTitle('');
     setBody('');
     setIsShared(false);
     setErrorMsg(null);
     setIsComposing(true);
-  };
-
-  const handleEditNote = (note: NoteEntry, forceShared?: boolean) => {
-    if (note.authorId !== currentUser.id) return;
-    setEditingId(note.id);
-    setTitle(note.title);
-    setBody(note.body);
-    setIsShared(forceShared !== undefined ? forceShared : note.isShared);
-    setErrorMsg(null);
-    setIsComposing(true);
-    setSelectedNote(null);
   };
 
   const handleToggleNotePrivacy = async (note: NoteEntry) => {
@@ -100,7 +85,6 @@ export const LettersSection: React.FC = () => {
 
     try {
       await notesService.saveNote({
-        id: editingId || undefined,
         title,
         body,
         isShared,
@@ -108,22 +92,12 @@ export const LettersSection: React.FC = () => {
 
       soundEngine.playChime(659.25, 1.2, 0.08);
       setIsComposing(false);
-      setEditingId(null);
       setTitle('');
       setBody('');
       setIsShared(false);
       await loadNotes();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Could not save letter.');
-    }
-  };
-
-  const handleDelete = async (note: NoteEntry) => {
-    if (note.authorId !== currentUser.id) return;
-    if (window.confirm(`Delete letter "${note.title || 'Untitled'}"?`)) {
-      await notesService.deleteNote(note.id);
-      setSelectedNote(null);
-      await loadNotes();
     }
   };
 
@@ -280,22 +254,36 @@ export const LettersSection: React.FC = () => {
                       <button
                         type="button"
                         onClick={(e) => {
-                          if (note.authorId === currentUser.id && !note.isShared) {
+                          if (note.authorId === currentUser.id) {
                             e.stopPropagation();
-                            handleEditNote(note, true);
+                            handleToggleNotePrivacy(note);
                           }
                         }}
                         className={`${styles.privacyBadge} ${
                           note.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
-                        } ${note.authorId === currentUser.id && !note.isShared ? 'cursor-pointer hover:scale-105 active:scale-95 transition-all' : ''}`}
-                        title={note.authorId === currentUser.id && !note.isShared ? 'Private letter — tap to edit or make public for both of us 🌸' : undefined}
+                        } ${note.authorId === currentUser.id ? 'cursor-pointer hover:scale-105 active:scale-95 transition-all' : ''}`}
+                        title={
+                          note.authorId === currentUser.id
+                            ? note.isShared
+                              ? 'Shared letter — tap to switch to private 🔒'
+                              : 'Private letter — tap to make public for both of us 🌸'
+                            : undefined
+                        }
                       >
                         {note.isShared ? (
                           <Globe2 className="w-3 h-3" />
                         ) : (
                           <Lock className="w-3 h-3" />
                         )}
-                        <span>{note.isShared ? 'Shared' : 'Private 🔒 (Tap to Share)'}</span>
+                        <span>
+                          {note.authorId === currentUser.id
+                            ? note.isShared
+                              ? 'Shared 💌 (Tap to Lock)'
+                              : 'Private 🔒 (Tap to Share)'
+                            : note.isShared
+                            ? 'Shared'
+                            : 'Private'}
+                        </span>
                       </button>
                     </div>
 
@@ -518,7 +506,7 @@ export const LettersSection: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleToggleNotePrivacy(selectedNote)}
-                      className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                      className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
                       title="Make letter public for both of us"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-pink-200" />
@@ -528,31 +516,13 @@ export const LettersSection: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleToggleNotePrivacy(selectedNote)}
-                      className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-pink-300/80 text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-pink-300/80 hover:text-pink-200 text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                       title="Switch back to private draft"
                     >
-                      <Lock className="w-3 h-3" />
+                      <Lock className="w-3.5 h-3.5" />
                       <span>Make Private 🔒</span>
                     </button>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={() => handleEditNote(selectedNote)}
-                    className={styles.editActionBtn}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    <span>Edit Letter</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(selectedNote)}
-                    className={styles.deleteActionBtn}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete</span>
-                  </button>
                 </div>
               ) : (
                 <span className="text-xs sm:text-sm font-mono text-pink-300/70">
@@ -590,7 +560,7 @@ export const LettersSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className={styles.composeHeaderTitle}>
-                    {editingId ? 'Edit Letter' : 'Pen a Letter in the Garden'}
+                    Pen a Letter in the Garden
                   </h4>
                   <p className={styles.composeHeaderSubtitle}>
                     {isShared ? `Shared with ${partner.displayName}` : 'Kept strictly private to you'}
