@@ -66,15 +66,30 @@ export const LettersSection: React.FC = () => {
     setIsComposing(true);
   };
 
-  const handleEditNote = (note: NoteEntry) => {
+  const handleEditNote = (note: NoteEntry, forceShared?: boolean) => {
     if (note.authorId !== currentUser.id) return;
     setEditingId(note.id);
     setTitle(note.title);
     setBody(note.body);
-    setIsShared(note.isShared);
+    setIsShared(forceShared !== undefined ? forceShared : note.isShared);
     setErrorMsg(null);
     setIsComposing(true);
     setSelectedNote(null);
+  };
+
+  const handleToggleNotePrivacy = async (note: NoteEntry) => {
+    if (note.authorId !== currentUser.id) return;
+    try {
+      soundEngine.playSparkle();
+      const nextShared = !note.isShared;
+      const updated = await notesService.toggleNotePrivacy(note.id, nextShared);
+      setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+      if (selectedNote?.id === updated.id) {
+        setSelectedNote(updated);
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle note privacy:', err);
+    }
   };
 
   const handleSave = async () => {
@@ -262,18 +277,26 @@ export const LettersSection: React.FC = () => {
                         {note.title || 'Untitled Letter'}
                       </h3>
 
-                      <span
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          if (note.authorId === currentUser.id && !note.isShared) {
+                            e.stopPropagation();
+                            handleEditNote(note, true);
+                          }
+                        }}
                         className={`${styles.privacyBadge} ${
                           note.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
-                        }`}
+                        } ${note.authorId === currentUser.id && !note.isShared ? 'cursor-pointer hover:scale-105 active:scale-95 transition-all' : ''}`}
+                        title={note.authorId === currentUser.id && !note.isShared ? 'Private letter — tap to edit or make public for both of us 🌸' : undefined}
                       >
                         {note.isShared ? (
                           <Globe2 className="w-3 h-3" />
                         ) : (
                           <Lock className="w-3 h-3" />
                         )}
-                        <span>{note.isShared ? 'Shared' : 'Private'}</span>
-                      </span>
+                        <span>{note.isShared ? 'Shared' : 'Private 🔒 (Tap to Share)'}</span>
+                      </button>
                     </div>
 
                     {/* Date */}
@@ -491,6 +514,28 @@ export const LettersSection: React.FC = () => {
             <div className={styles.readingFooter}>
               {selectedNote.authorId === currentUser.id ? (
                 <div className={styles.readingAuthorActions}>
+                  {!selectedNote.isShared ? (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleNotePrivacy(selectedNote)}
+                      className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                      title="Make letter public for both of us"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-pink-200" />
+                      <span>Make Public for Both of Us 🌸</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleNotePrivacy(selectedNote)}
+                      className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-pink-300/80 text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                      title="Switch back to private draft"
+                    >
+                      <Lock className="w-3 h-3" />
+                      <span>Make Private 🔒</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => handleEditNote(selectedNote)}

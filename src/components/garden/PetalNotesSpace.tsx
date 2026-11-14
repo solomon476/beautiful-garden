@@ -6,6 +6,7 @@ import {
   Lock,
   Globe2,
   X,
+  Edit3,
 } from 'lucide-react';
 import { petalNotesService, authService } from '../../services/gardenService';
 import type { PetalNoteEntry, UserProfile } from '../../types/garden';
@@ -29,6 +30,7 @@ export const PetalNotesSpace: React.FC = () => {
 
   // Form state
   const [isComposing, setIsComposing] = useState<boolean>(false);
+  const [editingPetalId, setEditingPetalId] = useState<string | null>(null);
   const [body, setBody] = useState<string>('');
   const [selectedTheme, setSelectedTheme] = useState(PALETTE[0]);
   const [isShared, setIsShared] = useState<boolean>(true); // Shared with partner by default
@@ -62,6 +64,7 @@ export const PetalNotesSpace: React.FC = () => {
 
   const handleOpenCompose = () => {
     soundEngine.playSparkle();
+    setEditingPetalId(null);
     setBody('');
     setSelectedTheme(PALETTE[0]);
     setIsShared(true);
@@ -73,24 +76,72 @@ export const PetalNotesSpace: React.FC = () => {
     }, 120);
   };
 
+  const handleEditPetal = (p: PetalNoteEntry, forceShared?: boolean) => {
+    soundEngine.playSparkle();
+    setEditingPetalId(p.id);
+    setBody(p.body);
+    const theme = PALETTE.find((item) => item.emoji === p.emoji) || PALETTE[0];
+    setSelectedTheme(theme);
+    setIsShared(forceShared !== undefined ? forceShared : p.isShared);
+    setIsComposing(true);
+    setActivePetal(null);
+
+    setTimeout(() => {
+      composePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      textareaRef.current?.focus();
+    }, 120);
+  };
+
+  const handleQuickTogglePrivacy = async (p: PetalNoteEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (p.authorId !== currentUser.id) return;
+    try {
+      const nextShared = !p.isShared;
+      soundEngine.playChime(659.25, 1.0, 0.08);
+      const updated = await petalNotesService.togglePetalPrivacy(p.id, nextShared);
+      setPetals((prev) => prev.map((item) => (item.id === p.id ? updated : item)));
+      if (activePetal?.id === p.id) {
+        setActivePetal(updated);
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle petal privacy:', err);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim()) return;
 
     try {
-      const newEntry = await petalNotesService.addPetal({
-        body,
-        color: selectedTheme.color,
-        emoji: selectedTheme.emoji,
-        isShared,
-      });
+      if (editingPetalId) {
+        const updated = await petalNotesService.updatePetal({
+          id: editingPetalId,
+          body,
+          color: selectedTheme.color,
+          emoji: selectedTheme.emoji,
+          isShared,
+        });
+        soundEngine.playChime(659.25, 1.0, 0.08);
+        setIsComposing(false);
+        setEditingPetalId(null);
+        setBody('');
+        setPetals((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        await loadPetals();
+      } else {
+        const newEntry = await petalNotesService.addPetal({
+          body,
+          color: selectedTheme.color,
+          emoji: selectedTheme.emoji,
+          isShared,
+        });
 
-      soundEngine.playChime(659.25, 1.0, 0.08);
-      setIsComposing(false);
-      setBody('');
-      // Instantly bloom on screen
-      setPetals((prev) => [newEntry, ...prev.filter((p) => p.id !== newEntry.id)]);
-      await loadPetals();
+        soundEngine.playChime(659.25, 1.0, 0.08);
+        setIsComposing(false);
+        setBody('');
+        // Instantly bloom on screen
+        setPetals((prev) => [newEntry, ...prev.filter((p) => p.id !== newEntry.id)]);
+        await loadPetals();
+      }
     } catch (err: any) {
       console.error('Failed to bloom petal note:', err);
       alert(err?.message || 'Could not save petal note.');
@@ -200,10 +251,10 @@ export const PetalNotesSpace: React.FC = () => {
               </div>
               <div>
                 <h4 className={styles.composeHeaderTitle}>
-                  Craft a Flower Petal Note
+                  {editingPetalId ? 'Edit Petal Note & Privacy' : 'Craft a Flower Petal Note'}
                 </h4>
                 <p className={styles.composeHeaderSubtitle}>
-                  Delicate whispers, encouragement, and smiles
+                  {editingPetalId ? 'Adjust your whisper or switch between private & public' : 'Delicate whispers, encouragement, and smiles'}
                 </p>
               </div>
             </div>
@@ -326,7 +377,15 @@ export const PetalNotesSpace: React.FC = () => {
                 className={styles.heroTriggerBtn}
               >
                 <Sparkles className="w-4 h-4 text-white" />
-                <span>Bloom Petal Note 🌸</span>
+                <span>
+                  {editingPetalId
+                    ? isShared
+                      ? 'Bloom & Share with Partner ✨'
+                      : 'Save as Private Draft 🔒'
+                    : isShared
+                    ? `Bloom for ${partner.displayName} 🌸`
+                    : 'Keep in Private Journal 🔒'}
+                </span>
               </button>
             </div>
           </form>
@@ -397,14 +456,22 @@ export const PetalNotesSpace: React.FC = () => {
                       >
                         <span>{petal.emoji}</span>
                       </div>
-                      <span
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          if (isMine && !petal.isShared) {
+                            e.stopPropagation();
+                            handleEditPetal(petal, true);
+                          }
+                        }}
                         className={`${styles.privacyBadge} ${
                           petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
-                        }`}
+                        } ${isMine && !petal.isShared ? 'cursor-pointer hover:scale-105 active:scale-95 transition-all' : ''}`}
+                        title={isMine && !petal.isShared ? 'Private note — tap to edit or switch to public for both of us 🌸' : undefined}
                       >
                         {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                        <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
-                      </span>
+                        <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒 (Tap to Share)'}</span>
+                      </button>
                     </div>
 
                     <p className={styles.petalBody}>
@@ -514,6 +581,42 @@ export const PetalNotesSpace: React.FC = () => {
                 “{activePetal.body}”
               </p>
             </div>
+
+            {activePetal.authorId === currentUser.id && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 pb-1">
+                <button
+                  type="button"
+                  onClick={() => handleEditPetal(activePetal)}
+                  className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                  title="Edit words and adjust thoughts"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-pink-300" />
+                  <span>Edit Words ✏️</span>
+                </button>
+
+                {!activePetal.isShared ? (
+                  <button
+                    type="button"
+                    onClick={() => handleQuickTogglePrivacy(activePetal)}
+                    className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
+                    title="Switch to public for both of us"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-pink-200" />
+                    <span>Bloom for Both of Us 🌸</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleQuickTogglePrivacy(activePetal)}
+                    className="px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-pink-300/80 hover:text-pink-200 text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                    title="Switch back to private journal"
+                  >
+                    <Lock className="w-3 h-3" />
+                    <span>Make Private 🔒</span>
+                  </button>
+                )}
+              </div>
+            )}
 
             <div style={{
               display: 'flex',
