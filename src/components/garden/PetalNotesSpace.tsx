@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Plus,
+  Trash2,
   Lock,
   Globe2,
   X,
@@ -72,22 +73,6 @@ export const PetalNotesSpace: React.FC = () => {
     }, 120);
   };
 
-  const handleQuickTogglePrivacy = async (p: PetalNoteEntry, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (p.authorId !== currentUser.id) return;
-    try {
-      const nextShared = !p.isShared;
-      soundEngine.playChime(659.25, 1.0, 0.08);
-      const updated = await petalNotesService.togglePetalPrivacy(p.id, nextShared);
-      setPetals((prev) => prev.map((item) => (item.id === p.id ? updated : item)));
-      if (activePetal?.id === p.id) {
-        setActivePetal(updated);
-      }
-    } catch (err: any) {
-      console.error('Failed to toggle petal privacy:', err);
-    }
-  };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim()) return;
@@ -109,6 +94,17 @@ export const PetalNotesSpace: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to bloom petal note:', err);
       alert(err?.message || 'Could not save petal note.');
+    }
+  };
+
+  const handleDelete = async (p: PetalNoteEntry) => {
+    if (p.authorId !== currentUser.id) return;
+    if (window.confirm('Delete this petal note?')) {
+      soundEngine.playSparkle();
+      setPetals((prev) => prev.filter((item) => item.id !== p.id));
+      if (activePetal?.id === p.id) setActivePetal(null);
+      await petalNotesService.deletePetal(p.id);
+      await loadPetals();
     }
   };
 
@@ -330,11 +326,7 @@ export const PetalNotesSpace: React.FC = () => {
                 className={styles.heroTriggerBtn}
               >
                 <Sparkles className="w-4 h-4 text-white" />
-                <span>
-                  {isShared
-                    ? `Bloom for ${partner.displayName} 🌸`
-                    : 'Keep in Private Journal 🔒'}
-                </span>
+                <span>Bloom Petal Note 🌸</span>
               </button>
             </div>
           </form>
@@ -405,36 +397,14 @@ export const PetalNotesSpace: React.FC = () => {
                       >
                         <span>{petal.emoji}</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          if (isMine) {
-                            e.stopPropagation();
-                            handleQuickTogglePrivacy(petal, e);
-                          }
-                        }}
+                      <span
                         className={`${styles.privacyBadge} ${
                           petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
-                        } ${isMine ? 'cursor-pointer hover:scale-105 active:scale-95 transition-all' : ''}`}
-                        title={
-                          isMine
-                            ? petal.isShared
-                              ? 'Shared with partner — tap to switch to private 🔒'
-                              : 'Private note — tap to bloom for both of us 🌸'
-                            : undefined
-                        }
+                        }`}
                       >
                         {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                        <span>
-                          {isMine
-                            ? petal.isShared
-                              ? 'Shared 💌 (Tap to Lock)'
-                              : 'Private 🔒 (Tap to Share)'
-                            : petal.isShared
-                            ? 'Shared 💌'
-                            : 'Private 🔒'}
-                        </span>
-                      </button>
+                        <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
+                      </span>
                     </div>
 
                     <p className={styles.petalBody}>
@@ -446,6 +416,20 @@ export const PetalNotesSpace: React.FC = () => {
                     <span className={styles.petalAuthorSignature}>
                       From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
                     </span>
+                    {isMine && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(petal);
+                        }}
+                        className={styles.deleteBtn}
+                        title="Delete petal"
+                        aria-label="Delete petal"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -530,32 +514,6 @@ export const PetalNotesSpace: React.FC = () => {
                 “{activePetal.body}”
               </p>
             </div>
-
-            {activePetal.authorId === currentUser.id && (
-              <div className="flex items-center justify-center pt-2 pb-1">
-                {!activePetal.isShared ? (
-                  <button
-                    type="button"
-                    onClick={(e) => handleQuickTogglePrivacy(activePetal, e)}
-                    className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
-                    title="Switch to public for both of us"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-pink-200" />
-                    <span>Bloom for Both of Us 🌸</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => handleQuickTogglePrivacy(activePetal, e)}
-                    className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-pink-300/80 hover:text-pink-200 text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                    title="Switch back to private journal"
-                  >
-                    <Lock className="w-3 h-3" />
-                    <span>Make Private 🔒</span>
-                  </button>
-                )}
-              </div>
-            )}
 
             <div style={{
               display: 'flex',

@@ -24,7 +24,6 @@ import {
   Play,
   Pause,
   Loader2,
-  Lock,
 } from 'lucide-react';
 import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
@@ -108,24 +107,6 @@ export const LittleArchiveSection: React.FC = () => {
   const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
   const musicFileInputRef = useRef<HTMLInputElement | null>(null);
   const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
-
-  const handleToggleMemoryPrivacy = async (mem: MemoryEntry, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (mem.contributorId && mem.contributorId !== currentUser.id) return;
-
-    try {
-      soundEngine.playSparkle();
-      const nextShared = !mem.isShared;
-      const updated = await memoryArchiveService.toggleMemoryPrivacy(mem.id, nextShared);
-      setMemories((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-      if (lightboxMemory?.id === updated.id) {
-        setLightboxMemory(updated);
-      }
-    } catch (err: any) {
-      console.error('Failed to toggle memory privacy:', err);
-      alert(err?.message || 'Could not change privacy.');
-    }
-  };
 
   const flashbacks = useMemo(() => getOnThisDayFlashbacks(memories), [memories]);
 
@@ -852,25 +833,9 @@ export const LittleArchiveSection: React.FC = () => {
                 <div className="archive-card-details">
                   {/* Category Pill & Menu */}
                   <div className="archive-card-header-row">
-                    {!mem.isShared && mem.contributorId === currentUser.id ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleMemoryPrivacy(mem, e);
-                        }}
-                        className="archive-card-category bg-pink-500/20 text-pink-200 border border-pink-400/40 hover:bg-pink-500/30 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                        title="Private moment — tap to bloom for both of us 🌸"
-                      >
-                        <Lock className="w-2.5 h-2.5 text-pink-300" />
-                        <span>Private 🔒 (Tap to Share)</span>
-                      </button>
-                    ) : (
-                      <span className="archive-card-category truncate max-w-[110px]">
-                        {categoryTag}
-                      </span>
-                    )}
-
+                    <span className="archive-card-category truncate max-w-[110px]">
+                      {categoryTag}
+                    </span>
                     <button
                       type="button"
                       onClick={(e) => {
@@ -878,7 +843,7 @@ export const LittleArchiveSection: React.FC = () => {
                         soundEngine.playSparkle();
                         setLightboxMemory(mem);
                       }}
-                      className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer hover:bg-white/10 transition-colors"
+                      className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer"
                       title="View memory"
                     >
                       <MoreHorizontal className="w-3.5 h-3.5" />
@@ -1007,27 +972,9 @@ export const LittleArchiveSection: React.FC = () => {
                       (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
                     }}
                   />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      if (mem.contributorId === currentUser.id) {
-                        e.stopPropagation();
-                        handleToggleMemoryPrivacy(mem, e);
-                      }
-                    }}
-                    className={`absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20 z-10 ${
-                      mem.contributorId === currentUser.id ? 'cursor-pointer hover:bg-pink-500/40 hover:scale-105 active:scale-95 transition-all' : ''
-                    }`}
-                    title={
-                      mem.contributorId === currentUser.id
-                        ? mem.isShared
-                          ? 'Shared keepsake — tap to make private 🔒'
-                          : 'Private keepsake — tap to bloom for both of us 🌸'
-                        : undefined
-                    }
-                  >
-                    {mem.isShared ? 'Shared ♡' : 'Private 🔒 (Tap to Share)'}
-                  </button>
+                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs text-white border border-white/20">
+                    {mem.isShared ? 'Shared ♡' : 'Private 🔒'}
+                  </div>
 
                   {/* Video Play Icon Overlay */}
                   {mem.videoUrl && (
@@ -1197,34 +1144,6 @@ export const LittleArchiveSection: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {lightboxMemory.contributorId === currentUser.id && (
-                    <>
-                      {!lightboxMemory.isShared ? (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMemoryPrivacy(lightboxMemory)}
-                          className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                          title="Make video public for both of us"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-pink-200" />
-                          <span className="hidden sm:inline">Bloom for Both of Us</span>
-                          <span>🌸</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMemoryPrivacy(lightboxMemory)}
-                          className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-pink-200 text-xs flex items-center gap-1 transition-all cursor-pointer"
-                          title="Switch back to private draft"
-                        >
-                          <Lock className="w-3 h-3 text-pink-300" />
-                          <span className="hidden sm:inline">Make Private</span>
-                          <span>🔒</span>
-                        </button>
-                      )}
-                    </>
-                  )}
-
                   <button
                     type="button"
                     onClick={handleCloseLightbox}
@@ -1454,49 +1373,18 @@ export const LittleArchiveSection: React.FC = () => {
               <div className={styles.modalHeader}>
                 <div className={styles.modalHeaderTitleGroup}>
                   <Camera className="w-4 h-4 text-pink-300" />
-                  <h3 className="font-serif text-lg font-bold text-white truncate max-w-[180px] sm:max-w-md">
+                  <h3 className="font-serif text-lg font-bold text-white truncate">
                     {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   </h3>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {lightboxMemory.contributorId === currentUser.id && (
-                    <>
-                      {!lightboxMemory.isShared ? (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMemoryPrivacy(lightboxMemory)}
-                          className="px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white text-xs font-semibold shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
-                          title="Make photo public for both of us"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-pink-200" />
-                          <span className="hidden sm:inline">Bloom for Both of Us</span>
-                          <span>🌸</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleToggleMemoryPrivacy(lightboxMemory)}
-                          className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-pink-200 text-xs flex items-center gap-1 transition-all cursor-pointer"
-                          title="Switch back to private draft"
-                        >
-                          <Lock className="w-3 h-3 text-pink-300" />
-                          <span className="hidden sm:inline">Make Private</span>
-                          <span>🔒</span>
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleCloseLightbox}
-                    className={styles.modalCloseBtn}
-                    aria-label="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseLightbox}
+                  className={styles.modalCloseBtn}
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <div className={styles.lightboxImageStage}>

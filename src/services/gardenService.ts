@@ -616,20 +616,6 @@ export const notesService = {
     return noteEntry;
   },
 
-  async toggleNotePrivacy(id: string, isShared: boolean): Promise<NoteEntry> {
-    const user = authService.getCurrentUser();
-    const all = loadLocal<NoteEntry[]>(STORAGE_KEYS.NOTES, []);
-    const existing = all.find((n) => n.id === id);
-    if (!existing) throw new Error('Note not found');
-    if (existing.authorId !== user.id) throw new Error('Unauthorized');
-    return this.saveNote({
-      id: existing.id,
-      title: existing.title,
-      body: existing.body,
-      isShared,
-    });
-  },
-
   async deleteNote(id: string): Promise<void> {
     const user = authService.getCurrentUser();
 
@@ -1384,69 +1370,6 @@ export const memoryArchiveService = {
     }
   },
 
-  async updateMemory(id: string, updates: { title?: string; caption?: string; isShared?: boolean }): Promise<MemoryEntry> {
-    const user = authService.getCurrentUser();
-    const partner = authService.getPartner();
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    const existingIndex = all.findIndex((m) => m.id === id);
-    if (existingIndex < 0) throw new Error('Memory not found');
-    const target = all[existingIndex];
-    if (target.contributorId && target.contributorId !== user.id) {
-      throw new Error('Unauthorized: You can only edit moments you personally contributed.');
-    }
-
-    const wasPrivate = !target.isShared;
-    const updated: MemoryEntry = {
-      ...target,
-      title: updates.title !== undefined ? updates.title.trim() : target.title,
-      caption: updates.caption !== undefined ? updates.caption.trim() : target.caption,
-      isShared: updates.isShared !== undefined ? updates.isShared : target.isShared,
-    };
-
-    all[existingIndex] = updated;
-    saveLocal(STORAGE_KEYS.MEMORIES, all);
-
-    if (isLiveSupabaseConfigured && supabase) {
-      try {
-        await supabase
-          .from('garden_memories')
-          .update({
-            title: updated.title,
-            caption: updated.caption,
-            is_shared: updated.isShared,
-          })
-          .eq('id', id)
-          .eq('contributor_id', user.id);
-      } catch (err) {
-        console.warn('[Archive] Cloud memory update error:', err);
-      }
-    }
-
-    if (wasPrivate && updated.isShared) {
-      notificationService.sendNotification({
-        type: 'memory',
-        title: updated.mediaType === 'video' ? '🎬 Moment Bloomed for Us' : '📷 Keepsake Bloomed for Us',
-        message: `${user.displayName} shared a moment: "${updated.title}"`,
-        targetTab: 'archive',
-        senderId: user.id,
-        senderName: user.displayName,
-        recipientId: partner.id,
-        isPrivate: false,
-        entityId: updated.id,
-      });
-    }
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('garden-memories-updated'));
-    }
-
-    return updated;
-  },
-
-  async toggleMemoryPrivacy(id: string, isShared: boolean): Promise<MemoryEntry> {
-    return this.updateMemory(id, { isShared });
-  },
-
   async updateMemoryVoiceWhisper(id: string, voiceNoteUrl: string, audioFileName?: string): Promise<void> {
     const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const updated = all.map((m) => (m.id === id ? { ...m, voiceNoteUrl, audioFileName } : m));
@@ -1718,79 +1641,6 @@ export const petalNotesService = {
       throw new Error('Unauthorized: You can only remove your own petal notes.');
     }
     saveLocal(STORAGE_KEYS.PETALS, all.filter((p) => p.id !== id));
-  },
-
-  async updatePetal(petal: { id: string; body: string; color: string; emoji: string; isShared: boolean }): Promise<PetalNoteEntry> {
-    const user = authService.getCurrentUser();
-    const partner = authService.getPartner();
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
-    const existingIndex = all.findIndex((p) => p.id === petal.id);
-    if (existingIndex < 0) throw new Error('Petal note not found');
-    if (all[existingIndex].authorId !== user.id) {
-      throw new Error('Unauthorized: You can only edit your own petal notes.');
-    }
-
-    const wasPrivate = !all[existingIndex].isShared;
-    const updated: PetalNoteEntry = {
-      ...all[existingIndex],
-      body: petal.body.trim(),
-      color: petal.color,
-      emoji: petal.emoji,
-      isShared: petal.isShared,
-    };
-
-    all[existingIndex] = updated;
-    saveLocal(STORAGE_KEYS.PETALS, all);
-
-    if (isLiveSupabaseConfigured && supabase) {
-      try {
-        await supabase
-          .from('petal_notes')
-          .update({
-            body: updated.body,
-            color: updated.color,
-            emoji: updated.emoji,
-            is_shared: updated.isShared,
-          })
-          .eq('id', updated.id)
-          .eq('author_id', user.id);
-      } catch (err) {
-        console.warn('Supabase update petal error:', err);
-      }
-    }
-
-    if (wasPrivate && updated.isShared) {
-      notificationService.sendNotification({
-        type: 'petal',
-        title: `${updated.emoji} Petal Bloomed for Us`,
-        message: `${user.displayName} shared a petal: "${updated.body.slice(0, 50)}${updated.body.length > 50 ? '...' : ''}"`,
-        targetTab: 'petals',
-        senderId: user.id,
-        senderName: user.displayName,
-        recipientId: partner.id,
-        isPrivate: false,
-        entityId: updated.id,
-      });
-    }
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('garden-petals-updated'));
-    }
-
-    return updated;
-  },
-
-  async togglePetalPrivacy(id: string, isShared: boolean): Promise<PetalNoteEntry> {
-    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
-    const existing = all.find((p) => p.id === id);
-    if (!existing) throw new Error('Petal not found');
-    return this.updatePetal({
-      id: existing.id,
-      body: existing.body,
-      color: existing.color,
-      emoji: existing.emoji,
-      isShared,
-    });
   },
 };
 
