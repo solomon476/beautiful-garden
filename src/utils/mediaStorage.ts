@@ -196,10 +196,7 @@ export const mediaStorage = {
       return all.filter((item) =>
         (item.type && item.type.startsWith('video/')) ||
         (item.name && /\.(mp4|mov|webm|m4v|3gp|mkv)$/i.test(item.name)) ||
-        (item.dataUrl && item.dataUrl.startsWith('data:video/')) ||
-        (item.name && item.name.includes('65392')) ||
-        (item.id && (item.id.includes('1794420983') || item.id.includes('qc3y'))) ||
-        (item.size && item.size > 2 * 1024 * 1024 && !item.type?.startsWith('image/'))
+        (item.dataUrl && item.dataUrl.startsWith('data:video/'))
       );
     } catch {
       return [];

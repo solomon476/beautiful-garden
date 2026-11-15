@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
-import { authService, isSampleMemory } from '../services/gardenService';
+import { authService } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
 import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
 import { mediaStorage } from '../utils/mediaStorage';
@@ -50,8 +50,6 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  const isVideo = isVideoMoment(memory as any);
-
   useEffect(() => {
     if (!memory) {
       setActiveVideoUrl(null);
@@ -59,6 +57,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       return;
     }
 
+    const isVideo = isVideoMoment(memory as any);
     if (!isVideo) {
       setActiveVideoUrl(null);
       setIsVideoLoading(false);
@@ -88,11 +87,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             (v) =>
               v.id === memAny.videoMediaId ||
               v.id === memory.id ||
-              memory.id === 'mem-1794420983599-qc3y' ||
-              memory.id === 'mem-1793791572597-emdc' ||
-              (storedVideos.length === 1 && !isSampleMemory(memory.id)) ||
-              (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase())) ||
-              (memory.id.includes('-') && memory.id.split('-')[1]?.length >= 10 && v.id.includes(memory.id.split('-')[1].slice(0, 10)))
+              (memory.id.startsWith('mem-') && v.id.includes(memory.id.replace('mem-', '').slice(0, 8))) ||
+              (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase()))
           );
           if (matched) {
             resolved = await mediaStorage.getMediaUrl(matched.id);
@@ -377,10 +373,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+          {memory.videoUrl ? (
             <video
-              key={memory.id + (activeVideoUrl || memory.videoUrl || '')}
-              src={activeVideoUrl || memory.videoUrl}
+              key={memory.id}
+              src={memory.videoUrl}
               poster={memory.photoUrl}
               controls
               playsInline
@@ -408,7 +404,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             />
           )}
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
-            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+            {memory.videoUrl ? (
               <>
                 <Film className="w-3 h-3 text-amber-300" />
                 <span>Video Keepsake 🎬</span>
@@ -422,7 +418,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           </div>
 
           {/* Optional Fit/Fill Toggle & Interactive Heart Button on Photo */}
-          {!(activeVideoUrl || memory.videoUrl || isVideo) && (
+          {!memory.videoUrl && (
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
               <button
                 type="button"
@@ -471,7 +467,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 truncate px-2">
               {memory.title}
             </h3>
-            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+            {memory.videoUrl ? (
               <button
                 type="button"
                 onClick={handleLike}

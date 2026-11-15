@@ -90,7 +90,9 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
   const [photoVideoMediaId, setPhotoVideoMediaId] = useState<string | undefined>(undefined);
   const [photoMediaType, setPhotoMediaType] = useState<'photo' | 'video'>('photo');
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
+  const [photoVoiceNote, setPhotoVoiceNote] = useState<string | undefined>(undefined);
   const [photoShared, setPhotoShared] = useState(true);
+  const [showPhotoRecorder, setShowPhotoRecorder] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   // 2. Date state
@@ -202,6 +204,7 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
         videoUrl: photoVideoUrl,
         videoMediaId: photoVideoMediaId,
         mediaType: photoMediaType,
+        voiceNoteUrl: photoVoiceNote,
         dateTaken: photoDate || 'Special Day',
         isShared: photoShared,
       });
@@ -603,6 +606,27 @@ export const QuickAddStudioModal: React.FC<QuickAddStudioModalProps> = ({
                 </div>
               )}
             </div>
+
+            {/* Voice Whisper Toggle Button */}
+            <div
+              className={styles.voiceButton}
+              onClick={() => setShowPhotoRecorder(!showPhotoRecorder)}
+            >
+              <Mic className="w-4 h-4 text-pink-300" />
+              <span>{photoVoiceNote ? 'Voice Whisper Attached 🎙️ (Click to re-record)' : '+ Add Voice Whisper'}</span>
+            </div>
+
+            {showPhotoRecorder && (
+              <div style={{ marginBottom: '22px' }}>
+                <VoiceNoteRecorder
+                  onRecorded={(audioDataUrl: string) => {
+                    setPhotoVoiceNote(audioDataUrl);
+                    setShowPhotoRecorder(false);
+                  }}
+                  onCancel={() => setShowPhotoRecorder(false)}
+                />
+              </div>
+            )}
 
             {/* Section 4: 👁️ Visibility (Dynamic for Solomon & Noella) */}
             <div className={styles.sectionTitle}>

@@ -20,7 +20,7 @@ import {
   Play,
   Loader2,
 } from 'lucide-react';
-import { memoryArchiveService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory } from '../../services/gardenService';
+import { memoryArchiveService, authService, DEFAULT_PROFILES, isExcludedMemory } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
@@ -66,9 +66,9 @@ export const formatMemoryDisplayTitle = (
 
 export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
   if (!m) return false;
-  // Sample gift memories are always pure standalone photos
-  if (m.id && isSampleMemory(m.id)) return false;
-  if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') return true;
+  // Sample gift memories (mem-1 through mem-9 or seed-*) are always pure photos
+  if (m.id && (/^mem-[1-9]$/.test(m.id) || m.id.startsWith('seed-'))) return false;
+  if (m.mediaType === 'photo') return false;
   if (m.mediaType === 'video') return true;
   if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
   if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
@@ -205,11 +205,8 @@ export const LittleArchiveSection: React.FC = () => {
             (v) =>
               v.id === lightboxMemory.videoMediaId ||
               v.id === lightboxMemory.id ||
-              lightboxMemory.id === 'mem-1794420983599-qc3y' ||
-              lightboxMemory.id === 'mem-1793791572597-emdc' ||
-              (storedVideos.length === 1 && !isSampleMemory(lightboxMemory.id)) ||
-              (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase())) ||
-              (lightboxMemory.id.includes('-') && lightboxMemory.id.split('-')[1]?.length >= 10 && v.id.includes(lightboxMemory.id.split('-')[1].slice(0, 10)))
+              (lightboxMemory.id.startsWith('mem-') && v.id.includes(lightboxMemory.id.replace('mem-', '').slice(0, 8))) ||
+              (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase()))
           );
           if (matched) {
             resolved = await mediaStorage.getMediaUrl(matched.id);
@@ -1101,34 +1098,8 @@ export const LittleArchiveSection: React.FC = () => {
                     ) : (
                       <>
                         <Film className="w-12 h-12 text-pink-400/50 mb-3" />
-                        <p className="text-sm font-medium">Video Clip</p>
-                        <p className="text-xs text-pink-300/70 mt-1 mb-3">Stored on device • Tap below if you'd like to load the video file</p>
-                        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-xs text-pink-200 cursor-pointer transition-all active:scale-95 shadow-md">
-                          <Film className="w-3.5 h-3.5 text-pink-300" />
-                          <span>Select Video to Play</span>
-                          <input
-                            type="file"
-                            accept="video/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                try {
-                                  const saved = await mediaStorage.saveFile(file, file.name);
-                                  const url = saved.blobUrl || saved.dataUrl;
-                                  setActiveLightboxVideoUrl(url);
-                                  setMemories((prev) =>
-                                    prev.map((m) =>
-                                      m.id === lightboxMemory.id
-                                        ? { ...m, videoUrl: url, videoMediaId: saved.id, mediaType: 'video' }
-                                        : m
-                                    )
-                                  );
-                                } catch {}
-                              }
-                            }}
-                          />
-                        </label>
+                        <p className="text-sm font-medium">Video is stored on device</p>
+                        <p className="text-xs text-pink-300/70 mt-1">If this video was recorded on this phone, refresh cache or re-upload to play.</p>
                       </>
                     )}
                   </div>

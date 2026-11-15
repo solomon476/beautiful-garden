@@ -4,6 +4,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Disc3,
   Heart,
   ChevronDown,
   ChevronUp,
@@ -12,7 +13,6 @@ import {
 import type { MemoryEntry } from '../../types/garden';
 import type { FlashbackItem } from '../../services/onThisDayService';
 import { soundEngine } from '../../utils/audio';
-import { isVideoMoment } from './LittleArchiveSection';
 
 interface OnThisDayTimeMachineProps {
   flashbacks: FlashbackItem[];
@@ -154,10 +154,16 @@ export const OnThisDayTimeMachine: React.FC<OnThisDayTimeMachineProps> = ({
                   (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
                 }}
               />
-              {isVideoMoment(mem) && (
+              {mem.videoUrl && (
                 <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[9px] text-amber-200 border border-amber-300/30 flex items-center gap-1">
                   <Film className="w-2.5 h-2.5 text-amber-300" />
-                  <span>Video</span>
+                  <span>Video Clip</span>
+                </div>
+              )}
+              {mem.musicTitle && (
+                <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-pink-500/80 backdrop-blur-md text-[9px] text-white border border-pink-300/40 flex items-center gap-1 max-w-[85%] truncate">
+                  <Disc3 className="w-2.5 h-2.5 shrink-0" />
+                  <span className="truncate">{mem.musicTitle}</span>
                 </div>
               )}
             </div>

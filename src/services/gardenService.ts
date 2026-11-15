@@ -945,14 +945,6 @@ export const isExcludedMemory = (m?: { id?: string; title?: string; photoUrl?: s
   return false;
 };
 
-export const isSampleMemory = (id?: string | null): boolean => {
-  if (!id) return false;
-  if (/^mem-[1-9]$/.test(id)) return true;
-  if (id.startsWith('seed-')) return true;
-  if (id === 'mem-fresh-private-now') return true;
-  return false;
-};
-
 export const memoryArchiveService = {
   getDeletedMemoryIds(): string[] {
     const userDeleted = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
@@ -968,20 +960,7 @@ export const memoryArchiveService = {
       .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
       .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared))
       .map((m) => {
-        if (isSampleMemory(m.id)) {
-          return {
-            ...m,
-            videoUrl: undefined,
-            videoMediaId: undefined,
-            mediaType: 'photo' as const,
-          };
-        }
-        const isVideo =
-          m.id === 'mem-1794420983599-qc3y' ||
-          m.id === 'mem-1793791572597-emdc' ||
-          m.mediaType === 'video' ||
-          Boolean(m.videoMediaId) ||
-          Boolean(m.videoUrl);
+        const isVideo = m.mediaType === 'video' || Boolean(m.videoMediaId) || Boolean(m.videoUrl);
         return {
           ...m,
           mediaType: isVideo ? ('video' as const) : ('photo' as const),
@@ -997,18 +976,12 @@ export const memoryArchiveService = {
     const rawLocalAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const localAll = rawLocalAll.map((m) => {
       // Seed / sample gift memories are ALWAYS pure standalone photos
-      if (isSampleMemory(m.id)) {
+      if (/^mem-[1-9]$/.test(m.id) || m.id.startsWith('seed-') || m.mediaType === 'photo') {
         return {
           ...m,
           mediaType: 'photo' as const,
           videoUrl: undefined,
           videoMediaId: undefined,
-        };
-      }
-      if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') {
-        return {
-          ...m,
-          mediaType: 'video' as const,
         };
       }
       return m;
@@ -1037,7 +1010,11 @@ export const memoryArchiveService = {
             let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
             let description: string = d.description || '';
 
-            // Check if description is packed JSON containing video metadata
+            let musicUrl: string | undefined = undefined;
+            let musicTitle: string | undefined = undefined;
+            let musicArtist: string | undefined = undefined;
+
+            // Check if description is packed JSON containing video or soundtrack metadata
             if (
               description &&
               typeof description === 'string' &&
@@ -1056,19 +1033,26 @@ export const memoryArchiveService = {
                 if (parsed.mediaType) {
                   mediaType = parsed.mediaType;
                 }
+                if (parsed.musicUrl) {
+                  musicUrl = parsed.musicUrl;
+                }
+                if (parsed.musicTitle) {
+                  musicTitle = parsed.musicTitle;
+                }
+                if (parsed.musicArtist) {
+                  musicArtist = parsed.musicArtist;
+                }
                 if (parsed.note !== undefined) {
                   description = parsed.note;
                 }
               } catch {}
             }
 
-            // Seed/sample memories are ALWAYS standalone photos
-            if (isSampleMemory(d.id)) {
+            // Seed/sample memories or explicit photo entries are ALWAYS standalone photos
+            if (mediaType === 'photo' || /^mem-[1-9]$/.test(d.id) || (typeof d.id === 'string' && d.id.startsWith('seed-'))) {
               mediaType = 'photo';
               videoUrl = undefined;
               videoMediaId = undefined;
-            } else if (d.id === 'mem-1794420983599-qc3y' || d.id === 'mem-1793791572597-emdc') {
-              mediaType = 'video';
             }
 
             return {
@@ -1082,6 +1066,9 @@ export const memoryArchiveService = {
               videoUrl: videoUrl,
               videoMediaId: videoMediaId,
               mediaType: mediaType,
+              musicUrl: musicUrl,
+              musicTitle: musicTitle,
+              musicArtist: musicArtist,
               dateTaken: d.date_taken,
               isShared: d.is_shared,
               createdAt: d.created_at,
@@ -1101,7 +1088,8 @@ export const memoryArchiveService = {
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
         const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
-          if (isSampleMemory(c.id)) {
+          const isSample = /^mem-[1-9]$/.test(c.id) || c.id.startsWith('seed-');
+          if (isSample || c.mediaType === 'photo' || (l && l.mediaType === 'photo')) {
             return {
               ...c,
               videoUrl: undefined,
@@ -1112,13 +1100,9 @@ export const memoryArchiveService = {
 
           let videoUrl = c.videoUrl || l?.videoUrl;
           let videoMediaId = c.videoMediaId || l?.videoMediaId;
-          let mediaType: 'photo' | 'video' =
-            c.id === 'mem-1794420983599-qc3y' || c.id === 'mem-1793791572597-emdc'
-              ? 'video'
-              : c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+          let mediaType: 'photo' | 'video' = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-          if (mediaType === 'video' || c.id === 'mem-1794420983599-qc3y' || c.id === 'mem-1793791572597-emdc') {
-            mediaType = 'video';
+          if (mediaType === 'video') {
             // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
             if (videoMediaId) {
               try {
@@ -1133,12 +1117,7 @@ export const memoryArchiveService = {
             if (!videoUrl && storedVideos.length > 0) {
               const matched = storedVideos.find((v) =>
                 (videoMediaId && v.id === videoMediaId) ||
-                (c.id && v.id === c.id) ||
-                (c.id === 'mem-1794420983599-qc3y') ||
-                (c.id === 'mem-1793791572597-emdc') ||
-                (storedVideos.length === 1 && !isSampleMemory(c.id)) ||
-                (c.title && v.name && v.name.toLowerCase().includes(c.title.toLowerCase())) ||
-                (c.id && c.id.includes('-') && c.id.split('-')[1]?.length >= 10 && v.id.includes(c.id.split('-')[1].slice(0, 10)))
+                (c.id && v.id === c.id)
               );
               if (matched) {
                 const idbUrl = await mediaStorage.getMediaUrl(matched.id);
@@ -1165,6 +1144,9 @@ export const memoryArchiveService = {
             videoUrl: mediaType === 'video' ? videoUrl : undefined,
             videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
             mediaType,
+            musicUrl: c.musicUrl || l?.musicUrl,
+            musicTitle: c.musicTitle || l?.musicTitle,
+            musicArtist: c.musicArtist || l?.musicArtist,
           };
         }));
 
@@ -1173,7 +1155,8 @@ export const memoryArchiveService = {
           localVisible
             .filter((m) => !cloudIds.has(m.id) && !isExcludedMemory(m))
             .map(async (l) => {
-              if (isSampleMemory(l.id)) {
+              const isSample = /^mem-[1-9]$/.test(l.id) || l.id.startsWith('seed-');
+              if (isSample || l.mediaType === 'photo') {
                 return {
                   ...l,
                   videoUrl: undefined,
@@ -1184,13 +1167,9 @@ export const memoryArchiveService = {
 
               let videoUrl = l.videoUrl;
               let videoMediaId = l.videoMediaId;
-              let mediaType: 'photo' | 'video' =
-                l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc'
-                  ? 'video'
-                  : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+              let mediaType: 'photo' | 'video' = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-              if (mediaType === 'video' || l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc') {
-                mediaType = 'video';
+              if (mediaType === 'video') {
                 if (videoMediaId) {
                   try {
                     const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
@@ -1202,12 +1181,7 @@ export const memoryArchiveService = {
                 if (!videoUrl && storedVideos.length > 0) {
                   const matched = storedVideos.find((v) =>
                     (videoMediaId && v.id === videoMediaId) ||
-                    (l.id && v.id === l.id) ||
-                    (l.id === 'mem-1794420983599-qc3y') ||
-                    (l.id === 'mem-1793791572597-emdc') ||
-                    (storedVideos.length === 1 && !isSampleMemory(l.id)) ||
-                    (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
-                    (l.id && l.id.includes('-') && l.id.split('-')[1]?.length >= 10 && v.id.includes(l.id.split('-')[1].slice(0, 10)))
+                    (l.id && v.id === l.id)
                   );
                   if (matched) {
                     const idbUrl = await mediaStorage.getMediaUrl(matched.id);
@@ -1247,7 +1221,8 @@ export const memoryArchiveService = {
       localVisible
         .filter((l) => !isExcludedMemory(l))
         .map(async (l) => {
-        if (isSampleMemory(l.id)) {
+        const isSample = /^mem-[1-9]$/.test(l.id) || l.id.startsWith('seed-');
+        if (isSample || l.mediaType === 'photo') {
           return {
             ...l,
             videoUrl: undefined,
@@ -1258,13 +1233,9 @@ export const memoryArchiveService = {
 
         let videoUrl = l.videoUrl;
         let videoMediaId = l.videoMediaId;
-        let mediaType: 'photo' | 'video' =
-          l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc'
-            ? 'video'
-            : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+        let mediaType: 'photo' | 'video' = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-        if (mediaType === 'video' || l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc') {
-          mediaType = 'video';
+        if (mediaType === 'video') {
           if (videoMediaId) {
             try {
               const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
@@ -1276,12 +1247,7 @@ export const memoryArchiveService = {
           if (!videoUrl && storedVideosFallback.length > 0) {
             const matched = storedVideosFallback.find((v) =>
               (videoMediaId && v.id === videoMediaId) ||
-              (l.id && v.id === l.id) ||
-              (l.id === 'mem-1794420983599-qc3y') ||
-              (l.id === 'mem-1793791572597-emdc') ||
-              (storedVideosFallback.length === 1 && !isSampleMemory(l.id)) ||
-              (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
-              (l.id && l.id.includes('-') && l.id.split('-')[1]?.length >= 10 && v.id.includes(l.id.split('-')[1].slice(0, 10)))
+              (l.id && v.id === l.id)
             );
             if (matched) {
               const idbUrl = await mediaStorage.getMediaUrl(matched.id);
@@ -1317,6 +1283,11 @@ export const memoryArchiveService = {
     videoUrl?: string;
     videoMediaId?: string;
     mediaType?: 'photo' | 'video';
+    voiceNoteUrl?: string;
+    audioFileName?: string;
+    musicUrl?: string;
+    musicTitle?: string;
+    musicArtist?: string;
     dateTaken?: string;
     isShared?: boolean;
   }): Promise<MemoryEntry> {
@@ -1347,6 +1318,11 @@ export const memoryArchiveService = {
       videoUrl: memory.videoUrl,
       videoMediaId: memory.videoMediaId,
       mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
+      voiceNoteUrl: memory.voiceNoteUrl,
+      audioFileName: memory.audioFileName,
+      musicUrl: memory.musicUrl,
+      musicTitle: memory.musicTitle,
+      musicArtist: memory.musicArtist,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
       isShared: memory.isShared !== undefined ? memory.isShared : true,
       createdAt: new Date().toISOString(),
@@ -1358,7 +1334,9 @@ export const memoryArchiveService = {
         if (
           entry.mediaType === 'video' ||
           entry.videoUrl ||
-          entry.videoMediaId
+          entry.videoMediaId ||
+          entry.musicUrl ||
+          entry.musicTitle
         ) {
           // If videoUrl is a local blob: URL, do not sync the dead blob URL to cloud!
           // Only sync remote URLs or base64 data URLs to cloud
@@ -1372,6 +1350,9 @@ export const memoryArchiveService = {
             videoUrl: syncableVideoUrl,
             videoMediaId: entry.videoMediaId,
             mediaType: entry.mediaType,
+            musicUrl: entry.musicUrl,
+            musicTitle: entry.musicTitle,
+            musicArtist: entry.musicArtist,
           });
         }
 

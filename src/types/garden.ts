@@ -69,6 +69,11 @@ export interface MemoryEntry {
   videoUrl?: string;
   videoMediaId?: string;
   mediaType?: 'photo' | 'video';
+  voiceNoteUrl?: string;
+  audioFileName?: string;
+  musicUrl?: string;
+  musicTitle?: string;
+  musicArtist?: string;
   dateTaken?: string;
   isShared: boolean;
   createdAt: string;
