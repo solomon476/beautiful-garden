@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
-import { authService } from '../services/gardenService';
+import { authService, isSampleMemory } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
-import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
+import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
+import { mediaStorage } from '../utils/mediaStorage';
 
 interface PhotoLightboxProps {
   memory: MemoryItem | null;
@@ -44,8 +45,72 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   const [isCoverMode, setIsCoverMode] = useState<boolean>(true);
   const [likeToast, setLikeToast] = useState<string | null>(null);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+
+  const isVideo = isVideoMoment(memory as any);
+
+  useEffect(() => {
+    if (!memory) {
+      setActiveVideoUrl(null);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    if (!isVideo) {
+      setActiveVideoUrl(null);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    if (memory.videoUrl && !memory.videoUrl.startsWith('blob:null')) {
+      setActiveVideoUrl(memory.videoUrl);
+    } else {
+      setIsVideoLoading(true);
+    }
+
+    (async () => {
+      try {
+        let resolved: string | null = null;
+        const memAny = memory as any;
+        if (memAny.videoMediaId) {
+          resolved = await mediaStorage.getMediaUrl(memAny.videoMediaId);
+        }
+        if (!resolved && memory.id) {
+          resolved = await mediaStorage.getMediaUrl(memory.id);
+        }
+        if (!resolved) {
+          const storedVideos = await mediaStorage.getAllVideos();
+          const matched = storedVideos.find(
+            (v) =>
+              v.id === memAny.videoMediaId ||
+              v.id === memory.id ||
+              memory.id === 'mem-1794420983599-qc3y' ||
+              memory.id === 'mem-1793791572597-emdc' ||
+              (storedVideos.length === 1 && !isSampleMemory(memory.id)) ||
+              (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase())) ||
+              (memory.id.includes('-') && memory.id.split('-')[1]?.length >= 10 && v.id.includes(memory.id.split('-')[1].slice(0, 10)))
+          );
+          if (matched) {
+            resolved = await mediaStorage.getMediaUrl(matched.id);
+          }
+        }
+        if (isMounted) {
+          if (resolved) setActiveVideoUrl(resolved);
+          setIsVideoLoading(false);
+        }
+      } catch {
+        if (isMounted) setIsVideoLoading(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [memory]);
 
   useEffect(() => {
     if (!memory) return;
@@ -90,7 +155,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         senderId: user.id,
         senderName: user.displayName,
         recipientId: partner.id,
-        entityId: `like-${memory.id}-${user.id}-${Date.now()}`,
+        entityId: memory.id,
       });
       // Show instant confirmation toast to self
       setLikeToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
@@ -133,7 +198,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   };
 
   // 1. Immersive Full-Screen Cinema Theater View for Videos
-  if (memory.videoUrl) {
+  if (isVideoMoment(memory as any)) {
     const videoContent = (
       <div
         className="fixed inset-0 flex flex-col justify-between select-none animate-fade-in"
@@ -199,22 +264,39 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
           onClick={(e) => e.stopPropagation()}
         >
-          <video
-            key={memory.id}
-            src={memory.videoUrl}
-            poster={memory.photoUrl}
-            controls
-            playsInline
-            autoPlay
-            preload="auto"
-            className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              const v = e.currentTarget;
-              if (v.paused) v.play().catch(() => {});
-              else v.pause();
-            }}
-          />
+          {(activeVideoUrl || memory.videoUrl) ? (
+            <video
+              key={memory.id + (activeVideoUrl || memory.videoUrl)}
+              src={activeVideoUrl || memory.videoUrl}
+              poster={memory.photoUrl}
+              controls
+              playsInline
+              autoPlay
+              preload="auto"
+              className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                const v = e.currentTarget;
+                if (v.paused) v.play().catch(() => {});
+                else v.pause();
+              }}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200">
+              {isVideoLoading ? (
+                <>
+                  <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
+                  <p className="text-sm font-medium">Preparing cinema video player...</p>
+                </>
+              ) : (
+                <>
+                  <Film className="w-12 h-12 text-pink-400/50 mb-3" />
+                  <p className="text-sm font-medium">Video is stored on device</p>
+                  <p className="text-xs text-pink-300/70 mt-1">If this video was recorded on this phone, refresh cache to play.</p>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Floating Bottom Navigation & Caption Bar */}
@@ -295,10 +377,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {memory.videoUrl ? (
+          {(activeVideoUrl || memory.videoUrl || isVideo) ? (
             <video
-              key={memory.id}
-              src={memory.videoUrl}
+              key={memory.id + (activeVideoUrl || memory.videoUrl || '')}
+              src={activeVideoUrl || memory.videoUrl}
               poster={memory.photoUrl}
               controls
               playsInline
@@ -326,7 +408,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             />
           )}
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
-            {memory.videoUrl ? (
+            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
               <>
                 <Film className="w-3 h-3 text-amber-300" />
                 <span>Video Keepsake 🎬</span>
@@ -340,7 +422,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           </div>
 
           {/* Optional Fit/Fill Toggle & Interactive Heart Button on Photo */}
-          {!memory.videoUrl && (
+          {!(activeVideoUrl || memory.videoUrl || isVideo) && (
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
               <button
                 type="button"
@@ -389,7 +471,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 truncate px-2">
               {memory.title}
             </h3>
-            {memory.videoUrl ? (
+            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
               <button
                 type="button"
                 onClick={handleLike}

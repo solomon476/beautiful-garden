@@ -12,10 +12,12 @@ import {
   CheckCheck,
   Trash2,
   Smile,
+  MessageSquare,
 } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import type { GardenNotification, UserProfile } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import { extractMemoryIdFromNotification, extractSongIdFromNotification } from '../../utils/notificationHelpers';
 
 interface GardenNotificationBellProps {
   currentUser: UserProfile;
@@ -72,6 +74,30 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
     soundEngine.playSparkle();
     notificationService.markAsRead(notif.id, currentUser.id);
     setIsOpen(false);
+
+    // If it's a memory / photo like notification, take them directly to the liked moment!
+    const memoryId = extractMemoryIdFromNotification(notif);
+    if (memoryId) {
+      sessionStorage.setItem('pending_open_memory_id', memoryId);
+      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
+    }
+
+    // If it's a song like / recommendation notification, take them directly to the song!
+    const songId = extractSongIdFromNotification(notif);
+    if (songId) {
+      sessionStorage.setItem('pending_open_song_id', songId);
+      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
+    }
+
+    // If it's a Question of the Day notification, take them directly to the question!
+    if (notif.type === 'question' || notif.title.includes('Question of the Day') || notif.title.includes('Daily Question')) {
+      const qId = notif.entityId;
+      sessionStorage.setItem('pending_open_daily_question', qId || 'true');
+      window.dispatchEvent(new CustomEvent('garden-open-daily-question', { detail: { questionId: qId } }));
+      onSelectTab('garden');
+      return;
+    }
+
     if (notif.targetTab) {
       onSelectTab(notif.targetTab);
     }
@@ -141,6 +167,11 @@ export const GardenNotificationBell: React.FC<GardenNotificationBellProps> = ({
         return {
           icon: <Smile className="w-3.5 h-3.5 text-amber-300" />,
           bg: 'bg-amber-500/15 border-amber-400/30',
+        };
+      case 'question':
+        return {
+          icon: <MessageSquare className="w-3.5 h-3.5 text-fuchsia-300" />,
+          bg: 'bg-fuchsia-500/15 border-fuchsia-400/30',
         };
       default:
         return {

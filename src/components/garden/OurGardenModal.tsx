@@ -15,9 +15,7 @@ import {
   Globe,
   Flower2,
   ArrowLeft,
-  RotateCw,
 } from 'lucide-react';
-import { forceAppSync } from '../../utils/appSync';
 import { GardenDashboardOverview } from './GardenDashboardOverview';
 import { LettersSection } from './LettersSection';
 import { SoundGardenSection } from './SoundGardenSection';
@@ -36,8 +34,10 @@ import { runPrivacyAndSecurityAudit, type PrivacyTestResult } from '../../utils/
 import { soundEngine } from '../../utils/audio';
 import { UserSwitcher } from './UserSwitcher';
 import { GardenNotificationBell } from './GardenNotificationBell';
+import { ThinkingOfYouButton } from './ThinkingOfYouButton';
 import { QuickAddStudioModal, type QuickAddType } from './QuickAddStudioModal';
 import { MobileBottomNav } from './MobileBottomNav';
+import { CelebrationPopModal } from './CelebrationPopModal';
 
 interface OurGardenModalProps {
   isOpen: boolean;
@@ -229,69 +229,58 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           className="relative z-40 px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-purple-400/15 flex items-center justify-between gap-2 sm:gap-4 bg-garden-header backdrop-blur-xl shrink-0"
           style={{ backgroundColor: 'rgba(13, 8, 30, 0.98)' }}
         >
-          {/* Logo & Brand Title — Calligraphy Script Matching Sanctuary Mockup (Click to return Home) */}
-          <button
-            type="button"
-            onClick={handleGoHome}
-            className="flex items-center gap-2 sm:gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer group transition-transform active:scale-95"
-            title="Return to Home page"
-          >
-            <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
-              <Flower2 className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-xl sm:text-2xl md:text-3xl text-white font-script tracking-wide flex items-center gap-1.5 truncate drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)] group-hover:text-pink-100 transition-colors">
-                <span>Perfect Time</span>
-                <span className="text-pink-300 font-sans text-sm sm:text-base font-light">♡</span>
-              </h2>
-              <p className="text-[11px] sm:text-xs text-pink-200/90 font-serif italic tracking-wide leading-none pt-0.5">
-                Together... always
-              </p>
-            </div>
-          </button>
-
-          {/* Right Header Area: Balanced Notification Bell & Partner Avatar */}
-          <div
-            className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 pr-1"
-            style={{ display: 'flex', alignItems: 'center', alignSelf: 'center' }}
-          >
-            {/* Quick Add Studio Launcher Button (Shown on Sanctuary Dashboard) */}
-            {activeTab === 'garden' && (
-              <button
-                onClick={() => handleOpenQuickAdd('photo')}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 shrink-0"
-                aria-label="Add to Our Garden"
-                title="Add photos, suggest a date, upload audio/book, write letter"
-              >
-                <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
-                <span>Add to Garden</span>
-              </button>
-            )}
-
-            {/* 1-Tap App Sync & Cache Buster Button */}
+            {/* Logo & Brand Title — Calligraphy Script Matching Sanctuary Mockup (Click to return Home) */}
             <button
               type="button"
-              onClick={() => {
-                soundEngine.playSparkle();
-                forceAppSync();
-              }}
-              className="p-1.5 sm:p-2 rounded-full bg-white/[0.08] hover:bg-white/[0.18] text-pink-200 hover:text-white border border-pink-400/30 transition-all active:scale-90"
-              title="Sync & Update App"
-              aria-label="Sync and update app"
+              onClick={handleGoHome}
+              className="flex items-center gap-2 sm:gap-3 min-w-0 text-left bg-transparent border-0 p-0 cursor-pointer group transition-transform active:scale-95"
+              title="Return to Home page"
             >
-              <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-300" />
+              <div className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 items-center justify-center text-white shadow-md shadow-pink-500/25 shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
+                <Flower2 className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl md:text-3xl text-white font-script tracking-wide flex items-center gap-1.5 truncate drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)] group-hover:text-pink-100 transition-colors">
+                  <span>Perfect Time</span>
+                  <span className="text-pink-300 font-sans text-sm sm:text-base font-light">♡</span>
+                </h2>
+                <p className="text-[11px] sm:text-xs text-pink-200/90 font-serif italic tracking-wide leading-none pt-0.5">
+                  Together... always
+                </p>
+              </div>
             </button>
 
-            {/* Notification Bell Dropdown */}
-            <GardenNotificationBell
-              currentUser={currentUser}
-              onSelectTab={(tab) => handleSelectTab(tab)}
-            />
+            {/* Right Header Area: Balanced Notification Bell & Partner Avatar */}
+            <div
+              className="flex items-center gap-2.5 sm:gap-3.5 shrink-0 pr-1"
+              style={{ display: 'flex', alignItems: 'center', alignSelf: 'center' }}
+            >
+              {/* Quick Add Studio Launcher Button (Shown on Sanctuary Dashboard) */}
+              {activeTab === 'garden' && (
+                <button
+                  onClick={() => handleOpenQuickAdd('photo')}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-pink-500/30 hover:scale-105 active:scale-95 transition-all border border-white/20 shrink-0"
+                  aria-label="Add to Our Garden"
+                  title="Add photos, suggest a date, upload audio/book, write letter"
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
+                  <span>Add to Garden</span>
+                </button>
+              )}
 
-            {/* Partner Avatar (Displays her photo for Solomon, his photo for Noella) */}
-            <UserSwitcher currentUser={currentUser} compact={true} />
-          </div>
-        </header>
+              {/* "Thinking of You" Send Blossom Button */}
+              <ThinkingOfYouButton currentUser={currentUser} />
+
+              {/* Notification Bell Dropdown */}
+              <GardenNotificationBell
+                currentUser={currentUser}
+                onSelectTab={(tab) => handleSelectTab(tab)}
+              />
+
+              {/* Partner Avatar (Displays her photo for Solomon, his photo for Noella) */}
+              <UserSwitcher currentUser={currentUser} compact={true} />
+            </div>
+          </header>
 
         {/* Feature Tab Navigation Bar — Desktop / Tablet Bar */}
         <nav
@@ -330,38 +319,46 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
             paddingBottom: 'calc(130px + env(safe-area-inset-bottom, 24px))',
           }}
         >
-          {/* Quick Back to Sanctuary Bar */}
-          {activeTab !== 'garden' && (
-            <div className="flex items-center justify-between pb-2.5 border-b border-purple-400/15 gap-2">
-              <button
-                onClick={handleGoBackToSanctuary}
-                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 hover:border-pink-300/50 text-pink-200 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0"
-              >
-                <ArrowLeft className="w-3.5 h-3.5 text-pink-300" />
-                <span>← Back to Sanctuary</span>
-              </button>
-            </div>
-          )}
+            {/* Quick Back to Sanctuary Bar */}
+            {activeTab !== 'garden' && (
+              <div className="flex items-center justify-between pb-2.5 border-b border-purple-400/15 gap-2">
+                <button
+                  onClick={handleGoBackToSanctuary}
+                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-pink-400/30 hover:border-pink-300/50 text-pink-200 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-pink-300" />
+                  <span>← Back to Sanctuary</span>
+                </button>
+              </div>
+            )}
 
-          {activeTab === 'garden' && (
-            <GardenDashboardOverview
-              onSelectTab={(tab) => handleSelectTab(tab)}
-              currentUser={currentUser}
-              onOpenAddStudio={handleOpenQuickAdd}
-            />
-          )}
+            {activeTab === 'garden' && (
+              <GardenDashboardOverview
+                onSelectTab={(tab) => handleSelectTab(tab)}
+                currentUser={currentUser}
+                onOpenAddStudio={handleOpenQuickAdd}
+              />
+            )}
 
-          {activeTab === 'letters' && <LettersSection />}
-          {activeTab === 'sound' && <SoundGardenSection />}
-          {activeTab === 'shelf' && <ExchangeShelfSection />}
-          {activeTab === 'archive' && <LittleArchiveSection />}
-          {activeTab === 'petals' && <PetalNotesSpace />}
-          {activeTab === 'time' && <OurTimeSection />}
-          {activeTab === 'questions' && <LittleQuestionsSection />}
-          {activeTab === 'capsule' && <TimeCapsuleSection />}
-          {activeTab === 'moods' && <MoodGardenSection />}
-          {activeTab === 'world' && <WorldAroundUsSection />}
-          {activeTab === 'more' && (
+            {activeTab === 'letters' && <LettersSection />}
+            {activeTab === 'sound' && <SoundGardenSection />}
+            {activeTab === 'shelf' && <ExchangeShelfSection />}
+            {activeTab === 'archive' && <LittleArchiveSection />}
+            {activeTab === 'petals' && <PetalNotesSpace />}
+            {activeTab === 'time' && <OurTimeSection />}
+            {activeTab === 'questions' && <LittleQuestionsSection />}
+            {activeTab === 'capsule' && <TimeCapsuleSection />}
+            {activeTab === 'moods' && <MoodGardenSection />}
+            {activeTab === 'world' && <WorldAroundUsSection />}
+            {activeTab === 'more' && (
+              <MoreGardenSection
+                currentUser={currentUser}
+                onSelectTab={(tab) => handleSelectTab(tab)}
+              />
+            )}
+
+            {/* Privacy & Security Audit Tab */}
+            {activeTab === 'security' && (
             <MoreGardenSection
               currentUser={currentUser}
               onSelectTab={(tab) => handleSelectTab(tab)}
@@ -469,6 +466,8 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
           else if (type === 'letter') setActiveTab('letters');
         }}
       />
+      {/* Special Dates Celebration Pop Modal (Birthdays, Valentine's, Christmas, New Year) */}
+      <CelebrationPopModal />
     </div>
   );
 };

@@ -53,13 +53,6 @@ export function openSpotifyApp(query?: string): void {
 }
 
 /**
- * Opens Spotify search directly in app or browser tab
- */
-export function openSpotifySearch(query: string): void {
-  openSpotifyApp(query);
-}
-
-/**
  * Fetches official track title and album cover thumbnail via Spotify's universal public oEmbed API.
  * Requires NO API key and supports universal open CORS.
  */

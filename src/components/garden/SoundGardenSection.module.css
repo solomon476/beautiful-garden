@@ -1910,6 +1910,13 @@
   transform: scale(1.03);
 }
 
+.reactionBtnActive {
+  background: linear-gradient(135deg, rgba(236, 74, 203, 0.35), rgba(168, 85, 247, 0.35)) !important;
+  border-color: #f472b6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.35);
+}
+
 .spotifyPillBtn {
   display: inline-flex;
   align-items: center;

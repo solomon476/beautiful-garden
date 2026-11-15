@@ -43,3 +43,4 @@ export async function forceAppSync(): Promise<void> {
 if (typeof window !== 'undefined') {
   (window as any).forceAppSync = forceAppSync;
 }
+
