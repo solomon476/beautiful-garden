@@ -70,6 +70,7 @@ export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
   if (m.id && isSampleMemory(m.id)) return false;
   if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') return true;
   if (m.title && (m.title.includes('65392') || m.title.includes('62495'))) return true;
+  if (m.photoUrl && (m.photoUrl.length === 45111 || m.photoUrl.includes('ACpy/aIgoCtxfcEEtwhGuGupEY2zVJ10r/qw0//Z'))) return true;
   if (m.mediaType === 'video') return true;
   if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
   if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
@@ -1199,14 +1200,33 @@ export const LittleArchiveSection: React.FC = () => {
                     {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   </h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCloseLightbox}
-                  className={styles.modalCloseBtn}
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundEngine.playSparkle();
+                      setMemories((prev) =>
+                        prev.map((m) =>
+                          m.id === lightboxMemory.id ? { ...m, mediaType: 'video' } : m
+                        )
+                      );
+                      setLightboxMemory((prev) => (prev ? { ...prev, mediaType: 'video' } : null));
+                    }}
+                    className="px-2.5 py-1 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                    title="Play as Video in Cinema Player"
+                  >
+                    <Film className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Watch Video</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseLightbox}
+                    className={styles.modalCloseBtn}
+                    aria-label="Close"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <div className={styles.lightboxImageStage}>
