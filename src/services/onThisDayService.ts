@@ -66,7 +66,7 @@ export function getOnThisDayFlashbacks(memories: MemoryEntry[]): FlashbackItem[]
         exactSameDayMatches.push({
           memory: mem,
           headline: `✨ Exactly Today in ${mYear} ♡`,
-          badge: `${yearsDiff} year${yearsDiff > 1 ? 's' : ''} ago today • Golden chapter ✨`,
+          badge: `💍 ${yearsDiff} Year${yearsDiff > 1 ? 's' : ''} Ago Today • Golden Memory`,
           relativeTime: `${yearsDiff} year${yearsDiff > 1 ? 's' : ''} ago`,
         });
         continue;
@@ -77,7 +77,7 @@ export function getOnThisDayFlashbacks(memories: MemoryEntry[]): FlashbackItem[]
         sameMonthMatches.push({
           memory: mem,
           headline: `🌸 Reliving Our ${monthCap} Days ♡`,
-          badge: `Reminiscing this month • Favorite moments ✨`,
+          badge: `✨ Reminiscing This Month ♡`,
           relativeTime: `${mem.dateTaken || 'Past Month'}`,
         });
         continue;
@@ -87,7 +87,7 @@ export function getOnThisDayFlashbacks(memories: MemoryEntry[]): FlashbackItem[]
     generalFlashbacks.push({
       memory: mem,
       headline: '💫 Stolen Moments Rewind ✨',
-      badge: 'Keepsake flashback • Special moments ✨',
+      badge: '💌 Nostalgia Vault • Keepsake',
       relativeTime: mem.dateTaken || 'Special Day',
     });
   }

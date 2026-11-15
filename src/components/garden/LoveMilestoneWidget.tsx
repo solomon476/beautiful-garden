@@ -289,20 +289,10 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
           <div>
             {/* If Today is the celebration! */}
             {activeCelebration.isToday ? (
-              <div
-                className={`${styles.todayCelebrationBanner} cursor-pointer hover:scale-[1.01] active:scale-95 transition-transform`}
-                onClick={() => {
-                  window.dispatchEvent(
-                    new CustomEvent('garden-trigger-celebration', {
-                      detail: { celebration: activeCelebration },
-                    })
-                  );
-                }}
-                title="Tap to pop full celebration confetti! 🎊"
-              >
+              <div className={styles.todayCelebrationBanner}>
                 <div className="flex items-center gap-1.5 text-amber-300 font-bold text-sm">
                   <PartyPopper className="w-4 h-4 animate-bounce" />
-                  <span>TODAY IS THE DAY! ✨ (Tap to Celebrate 🎊)</span>
+                  <span>TODAY IS THE DAY! ✨</span>
                 </div>
                 <h4 className="text-base sm:text-lg font-serif font-bold text-white">
                   {activeCelebration.title}

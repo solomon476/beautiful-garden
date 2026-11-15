@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import confetti from 'canvas-confetti';
-import { Sparkles, X, ExternalLink, Camera, PenLine, Headphones, Heart, Calendar, MessageSquare } from 'lucide-react';
+import { Sparkles, X, ExternalLink, Camera, PenLine, Headphones, Heart, Calendar } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { GardenNotification } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
-import { extractMemoryIdFromNotification, extractSongIdFromNotification } from '../../utils/notificationHelpers';
 
 interface LiveNotificationToastProps {
   onOpenTab: (tab: string) => void;
@@ -73,23 +71,6 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
       // Audio autoplay policy fallback
     }
 
-    if (notif.type === 'petal') {
-      try {
-        confetti({
-          particleCount: 35,
-          spread: 85,
-          origin: { y: 0.15 },
-          colors: ['#f472b6', '#ec4899', '#fbcfe8', '#fda4af', '#f43f5e', '#ffb6c1'],
-          shapes: ['circle'],
-          scalar: 1.3,
-          ticks: 240,
-          gravity: 0.65,
-        });
-      } catch {
-        // ignore
-      }
-    }
-
     // Auto-dismiss after 8 seconds
     const dismissTimer = setTimeout(() => {
       setIsVisible(false);
@@ -107,30 +88,6 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
     setIsVisible(false);
     const currentUser = authService.getCurrentUser();
     notificationService.markAsRead(activeToast.id, currentUser.id);
-
-    // If it's a memory / photo like notification, take them directly to the liked moment!
-    const memoryId = extractMemoryIdFromNotification(activeToast);
-    if (memoryId) {
-      sessionStorage.setItem('pending_open_memory_id', memoryId);
-      window.dispatchEvent(new CustomEvent('garden-open-memory', { detail: { memoryId } }));
-    }
-
-    // If it's a song like / recommendation notification, take them directly to the song!
-    const songId = extractSongIdFromNotification(activeToast);
-    if (songId) {
-      sessionStorage.setItem('pending_open_song_id', songId);
-      window.dispatchEvent(new CustomEvent('garden-open-song', { detail: { songId } }));
-    }
-
-    // If it's a Question of the Day notification, take them directly to the question!
-    if (activeToast.type === 'question' || activeToast.title.includes('Question of the Day') || activeToast.title.includes('Daily Question')) {
-      const qId = activeToast.entityId;
-      sessionStorage.setItem('pending_open_daily_question', qId || 'true');
-      window.dispatchEvent(new CustomEvent('garden-open-daily-question', { detail: { questionId: qId } }));
-      onOpenTab('garden');
-      return;
-    }
-
     onOpenTab(activeToast.targetTab || 'garden');
   };
 
@@ -153,8 +110,6 @@ export const LiveNotificationToast: React.FC<LiveNotificationToastProps> = ({ on
         return <Headphones className="w-4 h-4 text-purple-300" />;
       case 'date':
         return <Calendar className="w-4 h-4 text-teal-300" />;
-      case 'question':
-        return <MessageSquare className="w-4 h-4 text-fuchsia-300" />;
       default:
         return <Heart className="w-4 h-4 text-pink-300" />;
     }

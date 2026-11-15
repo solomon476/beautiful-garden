@@ -793,15 +793,6 @@ export const soundGardenService = {
     saveLocal(STORAGE_KEYS.SONGS, updated);
   },
 
-  async updateSongReaction(id: string, reaction: string): Promise<void> {
-    if (isLiveSupabaseConfigured && supabase) {
-      await supabase.from('songs').update({ reaction }).eq('id', id);
-    }
-    const all = loadLocal<SongEntry[]>(STORAGE_KEYS.SONGS, DEFAULT_INITIAL_SONGS);
-    const updated = all.map((s) => (s.id === id ? { ...s, reaction } : s));
-    saveLocal(STORAGE_KEYS.SONGS, updated);
-  },
-
   async deleteSong(id: string): Promise<void> {
     if (isLiveSupabaseConfigured && supabase) {
       await supabase.from('songs').delete().eq('id', id);
@@ -1345,29 +1336,6 @@ export const memoryArchiveService = {
       window.dispatchEvent(new Event('garden-memories-updated'));
       window.dispatchEvent(new Event('garden-memory-deleted'));
       window.dispatchEvent(new Event('garden-bin-updated'));
-    }
-  },
-
-  async updateMemoryVoiceWhisper(id: string, voiceNoteUrl: string, audioFileName?: string): Promise<void> {
-    const all = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    const updated = all.map((m) => (m.id === id ? { ...m, voiceNoteUrl, audioFileName } : m));
-    saveLocal(STORAGE_KEYS.MEMORIES, updated);
-
-    if (isLiveSupabaseConfigured && supabase) {
-      try {
-        await supabase
-          .from('garden_memories')
-          .update({
-            voice_note_url: voiceNoteUrl,
-          })
-          .eq('id', id);
-      } catch (err) {
-        console.warn('[Archive] Cloud voice note update failed:', err);
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('garden-memories-updated'));
     }
   },
 

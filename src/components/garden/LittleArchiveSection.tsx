@@ -91,7 +91,6 @@ export const LittleArchiveSection: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
   const [isGeneratingAi, setIsGeneratingAi] = useState<boolean>(false);
   const [likeNotificationToast, setLikeNotificationToast] = useState<string | null>(null);
-  const [lastLikedMemoryId, setLastLikedMemoryId] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
@@ -135,13 +134,12 @@ export const LittleArchiveSection: React.FC = () => {
         senderId: user.id,
         senderName: user.displayName,
         recipientId: partner.id,
-        entityId: id,
+        entityId: `like-${id}-${user.id}-${Date.now()}`,
       });
 
       // Immediate confirmation to self
-      setLastLikedMemoryId(id);
-      setLikeNotificationToast(`❤️ You liked "${displayTitle}"! Tap to view ✨`);
-      setTimeout(() => setLikeNotificationToast(null), 4000);
+      setLikeNotificationToast(`❤️ You liked "${displayTitle}"! Notification sent to ${partner.displayName} ✨`);
+      setTimeout(() => setLikeNotificationToast(null), 3800);
     }
   };
 
@@ -178,7 +176,6 @@ export const LittleArchiveSection: React.FC = () => {
 
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
-  const [isRecordingWhisper, setIsRecordingWhisper] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -244,39 +241,6 @@ export const LittleArchiveSection: React.FC = () => {
       window.removeEventListener('garden-memories-updated', handleUpdate);
     };
   }, []);
-
-  // Listen for direct navigation to a specific liked or referenced memory
-  useEffect(() => {
-    const openTargetMemory = (targetId: string) => {
-      if (!targetId || memories.length === 0) return;
-      const found = memories.find((m) => m.id === targetId);
-      if (found) {
-        sessionStorage.removeItem('pending_open_memory_id');
-        soundEngine.playSparkle();
-        setLightboxMemory(found);
-        setTimeout(() => {
-          const el = document.getElementById(`archive-card-${found.id}`);
-          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 350);
-      }
-    };
-
-    // Check if notification clicked earlier left a pending memory ID
-    const pendingId = sessionStorage.getItem('pending_open_memory_id');
-    if (pendingId && memories.length > 0) {
-      openTargetMemory(pendingId);
-    }
-
-    const handleOpenMemoryEvent = (e: CustomEvent<{ memoryId: string }>) => {
-      const targetId = e.detail?.memoryId;
-      if (targetId) {
-        openTargetMemory(targetId);
-      }
-    };
-
-    window.addEventListener('garden-open-memory' as any, handleOpenMemoryEvent);
-    return () => window.removeEventListener('garden-open-memory' as any, handleOpenMemoryEvent);
-  }, [memories]);
 
   const handleCloseLightbox = () => {
     if (soundtrackAudioRef.current) {
@@ -585,22 +549,8 @@ export const LittleArchiveSection: React.FC = () => {
   return (
     <div className={styles.archiveSection}>
       {likeNotificationToast && (
-        <div
-          onClick={() => {
-            if (lastLikedMemoryId) {
-              const found = memories.find((m) => m.id === lastLikedMemoryId);
-              if (found) {
-                soundEngine.playSparkle();
-                setLightboxMemory(found);
-              }
-            }
-          }}
-          className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 hover:bg-pink-500 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
-          role="button"
-          title="Tap to view liked memory"
-        >
-          <span>{likeNotificationToast}</span>
-          <span className="text-[10px] opacity-80 underline ml-1">Open ↗</span>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-600/95 text-white text-xs font-semibold backdrop-blur-md shadow-2xl border border-white/30 z-[10001] animate-bounce-subtle pointer-events-none">
+          {likeNotificationToast}
         </div>
       )}
 
@@ -752,7 +702,6 @@ export const LittleArchiveSection: React.FC = () => {
             return (
               <div
                 key={mem.id}
-                id={`archive-card-${mem.id}`}
                 className="archive-card group"
                 onClick={() => {
                   soundEngine.playSparkle();
@@ -941,7 +890,6 @@ export const LittleArchiveSection: React.FC = () => {
             return (
               <div
                 key={mem.id}
-                id={`archive-card-${mem.id}`}
                 className="keepsake-album-card group cursor-pointer"
                 onClick={() => {
                   soundEngine.playSparkle();
@@ -1188,74 +1136,14 @@ export const LittleArchiveSection: React.FC = () => {
                   </p>
                 )}
 
-                {/* Voice Whisper Section */}
-                {isRecordingWhisper ? (
-                  <div className="max-w-md mx-auto p-3 rounded-2xl bg-black/60 border border-pink-400/30 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-mono text-pink-200">
-                      <span>🎙️ Record Voice Whisper</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsRecordingWhisper(false)}
-                        className="text-pink-300 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    <VoiceNoteRecorder
-                      onRecorded={async (dataUrl, _duration, fileName) => {
-                        soundEngine.playSparkle();
-                        if (!lightboxMemory) return;
-                        await memoryArchiveService.updateMemoryVoiceWhisper(lightboxMemory.id, dataUrl, fileName);
-                        setLightboxMemory({ ...lightboxMemory, voiceNoteUrl: dataUrl, audioFileName: fileName });
-                        setMemories((prev) =>
-                          prev.map((m) =>
-                            m.id === lightboxMemory.id ? { ...m, voiceNoteUrl: dataUrl, audioFileName: fileName } : m
-                          )
-                        );
-                        setIsRecordingWhisper(false);
-
-                        notificationService.sendNotification({
-                          type: 'memory',
-                          title: '🎙️ Added Voice Whisper',
-                          message: `${currentUser.displayName} attached a voice whisper to "${lightboxMemory.title}" ♡`,
-                          targetTab: 'archive',
-                          senderId: currentUser.id,
-                          senderName: currentUser.displayName,
-                          recipientId: partner.id,
-                          entityId: lightboxMemory.id,
-                        });
-                      }}
-                      onCancel={() => setIsRecordingWhisper(false)}
-                    />
-                  </div>
-                ) : lightboxMemory.voiceNoteUrl ? (
-                  <div className="max-w-md mx-auto space-y-1">
+                {lightboxMemory.voiceNoteUrl && (
+                  <div className="max-w-md mx-auto">
                     <GardenAudioPlayer
                       src={lightboxMemory.voiceNoteUrl}
                       title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
                       subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
                       isVoiceNote={true}
                     />
-                    <div className="text-right">
-                      <button
-                        type="button"
-                        onClick={() => setIsRecordingWhisper(true)}
-                        className="text-[10px] text-pink-300/80 hover:text-pink-200 underline cursor-pointer"
-                      >
-                        Re-record whisper 🎙️
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="max-w-md mx-auto flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setIsRecordingWhisper(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 hover:bg-pink-500/25 border border-pink-400/30 text-pink-200 hover:text-white text-xs font-medium shadow-sm transition-all cursor-pointer active:scale-95"
-                    >
-                      <Mic className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Add Voice Whisper 🎙️</span>
-                    </button>
                   </div>
                 )}
 
@@ -1399,75 +1287,13 @@ export const LittleArchiveSection: React.FC = () => {
                 </p>
               )}
 
-              {/* Voice Whisper Section */}
-              {isRecordingWhisper ? (
-                <div className="p-3 rounded-2xl bg-white/[0.06] border border-pink-400/30 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono text-pink-200">
-                    <span>🎙️ Record Voice Whisper</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsRecordingWhisper(false)}
-                      className="text-pink-300 hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  <VoiceNoteRecorder
-                    onRecorded={async (dataUrl, _duration, fileName) => {
-                      soundEngine.playSparkle();
-                      if (!lightboxMemory) return;
-                      await memoryArchiveService.updateMemoryVoiceWhisper(lightboxMemory.id, dataUrl, fileName);
-                      setLightboxMemory({ ...lightboxMemory, voiceNoteUrl: dataUrl, audioFileName: fileName });
-                      setMemories((prev) =>
-                        prev.map((m) =>
-                          m.id === lightboxMemory.id ? { ...m, voiceNoteUrl: dataUrl, audioFileName: fileName } : m
-                        )
-                      );
-                      setIsRecordingWhisper(false);
-
-                      notificationService.sendNotification({
-                        type: 'memory',
-                        title: '🎙️ Added Voice Whisper',
-                        message: `${currentUser.displayName} attached a voice whisper to "${lightboxMemory.title}" ♡`,
-                        targetTab: 'archive',
-                        senderId: currentUser.id,
-                        senderName: currentUser.displayName,
-                        recipientId: partner.id,
-                        entityId: lightboxMemory.id,
-                      });
-                    }}
-                    onCancel={() => setIsRecordingWhisper(false)}
-                  />
-                </div>
-              ) : lightboxMemory.voiceNoteUrl ? (
-                <div className="space-y-1">
-                  <GardenAudioPlayer
-                    src={lightboxMemory.voiceNoteUrl}
-                    title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
-                    subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
-                    isVoiceNote={true}
-                  />
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => setIsRecordingWhisper(true)}
-                      className="text-[10px] text-pink-300/80 hover:text-pink-200 underline cursor-pointer"
-                    >
-                      Re-record whisper 🎙️
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-1 flex items-center justify-start">
-                  <button
-                    type="button"
-                    onClick={() => setIsRecordingWhisper(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-pink-500/20 border border-pink-400/30 text-pink-200 hover:text-white text-xs font-medium shadow-sm transition-all cursor-pointer active:scale-95"
-                  >
-                    <Mic className="w-3.5 h-3.5 text-pink-300" />
-                    <span>Add Voice Whisper 🎙️</span>
-                  </button>
-                </div>
+              {lightboxMemory.voiceNoteUrl && (
+                <GardenAudioPlayer
+                  src={lightboxMemory.voiceNoteUrl}
+                  title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                  subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                  isVoiceNote={true}
+                />
               )}
 
               {/* Soundtrack Player if attached to photo */}
@@ -1816,7 +1642,7 @@ export const LittleArchiveSection: React.FC = () => {
                     setPhotoUrl('');
                     setVideoDuration(undefined);
                   }}
-                  className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-rose-500 transition-colors cursor-pointer"
                   title="Remove video"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -1835,8 +1661,7 @@ export const LittleArchiveSection: React.FC = () => {
                       setPhotoUrl('');
                       setCompressionStats(null);
                     }}
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
-                    title="Remove photo"
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
