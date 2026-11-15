@@ -68,7 +68,7 @@ export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
   if (!m) return false;
   // Sample gift memories are always pure standalone photos
   if (m.id && isSampleMemory(m.id)) return false;
-  if (m.id === 'mem-1793791572597-emdc') return true;
+  if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') return true;
   if (m.mediaType === 'video') return true;
   if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
   if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
@@ -205,6 +205,7 @@ export const LittleArchiveSection: React.FC = () => {
             (v) =>
               v.id === lightboxMemory.videoMediaId ||
               v.id === lightboxMemory.id ||
+              lightboxMemory.id === 'mem-1794420983599-qc3y' ||
               lightboxMemory.id === 'mem-1793791572597-emdc' ||
               (storedVideos.length === 1 && !isSampleMemory(lightboxMemory.id)) ||
               (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase())) ||

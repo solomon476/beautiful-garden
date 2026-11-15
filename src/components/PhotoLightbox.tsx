@@ -87,6 +87,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             (v) =>
               v.id === memAny.videoMediaId ||
               v.id === memory.id ||
+              memory.id === 'mem-1794420983599-qc3y' ||
               memory.id === 'mem-1793791572597-emdc' ||
               (storedVideos.length === 1 && !isSampleMemory(memory.id)) ||
               (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase())) ||

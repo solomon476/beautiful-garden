@@ -977,6 +977,7 @@ export const memoryArchiveService = {
           };
         }
         const isVideo =
+          m.id === 'mem-1794420983599-qc3y' ||
           m.id === 'mem-1793791572597-emdc' ||
           m.mediaType === 'video' ||
           Boolean(m.videoMediaId) ||
@@ -1004,7 +1005,7 @@ export const memoryArchiveService = {
           videoMediaId: undefined,
         };
       }
-      if (m.id === 'mem-1793791572597-emdc') {
+      if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') {
         return {
           ...m,
           mediaType: 'video' as const,
@@ -1079,7 +1080,7 @@ export const memoryArchiveService = {
               mediaType = 'photo';
               videoUrl = undefined;
               videoMediaId = undefined;
-            } else if (d.id === 'mem-1793791572597-emdc') {
+            } else if (d.id === 'mem-1794420983599-qc3y' || d.id === 'mem-1793791572597-emdc') {
               mediaType = 'video';
             }
 
@@ -1128,11 +1129,11 @@ export const memoryArchiveService = {
           let videoUrl = c.videoUrl || l?.videoUrl;
           let videoMediaId = c.videoMediaId || l?.videoMediaId;
           let mediaType: 'photo' | 'video' =
-            c.id === 'mem-1793791572597-emdc'
+            c.id === 'mem-1794420983599-qc3y' || c.id === 'mem-1793791572597-emdc'
               ? 'video'
               : c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-          if (mediaType === 'video' || c.id === 'mem-1793791572597-emdc') {
+          if (mediaType === 'video' || c.id === 'mem-1794420983599-qc3y' || c.id === 'mem-1793791572597-emdc') {
             mediaType = 'video';
             // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
             if (videoMediaId) {
@@ -1149,6 +1150,7 @@ export const memoryArchiveService = {
               const matched = storedVideos.find((v) =>
                 (videoMediaId && v.id === videoMediaId) ||
                 (c.id && v.id === c.id) ||
+                (c.id === 'mem-1794420983599-qc3y') ||
                 (c.id === 'mem-1793791572597-emdc') ||
                 (storedVideos.length === 1 && !isSampleMemory(c.id)) ||
                 (c.title && v.name && v.name.toLowerCase().includes(c.title.toLowerCase())) ||
@@ -1202,11 +1204,11 @@ export const memoryArchiveService = {
               let videoUrl = l.videoUrl;
               let videoMediaId = l.videoMediaId;
               let mediaType: 'photo' | 'video' =
-                l.id === 'mem-1793791572597-emdc'
+                l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc'
                   ? 'video'
                   : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-              if (mediaType === 'video' || l.id === 'mem-1793791572597-emdc') {
+              if (mediaType === 'video' || l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc') {
                 mediaType = 'video';
                 if (videoMediaId) {
                   try {
@@ -1220,6 +1222,7 @@ export const memoryArchiveService = {
                   const matched = storedVideos.find((v) =>
                     (videoMediaId && v.id === videoMediaId) ||
                     (l.id && v.id === l.id) ||
+                    (l.id === 'mem-1794420983599-qc3y') ||
                     (l.id === 'mem-1793791572597-emdc') ||
                     (storedVideos.length === 1 && !isSampleMemory(l.id)) ||
                     (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
@@ -1275,11 +1278,11 @@ export const memoryArchiveService = {
         let videoUrl = l.videoUrl;
         let videoMediaId = l.videoMediaId;
         let mediaType: 'photo' | 'video' =
-          l.id === 'mem-1793791572597-emdc'
+          l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc'
             ? 'video'
             : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-        if (mediaType === 'video' || l.id === 'mem-1793791572597-emdc') {
+        if (mediaType === 'video' || l.id === 'mem-1794420983599-qc3y' || l.id === 'mem-1793791572597-emdc') {
           mediaType = 'video';
           if (videoMediaId) {
             try {
@@ -1293,6 +1296,7 @@ export const memoryArchiveService = {
             const matched = storedVideosFallback.find((v) =>
               (videoMediaId && v.id === videoMediaId) ||
               (l.id && v.id === l.id) ||
+              (l.id === 'mem-1794420983599-qc3y') ||
               (l.id === 'mem-1793791572597-emdc') ||
               (storedVideosFallback.length === 1 && !isSampleMemory(l.id)) ||
               (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
