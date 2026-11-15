@@ -50,6 +50,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
+  const isVideo = isVideoMoment(memory as any);
+
   useEffect(() => {
     if (!memory) {
       setActiveVideoUrl(null);
@@ -57,7 +59,6 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       return;
     }
 
-    const isVideo = isVideoMoment(memory as any);
     if (!isVideo) {
       setActiveVideoUrl(null);
       setIsVideoLoading(false);
@@ -376,10 +377,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {memory.videoUrl ? (
+          {(activeVideoUrl || memory.videoUrl || isVideo) ? (
             <video
-              key={memory.id}
-              src={memory.videoUrl}
+              key={memory.id + (activeVideoUrl || memory.videoUrl || '')}
+              src={activeVideoUrl || memory.videoUrl}
               poster={memory.photoUrl}
               controls
               playsInline
@@ -407,7 +408,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             />
           )}
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
-            {memory.videoUrl ? (
+            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
               <>
                 <Film className="w-3 h-3 text-amber-300" />
                 <span>Video Keepsake 🎬</span>
@@ -421,7 +422,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           </div>
 
           {/* Optional Fit/Fill Toggle & Interactive Heart Button on Photo */}
-          {!memory.videoUrl && (
+          {!(activeVideoUrl || memory.videoUrl || isVideo) && (
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
               <button
                 type="button"
@@ -470,7 +471,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 truncate px-2">
               {memory.title}
             </h3>
-            {memory.videoUrl ? (
+            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
               <button
                 type="button"
                 onClick={handleLike}

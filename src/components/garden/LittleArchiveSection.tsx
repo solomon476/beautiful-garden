@@ -1101,8 +1101,34 @@ export const LittleArchiveSection: React.FC = () => {
                     ) : (
                       <>
                         <Film className="w-12 h-12 text-pink-400/50 mb-3" />
-                        <p className="text-sm font-medium">Video is stored on device</p>
-                        <p className="text-xs text-pink-300/70 mt-1">If this video was recorded on this phone, refresh cache or re-upload to play.</p>
+                        <p className="text-sm font-medium">Video Clip</p>
+                        <p className="text-xs text-pink-300/70 mt-1 mb-3">Stored on device • Tap below if you'd like to load the video file</p>
+                        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-xs text-pink-200 cursor-pointer transition-all active:scale-95 shadow-md">
+                          <Film className="w-3.5 h-3.5 text-pink-300" />
+                          <span>Select Video to Play</span>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const saved = await mediaStorage.saveFile(file, file.name);
+                                  const url = saved.blobUrl || saved.dataUrl;
+                                  setActiveLightboxVideoUrl(url);
+                                  setMemories((prev) =>
+                                    prev.map((m) =>
+                                      m.id === lightboxMemory.id
+                                        ? { ...m, videoUrl: url, videoMediaId: saved.id, mediaType: 'video' }
+                                        : m
+                                    )
+                                  );
+                                } catch {}
+                              }
+                            }}
+                          />
+                        </label>
                       </>
                     )}
                   </div>

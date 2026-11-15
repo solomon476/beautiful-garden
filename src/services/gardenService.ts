@@ -1037,11 +1037,7 @@ export const memoryArchiveService = {
             let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
             let description: string = d.description || '';
 
-            let musicUrl: string | undefined = undefined;
-            let musicTitle: string | undefined = undefined;
-            let musicArtist: string | undefined = undefined;
-
-            // Check if description is packed JSON containing video or soundtrack metadata
+            // Check if description is packed JSON containing video metadata
             if (
               description &&
               typeof description === 'string' &&
@@ -1059,15 +1055,6 @@ export const memoryArchiveService = {
                 }
                 if (parsed.mediaType) {
                   mediaType = parsed.mediaType;
-                }
-                if (parsed.musicUrl) {
-                  musicUrl = parsed.musicUrl;
-                }
-                if (parsed.musicTitle) {
-                  musicTitle = parsed.musicTitle;
-                }
-                if (parsed.musicArtist) {
-                  musicArtist = parsed.musicArtist;
                 }
                 if (parsed.note !== undefined) {
                   description = parsed.note;
@@ -1095,9 +1082,6 @@ export const memoryArchiveService = {
               videoUrl: videoUrl,
               videoMediaId: videoMediaId,
               mediaType: mediaType,
-              musicUrl: musicUrl,
-              musicTitle: musicTitle,
-              musicArtist: musicArtist,
               dateTaken: d.date_taken,
               isShared: d.is_shared,
               createdAt: d.created_at,
@@ -1181,9 +1165,6 @@ export const memoryArchiveService = {
             videoUrl: mediaType === 'video' ? videoUrl : undefined,
             videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
             mediaType,
-            musicUrl: c.musicUrl || l?.musicUrl,
-            musicTitle: c.musicTitle || l?.musicTitle,
-            musicArtist: c.musicArtist || l?.musicArtist,
           };
         }));
 
@@ -1336,11 +1317,6 @@ export const memoryArchiveService = {
     videoUrl?: string;
     videoMediaId?: string;
     mediaType?: 'photo' | 'video';
-    voiceNoteUrl?: string;
-    audioFileName?: string;
-    musicUrl?: string;
-    musicTitle?: string;
-    musicArtist?: string;
     dateTaken?: string;
     isShared?: boolean;
   }): Promise<MemoryEntry> {
@@ -1371,11 +1347,6 @@ export const memoryArchiveService = {
       videoUrl: memory.videoUrl,
       videoMediaId: memory.videoMediaId,
       mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
-      voiceNoteUrl: memory.voiceNoteUrl,
-      audioFileName: memory.audioFileName,
-      musicUrl: memory.musicUrl,
-      musicTitle: memory.musicTitle,
-      musicArtist: memory.musicArtist,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
       isShared: memory.isShared !== undefined ? memory.isShared : true,
       createdAt: new Date().toISOString(),
@@ -1387,9 +1358,7 @@ export const memoryArchiveService = {
         if (
           entry.mediaType === 'video' ||
           entry.videoUrl ||
-          entry.videoMediaId ||
-          entry.musicUrl ||
-          entry.musicTitle
+          entry.videoMediaId
         ) {
           // If videoUrl is a local blob: URL, do not sync the dead blob URL to cloud!
           // Only sync remote URLs or base64 data URLs to cloud
@@ -1403,9 +1372,6 @@ export const memoryArchiveService = {
             videoUrl: syncableVideoUrl,
             videoMediaId: entry.videoMediaId,
             mediaType: entry.mediaType,
-            musicUrl: entry.musicUrl,
-            musicTitle: entry.musicTitle,
-            musicArtist: entry.musicArtist,
           });
         }
 
