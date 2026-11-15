@@ -930,7 +930,7 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
-const CLEANUP_KEY_V523 = 'pt_cleanup_memories_v523';
+const CLEANUP_KEY_V524 = 'pt_cleanup_memories_v524';
 
 function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
   return entries
@@ -949,6 +949,15 @@ function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
       if ((m.id === 'mem-1793965972650-47nv' || m.id === 'mem-1793791450397-gsvu') && m.isShared) {
         return { ...m, isShared: false };
       }
+      // Ensure Moon photo has its requested Come 'n Go soundtrack linked
+      if (m.id === 'mem-1794588860087-yzxv' && !m.musicUrl) {
+        return {
+          ...m,
+          musicUrl: 'https://open.spotify.com/track/2mNGL7mZILSqZHxGboJaO9',
+          musicTitle: 'COMË N GO',
+          musicArtist: 'Solomon 🌿',
+        };
+      }
       return m;
     });
 }
@@ -962,12 +971,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V523)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V524)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V523, 'true');
+        localStorage.setItem(CLEANUP_KEY_V524, 'true');
       } catch {}
     }
 
@@ -982,12 +991,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V523)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V524)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V523, 'true');
+        localStorage.setItem(CLEANUP_KEY_V524, 'true');
       } catch {}
     }
 

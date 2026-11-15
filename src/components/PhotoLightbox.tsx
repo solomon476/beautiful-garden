@@ -5,7 +5,7 @@ import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 import { authService } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
-import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
+import { formatMemoryDisplayTitle, formatMemoryDisplayCaption, isVideoMoment } from './garden/LittleArchiveSection';
 import { mediaStorage } from '../utils/mediaStorage';
 
 interface PhotoLightboxProps {
@@ -303,9 +303,9 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
           onClick={(e) => e.stopPropagation()}
         >
-          {memory.caption && (
+          {formatMemoryDisplayCaption(memory.caption, (memory as any).description) && (
             <p className="font-handwriting text-xl sm:text-2xl text-center text-pink-100/90 leading-snug drop-shadow-md px-3 line-clamp-2">
-              “{memory.caption}” ♡
+              “{formatMemoryDisplayCaption(memory.caption, (memory as any).description)}” ♡
             </p>
           )}
 
@@ -487,7 +487,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <span>{memory.date}</span>
           </div>
           <p className="font-handwriting text-2xl sm:text-3xl text-slate-700 leading-snug px-2">
-            “{memory.caption}”
+            “{formatMemoryDisplayCaption(memory.caption, (memory as any).description)}”
           </p>
         </div>
 
