@@ -102,12 +102,23 @@ export const PwaInstallPrompt: React.FC = () => {
     localStorage.setItem('pt_pwa_notif_dismissed', 'true');
   };
 
+  // Only show phone install / lock screen alert prompt on mobile phones & tablets
+  const isMobileDevice =
+    typeof window !== 'undefined' &&
+    (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ||
+      (typeof window.matchMedia !== 'undefined' && window.matchMedia('(max-width: 768px)').matches));
+
+  if (!isMobileDevice) return null;
+
   // If already standalone and notifications configured, no need to show banner
   if (isStandalone && !showNotificationCard) return null;
   if (isDismissed && !showNotificationCard) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-[9990] max-w-md mx-auto space-y-2 pointer-events-auto">
+    <div
+      className="fixed left-4 right-4 z-[9990] max-w-md mx-auto space-y-2 pointer-events-auto md:hidden"
+      style={{ bottom: '5.5rem' }}
+    >
       {/* 1. Install App Banner (if not installed yet) */}
       {!isStandalone && !isDismissed && (deferredPrompt || isIos) && (
         <div className="relative overflow-hidden rounded-2xl border border-pink-400/40 bg-gradient-to-r from-purple-950/90 via-fuchsia-950/90 to-slate-950/95 p-3.5 shadow-2xl backdrop-blur-xl animate-fade-in text-xs text-white">
