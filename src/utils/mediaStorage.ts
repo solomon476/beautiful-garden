@@ -170,6 +170,40 @@ export const mediaStorage = {
   },
 
   /**
+   * Retrieves all media items stored in IndexedDB
+   */
+  async getAllFiles(): Promise<StoredMediaItem[]> {
+    try {
+      const db = await openDB();
+      return new Promise<StoredMediaItem[]>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = () => resolve((req.result || []) as StoredMediaItem[]);
+        req.onerror = () => reject(req.error);
+      });
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Retrieves all video media items stored in IndexedDB
+   */
+  async getAllVideos(): Promise<StoredMediaItem[]> {
+    try {
+      const all = await this.getAllFiles();
+      return all.filter((item) =>
+        (item.type && item.type.startsWith('video/')) ||
+        (item.name && /\.(mp4|mov|webm|m4v|3gp|mkv)$/i.test(item.name)) ||
+        (item.dataUrl && item.dataUrl.startsWith('data:video/'))
+      );
+    } catch {
+      return [];
+    }
+  },
+
+  /**
    * Deletes a stored file from IndexedDB
    */
   async deleteFile(id: string): Promise<void> {

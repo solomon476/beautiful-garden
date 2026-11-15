@@ -960,7 +960,14 @@ export const memoryArchiveService = {
     const isAuthed = authService.isAuthenticated();
     return localAll
       .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
-      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
+      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared))
+      .map((m) => {
+        const isVideo = m.mediaType === 'video' || Boolean(m.videoMediaId) || Boolean(m.videoUrl);
+        return {
+          ...m,
+          mediaType: isVideo ? ('video' as const) : ('photo' as const),
+        };
+      });
   },
 
   async getMemories(): Promise<MemoryEntry[]> {
@@ -997,8 +1004,7 @@ export const memoryArchiveService = {
             if (
               description &&
               typeof description === 'string' &&
-              description.startsWith('{') &&
-              (description.includes('"videoUrl"') || description.includes('"musicUrl"'))
+              description.trim().startsWith('{')
             ) {
               try {
                 const parsed = JSON.parse(description);
@@ -1054,20 +1060,44 @@ export const memoryArchiveService = {
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
+        // Retrieve stored videos from local IndexedDB for auto-recovery
+        const storedVideos = await mediaStorage.getAllVideos();
+
         // Merge: preserve videoUrl & mediaType from local cache or IndexedDB
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
         const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
           let videoUrl = c.videoUrl || l?.videoUrl;
-          const videoMediaId = c.videoMediaId || l?.videoMediaId;
-          const mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+          let videoMediaId = c.videoMediaId || l?.videoMediaId;
+          let mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
           // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
           if (videoMediaId) {
             try {
               const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-              if (idbUrl) videoUrl = idbUrl;
+              if (idbUrl) {
+                videoUrl = idbUrl;
+                mediaType = 'video';
+              }
             } catch {}
+          }
+
+          // If video still missing, attempt auto-recovery from storedVideos in IndexedDB
+          if (!videoUrl && storedVideos.length > 0) {
+            const matched = storedVideos.find((v) =>
+              v.id === videoMediaId ||
+              v.id === c.id ||
+              (c.id && c.id.startsWith('mem-') && v.id.includes(c.id.replace('mem-', '').slice(0, 8))) ||
+              (c.title && v.name && v.name.toLowerCase().includes(c.title.toLowerCase()))
+            );
+            if (matched) {
+              const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+              if (idbUrl) {
+                videoUrl = idbUrl;
+                videoMediaId = matched.id;
+                mediaType = 'video';
+              }
+            }
           }
 
           // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
@@ -1075,6 +1105,7 @@ export const memoryArchiveService = {
             try {
               const blob = mediaStorage.dataUrlToBlob(videoUrl);
               videoUrl = URL.createObjectURL(blob);
+              mediaType = 'video';
             } catch (err) {
               console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
             }
@@ -1094,22 +1125,44 @@ export const memoryArchiveService = {
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
         const resolvedLocalEntries = await Promise.all(
           localVisible
-            .filter((m) => !cloudIds.has(m.id) && !m.id.startsWith('mem-') && !isExcludedMemory(m))
+            .filter((m) => !cloudIds.has(m.id) && !isExcludedMemory(m))
             .map(async (l) => {
               let videoUrl = l.videoUrl;
-              if (l.videoMediaId) {
+              let videoMediaId = l.videoMediaId;
+              let mediaType = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+              if (videoMediaId) {
                 try {
-                  const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
-                  if (idbUrl) videoUrl = idbUrl;
+                  const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+                  if (idbUrl) {
+                    videoUrl = idbUrl;
+                    mediaType = 'video';
+                  }
                 } catch {}
+              }
+              if (!videoUrl && storedVideos.length > 0) {
+                const matched = storedVideos.find((v) =>
+                  v.id === videoMediaId ||
+                  v.id === l.id ||
+                  (l.id && l.id.startsWith('mem-') && v.id.includes(l.id.replace('mem-', '').slice(0, 8))) ||
+                  (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase()))
+                );
+                if (matched) {
+                  const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+                  if (idbUrl) {
+                    videoUrl = idbUrl;
+                    videoMediaId = matched.id;
+                    mediaType = 'video';
+                  }
+                }
               }
               if (videoUrl && videoUrl.startsWith('data:video/')) {
                 try {
                   const blob = mediaStorage.dataUrlToBlob(videoUrl);
                   videoUrl = URL.createObjectURL(blob);
+                  mediaType = 'video';
                 } catch {}
               }
-              return { ...l, videoUrl };
+              return { ...l, videoUrl, videoMediaId, mediaType };
             })
         );
 
@@ -1121,24 +1174,47 @@ export const memoryArchiveService = {
     }
 
     // Fallback: local only with resolved IndexedDB video URLs
+    const storedVideosFallback = await mediaStorage.getAllVideos();
     return Promise.all(
       localVisible
         .filter((l) => !isExcludedMemory(l))
         .map(async (l) => {
         let videoUrl = l.videoUrl;
-        if (l.videoMediaId) {
+        let videoMediaId = l.videoMediaId;
+        let mediaType = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+        if (videoMediaId) {
           try {
-            const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
-            if (idbUrl) videoUrl = idbUrl;
+            const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+            if (idbUrl) {
+              videoUrl = idbUrl;
+              mediaType = 'video';
+            }
           } catch {}
+        }
+        if (!videoUrl && storedVideosFallback.length > 0) {
+          const matched = storedVideosFallback.find((v) =>
+            v.id === videoMediaId ||
+            v.id === l.id ||
+            (l.id && l.id.startsWith('mem-') && v.id.includes(l.id.replace('mem-', '').slice(0, 8))) ||
+            (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase()))
+          );
+          if (matched) {
+            const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+            if (idbUrl) {
+              videoUrl = idbUrl;
+              videoMediaId = matched.id;
+              mediaType = 'video';
+            }
+          }
         }
         if (videoUrl && videoUrl.startsWith('data:video/')) {
           try {
             const blob = mediaStorage.dataUrlToBlob(videoUrl);
             videoUrl = URL.createObjectURL(blob);
+            mediaType = 'video';
           } catch {}
         }
-        return { ...l, videoUrl };
+        return { ...l, videoUrl, videoMediaId, mediaType };
       })
     );
   },
