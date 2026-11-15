@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
-import { authService, isSampleMemory } from '../services/gardenService';
+import { authService } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
 import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
 import { mediaStorage } from '../utils/mediaStorage';
@@ -88,9 +88,6 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             (v) =>
               v.id === memAny.videoMediaId ||
               v.id === memory.id ||
-              memory.id === 'mem-1794420983599-qc3y' ||
-              memory.id === 'mem-1793791572597-emdc' ||
-              (storedVideos.length === 1 && !isSampleMemory(memory.id)) ||
               (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase())) ||
               (memory.id.includes('-') && memory.id.split('-')[1]?.length >= 10 && v.id.includes(memory.id.split('-')[1].slice(0, 10)))
           );

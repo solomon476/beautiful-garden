@@ -149,7 +149,7 @@ export const MoreGardenSection: React.FC<MoreGardenSectionProps> = ({
           <div>
             <h4 className="text-sm font-bold text-white flex items-center gap-1.5 flex-wrap">
               <span>Sanctuary Sync & Updates</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 border border-pink-400/40 font-mono">v5.15.0</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 border border-pink-400/40 font-mono">v5.16.0</span>
             </h4>
             <p className="text-xs text-pink-200/70">
               Tap anytime to force-refresh & clear mobile cache immediately

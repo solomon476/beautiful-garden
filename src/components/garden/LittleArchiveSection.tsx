@@ -20,7 +20,7 @@ import {
   Play,
   Loader2,
 } from 'lucide-react';
-import { memoryArchiveService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory } from '../../services/gardenService';
+import { memoryArchiveService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory, PERMANENTLY_EXCLUDED_MEMORY_IDS } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
@@ -32,6 +32,16 @@ import { getOnThisDayFlashbacks } from '../../services/onThisDayService';
 import { notificationService } from '../../services/notificationService';
 import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
 import styles from './LittleArchiveSection.module.css';
+
+export const getCleanMemoryCaption = (caption?: string, description?: string): string => {
+  if (caption && caption.trim().length > 0 && !caption.includes('mediaType') && !caption.startsWith('{')) {
+    return caption.trim();
+  }
+  if (description && description.trim().length > 0 && !description.includes('mediaType') && !description.startsWith('{')) {
+    return description.trim();
+  }
+  return 'A timeless moment in our story.';
+};
 
 export const formatMemoryDisplayTitle = (
   title: string,
@@ -68,9 +78,7 @@ export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
   if (!m) return false;
   // Sample gift memories are always pure standalone photos
   if (m.id && isSampleMemory(m.id)) return false;
-  if (m.id === 'mem-1794420983599-qc3y' || m.id === 'mem-1793791572597-emdc') return true;
-  if (m.title && (m.title.includes('65392') || m.title.includes('62495'))) return true;
-  if (m.photoUrl && (m.photoUrl.length === 45111 || m.photoUrl.includes('ACpy/aIgoCtxfcEEtwhGuGupEY2zVJ10r/qw0//Z'))) return true;
+  if (m.id && PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id)) return false;
   if (m.mediaType === 'video') return true;
   if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
   if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
@@ -207,9 +215,6 @@ export const LittleArchiveSection: React.FC = () => {
             (v) =>
               v.id === lightboxMemory.videoMediaId ||
               v.id === lightboxMemory.id ||
-              lightboxMemory.id === 'mem-1794420983599-qc3y' ||
-              lightboxMemory.id === 'mem-1793791572597-emdc' ||
-              (storedVideos.length === 1 && !isSampleMemory(lightboxMemory.id)) ||
               (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase())) ||
               (lightboxMemory.id.includes('-') && lightboxMemory.id.split('-')[1]?.length >= 10 && v.id.includes(lightboxMemory.id.split('-')[1].slice(0, 10)))
           );
@@ -812,9 +817,9 @@ export const LittleArchiveSection: React.FC = () => {
                   {/* Note Caption Preview */}
                   <p
                     className="archive-card-note line-clamp-2"
-                    title={mem.caption || mem.description || 'A timeless moment in our story.'}
+                    title={getCleanMemoryCaption(mem.caption, mem.description)}
                   >
-                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
+                    “{getCleanMemoryCaption(mem.caption, mem.description)}” ♡
                   </p>
 
                   {/* Date */}
@@ -1240,9 +1245,9 @@ export const LittleArchiveSection: React.FC = () => {
                 />
               </div>
 
-              {lightboxMemory.caption && (
+              {getCleanMemoryCaption(lightboxMemory.caption, lightboxMemory.description) !== 'A timeless moment in our story.' && (
                 <p className={styles.lightboxCaption}>
-                  “{lightboxMemory.caption}” ♡
+                  “{getCleanMemoryCaption(lightboxMemory.caption, lightboxMemory.description)}” ♡
                 </p>
               )}
 
