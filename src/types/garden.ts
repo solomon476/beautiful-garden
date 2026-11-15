@@ -79,6 +79,13 @@ export interface MemoryEntry {
   createdAt: string;
 }
 
+export interface DeletedMemoryItem {
+  id: string;
+  originalMemory: MemoryEntry;
+  deletedAt: string;
+  deletedBy: string; // userId of person who moved it to bin
+}
+
 export interface PetalNoteEntry {
   id: string;
   authorId: string;

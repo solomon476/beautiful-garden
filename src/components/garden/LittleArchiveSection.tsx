@@ -72,22 +72,6 @@ export const formatMemoryDisplayTitle = (
   return trimmed;
 };
 
-export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
-  if (!m) return false;
-  if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
-  if (m.mediaType === 'video') return true;
-  if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
-  if (
-    m.description &&
-    typeof m.description === 'string' &&
-    (m.description.includes('"mediaType":"video"') ||
-      m.description.includes('"videoUrl"') ||
-      m.description.includes('"videoMediaId"'))
-  )
-    return true;
-  return false;
-};
-
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>(() => {
     const cached = memoryArchiveService.getCachedMemories();
@@ -194,71 +178,7 @@ export const LittleArchiveSection: React.FC = () => {
 
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
-  const [activeLightboxVideoUrl, setActiveLightboxVideoUrl] = useState<string | null>(null);
-  const [isLightboxVideoLoading, setIsLightboxVideoLoading] = useState<boolean>(false);
   const [isRecordingWhisper, setIsRecordingWhisper] = useState(false);
-
-  // Active resolution of video stream URL for Lightbox cinema player
-  useEffect(() => {
-    if (!lightboxMemory) {
-      setActiveLightboxVideoUrl(null);
-      setIsLightboxVideoLoading(false);
-      return;
-    }
-
-    if (!isVideoMoment(lightboxMemory)) {
-      setActiveLightboxVideoUrl(null);
-      setIsLightboxVideoLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    if (lightboxMemory.videoUrl && !lightboxMemory.videoUrl.startsWith('blob:null')) {
-      setActiveLightboxVideoUrl(lightboxMemory.videoUrl);
-    } else {
-      setIsLightboxVideoLoading(true);
-    }
-
-    (async () => {
-      try {
-        let resolved: string | null = null;
-        if (lightboxMemory.videoMediaId) {
-          resolved = await mediaStorage.getMediaUrl(lightboxMemory.videoMediaId);
-        }
-        if (!resolved && lightboxMemory.id) {
-          resolved = await mediaStorage.getMediaUrl(lightboxMemory.id);
-        }
-        if (!resolved) {
-          const storedVideos = await mediaStorage.getAllVideos();
-          const matched = storedVideos.find(
-            (v) =>
-              v.id === lightboxMemory.videoMediaId ||
-              v.id === lightboxMemory.id ||
-              (lightboxMemory.id.startsWith('mem-') && v.id.includes(lightboxMemory.id.replace('mem-', '').slice(0, 8))) ||
-              (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase()))
-          );
-          if (matched) {
-            resolved = await mediaStorage.getMediaUrl(matched.id);
-          }
-        }
-        if (isMounted) {
-          if (resolved) {
-            setActiveLightboxVideoUrl(resolved);
-            setMemories((prev) =>
-              prev.map((m) => (m.id === lightboxMemory.id ? { ...m, videoUrl: resolved!, mediaType: 'video' } : m))
-            );
-          }
-          setIsLightboxVideoLoading(false);
-        }
-      } catch {
-        if (isMounted) setIsLightboxVideoLoading(false);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [lightboxMemory]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -269,11 +189,14 @@ export const LittleArchiveSection: React.FC = () => {
       if (memories.length === 0) setLoading(true);
       const list = await memoryArchiveService.getMemories();
       const seenIds = new Set<string>();
+      const seenMedia = new Set<string>();
       const combined: MemoryEntry[] = [];
       for (const m of list) {
         if (isExcludedMemory(m)) continue;
-        if (!seenIds.has(m.id)) {
+        const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
+        if (!seenIds.has(m.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(m.id);
+          seenMedia.add(mediaKey);
           combined.push(m);
         }
       }
@@ -281,8 +204,10 @@ export const LittleArchiveSection: React.FC = () => {
       if (combined.length === 0) {
         for (const gm of giftContent.memories) {
           if (isExcludedMemory(gm)) continue;
-          if (!seenIds.has(gm.id)) {
+          const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
+          if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
             seenIds.add(gm.id);
+            seenMedia.add(mediaKey);
             combined.push({
               id: gm.id,
               contributorId: DEFAULT_PROFILES.solomon.id,
@@ -857,7 +782,7 @@ export const LittleArchiveSection: React.FC = () => {
                   />
 
                   {/* Video Play Icon Overlay */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className={styles.videoPlayBadgeOverlay}>
                       <div className={styles.videoPlayIconCircle}>
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -880,7 +805,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </button>
 
                   {/* Photo or Video count badge */}
-                  {isVideoMoment(mem) ? (
+                  {mem.videoUrl ? (
                     <div className="archive-card-photo-count bg-black/70 text-amber-200 border border-amber-300/40">
                       <Film className="w-2.5 h-2.5 text-amber-300" />
                       <span>Video</span>
@@ -1052,7 +977,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
 
                   {/* Video Play Icon Overlay */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -1061,7 +986,7 @@ export const LittleArchiveSection: React.FC = () => {
                   )}
 
                   {/* Video Clip Badge */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-mono text-amber-200 border border-amber-300/40 flex items-center gap-1.5 z-10">
                       <Film className="w-3 h-3 text-amber-300" />
                       <span>Video Clip</span>
@@ -1169,16 +1094,15 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* 3. Lightbox Modal */}
       {lightboxMemory && (() => {
-        const isVideo = isVideoMoment(lightboxMemory);
         const modalContent = (
           <div
             className={
-              isVideo
+              lightboxMemory.videoUrl
                 ? 'fixed inset-0 flex flex-col justify-between select-none animate-fade-in'
                 : styles.modalBackdrop
             }
             style={
-              isVideo
+              lightboxMemory.videoUrl
                 ? {
                     zIndex: 99999,
                     backgroundColor: '#05020a',
@@ -1189,7 +1113,7 @@ export const LittleArchiveSection: React.FC = () => {
             }
             onClick={handleCloseLightbox}
           >
-          {isVideo ? (
+          {lightboxMemory.videoUrl ? (
             /* Immersive Full-Screen Cinema Video Player */
             <>
               {/* Floating Top Header Bar */}
@@ -1236,39 +1160,22 @@ export const LittleArchiveSection: React.FC = () => {
                 className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                {(activeLightboxVideoUrl || lightboxMemory.videoUrl) ? (
-                  <video
-                    key={lightboxMemory.id + (activeLightboxVideoUrl || lightboxMemory.videoUrl)}
-                    src={activeLightboxVideoUrl || lightboxMemory.videoUrl}
-                    poster={lightboxMemory.photoUrl}
-                    controls
-                    playsInline
-                    autoPlay
-                    preload="auto"
-                    className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const v = e.currentTarget;
-                      if (v.paused) v.play().catch(() => {});
-                      else v.pause();
-                    }}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200">
-                    {isLightboxVideoLoading ? (
-                      <>
-                        <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
-                        <p className="text-sm font-medium">Preparing cinema video player...</p>
-                      </>
-                    ) : (
-                      <>
-                        <Film className="w-12 h-12 text-pink-400/50 mb-3" />
-                        <p className="text-sm font-medium">Video is stored on device</p>
-                        <p className="text-xs text-pink-300/70 mt-1">If this video was recorded on this phone, refresh cache or re-upload to play.</p>
-                      </>
-                    )}
-                  </div>
-                )}
+                <video
+                  key={lightboxMemory.id}
+                  src={lightboxMemory.videoUrl}
+                  poster={lightboxMemory.photoUrl}
+                  controls
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const v = e.currentTarget;
+                    if (v.paused) v.play().catch(() => {});
+                    else v.pause();
+                  }}
+                />
               </div>
 
               {/* Floating Bottom Navigation & Romantic Caption */}
