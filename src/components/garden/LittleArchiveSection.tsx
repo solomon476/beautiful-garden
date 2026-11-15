@@ -18,14 +18,19 @@ import {
   Calendar,
   Film,
   Play,
+  Pause,
   Loader2,
+  Music2,
+  Disc3,
+  Upload,
 } from 'lucide-react';
-import { memoryArchiveService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory, PERMANENTLY_EXCLUDED_MEMORY_IDS } from '../../services/gardenService';
-import type { MemoryEntry, UserProfile } from '../../types/garden';
+import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory, PERMANENTLY_EXCLUDED_MEMORY_IDS } from '../../services/gardenService';
+import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
 import { compressImageWithStats, extractVideoThumbnail, type CompressionResult } from '../../utils/imageCompressor';
 import { mediaStorage } from '../../utils/mediaStorage';
+import { isSpotifyUrl, fetchSpotifyOEmbed } from '../../utils/spotify';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
 import { OnThisDayTimeMachine } from './OnThisDayTimeMachine';
 import { getOnThisDayFlashbacks } from '../../services/onThisDayService';
@@ -34,11 +39,21 @@ import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCap
 import styles from './LittleArchiveSection.module.css';
 
 export const getCleanMemoryCaption = (caption?: string, description?: string): string => {
-  if (caption && caption.trim().length > 0 && !caption.includes('mediaType') && !caption.startsWith('{')) {
+  if (caption && caption.trim().length > 0 && !caption.includes('mediaType') && !caption.trim().startsWith('{')) {
     return caption.trim();
   }
-  if (description && description.trim().length > 0 && !description.includes('mediaType') && !description.startsWith('{')) {
+  if (description && description.trim().length > 0 && !description.includes('mediaType') && !description.trim().startsWith('{')) {
     return description.trim();
+  }
+  for (const raw of [caption, description]) {
+    if (raw && raw.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.note && typeof parsed.note === 'string' && parsed.note.trim()) {
+          return parsed.note.trim();
+        }
+      } catch {}
+    }
   }
   return 'A timeless moment in our story.';
 };
@@ -164,7 +179,6 @@ export const LittleArchiveSection: React.FC = () => {
   const [caption, setCaption] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
-  const [cloudVideoUrl, setCloudVideoUrl] = useState<string | undefined>(undefined);
   const [videoMediaId, setVideoMediaId] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const [videoDuration, setVideoDuration] = useState<number | undefined>(undefined);
@@ -173,6 +187,18 @@ export const LittleArchiveSection: React.FC = () => {
   const [isShared, setIsShared] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Soundtrack / Music Caption state
+  const [musicUrl, setMusicUrl] = useState<string | undefined>(undefined);
+  const [musicTitle, setMusicTitle] = useState<string | undefined>(undefined);
+  const [musicArtist, setMusicArtist] = useState<string | undefined>(undefined);
+  const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+  const [availableSongs, setAvailableSongs] = useState<SongEntry[]>([]);
+  const [customSpotifyUrl, setCustomSpotifyUrl] = useState<string>('');
+  const [isCheckingSpotify, setIsCheckingSpotify] = useState<boolean>(false);
+  const [isPlayingSoundtrack, setIsPlayingSoundtrack] = useState<boolean>(false);
+  const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
+  const musicFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
@@ -338,11 +364,21 @@ export const LittleArchiveSection: React.FC = () => {
   }, [memories]);
 
   const handleCloseLightbox = () => {
+    if (soundtrackAudioRef.current) {
+      soundtrackAudioRef.current.pause();
+    }
+    setIsPlayingSoundtrack(false);
+    setActiveLightboxVideoUrl(null);
     setLightboxMemory(null);
   };
 
   const handleNavigateLightbox = (mem: MemoryEntry) => {
+    if (soundtrackAudioRef.current) {
+      soundtrackAudioRef.current.pause();
+    }
+    setIsPlayingSoundtrack(false);
     soundEngine.playSparkle();
+    setActiveLightboxVideoUrl(mem.videoUrl || null);
     setLightboxMemory(mem);
   };
 
@@ -352,16 +388,79 @@ export const LittleArchiveSection: React.FC = () => {
     setCaption('');
     setPhotoUrl('');
     setVideoUrl(undefined);
-    setCloudVideoUrl(undefined);
     setVideoMediaId(undefined);
     setMediaType('photo');
     setVideoDuration(undefined);
     setIsProcessingMedia(false);
     setCompressionStats(null);
+    setMusicUrl(undefined);
+    setMusicTitle(undefined);
+    setMusicArtist(undefined);
+    setShowMusicPicker(false);
+    setCustomSpotifyUrl('');
     setDateTaken('');
     setIsShared(true);
     setErrorMsg(null);
     setIsAdding(true);
+  };
+
+  const handleOpenMusicPicker = async () => {
+    soundEngine.playSparkle();
+    setShowMusicPicker((prev) => !prev);
+    if (availableSongs.length === 0) {
+      try {
+        const songs = await soundGardenService.getSongs();
+        setAvailableSongs(songs);
+      } catch (e) {
+        console.warn('Could not load songs for picker:', e);
+      }
+    }
+  };
+
+  const handleMusicFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      soundEngine.playSparkle();
+      const cleanName = file.name.replace(/\.[^/.]+$/, '');
+      const dataUrl = await mediaStorage.readFileAsDataUrl(file);
+      setMusicUrl(dataUrl);
+      setMusicTitle(cleanName);
+      setMusicArtist(currentUser.displayName || 'Us');
+      setShowMusicPicker(false);
+    } catch (err) {
+      console.warn('[Archive] Could not read music file:', err);
+    }
+  };
+
+  const handleAttachSpotify = async () => {
+    if (!customSpotifyUrl.trim()) return;
+    setIsCheckingSpotify(true);
+    soundEngine.playSparkle();
+    try {
+      const oembed = await fetchSpotifyOEmbed(customSpotifyUrl.trim());
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle(oembed?.title || 'Spotify Soundtrack');
+      setMusicArtist(oembed?.artist || 'Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } catch {
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle('Spotify Soundtrack');
+      setMusicArtist('Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } finally {
+      setIsCheckingSpotify(false);
+    }
+  };
+
+  const handleSelectSoundGardenSong = (song: SongEntry) => {
+    soundEngine.playSparkle();
+    setMusicUrl(song.audioUrl || song.musicUrl);
+    setMusicTitle(song.title);
+    setMusicArtist(song.artist);
+    setShowMusicPicker(false);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -419,18 +518,6 @@ export const LittleArchiveSection: React.FC = () => {
       setVideoUrl(saved.blobUrl || saved.dataUrl);
       setVideoMediaId(saved.id);
       setMediaType('video');
-
-      // 3. For video clips under 7MB, read base64 data URL for cross-device cloud sync to partner
-      if (file.size <= 7 * 1024 * 1024) {
-        try {
-          const syncDataUrl = await mediaStorage.readFileAsDataUrl(file);
-          setCloudVideoUrl(syncDataUrl);
-        } catch (e) {
-          console.warn('[VideoUpload] Could not generate base64 for cloud sync:', e);
-        }
-      } else {
-        setCloudVideoUrl(undefined);
-      }
 
       // AI Romantic title and caption suggestion if user hasn't typed one or name is machine numbers
       if (!title || isRawMachineName(title) || isRawMachineName(file.name)) {
@@ -494,19 +581,25 @@ export const LittleArchiveSection: React.FC = () => {
         caption: finalCaption,
         description: finalCaption,
         photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
-        videoUrl: cloudVideoUrl || videoUrl,
+        videoUrl: videoUrl,
         videoMediaId,
         mediaType,
+        musicUrl,
+        musicTitle,
+        musicArtist,
         dateTaken: dateTaken || 'Special Day',
         isShared,
       });
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
-      // For immediate local display, preserve the instant blobUrl
+      // For immediate local display, preserve the instant blobUrl and music info
       const localPlayableEntry: MemoryEntry = {
         ...newEntry,
         videoUrl: videoUrl || newEntry.videoUrl,
+        musicUrl: musicUrl || newEntry.musicUrl,
+        musicTitle: musicTitle || newEntry.musicTitle,
+        musicArtist: musicArtist || newEntry.musicArtist,
       };
       setMemories((prev) => [localPlayableEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
       await loadMemories();
@@ -821,6 +914,14 @@ export const LittleArchiveSection: React.FC = () => {
                   >
                     “{getCleanMemoryCaption(mem.caption, mem.description)}” ♡
                   </p>
+
+                  {/* Soundtrack / Music Caption Pill */}
+                  {mem.musicTitle && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-400/25 text-[10px] text-pink-200 font-mono truncate max-w-full my-1">
+                      <Music2 className="w-3 h-3 text-pink-300 shrink-0" />
+                      <span className="truncate">{mem.musicTitle}</span>
+                    </div>
+                  )}
 
                   {/* Date */}
                   <div className="archive-card-date">
@@ -1251,6 +1352,84 @@ export const LittleArchiveSection: React.FC = () => {
                 </p>
               )}
 
+              {/* Attached Soundtrack / Music Player Bar */}
+              {lightboxMemory.musicUrl && (
+                <div className="w-full my-2.5">
+                  {isSpotifyUrl(lightboxMemory.musicUrl) ? (
+                    <a
+                      href={lightboxMemory.musicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-xs text-white hover:bg-emerald-500/25 transition-all shadow-md"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                          <Disc3 className="w-4 h-4 text-emerald-300" />
+                        </div>
+                        <div className="truncate">
+                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Spotify Soundtrack'}</span>
+                          <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Open in Spotify'}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 shrink-0">
+                        Open Spotify ↗
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="flex items-center justify-between p-2.5 rounded-2xl bg-pink-500/15 border border-pink-400/30 text-xs text-white shadow-md">
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className={`w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0 ${isPlayingSoundtrack ? 'ring-2 ring-pink-400/60' : ''}`}>
+                          <Disc3 className={`w-4 h-4 text-pink-300 ${isPlayingSoundtrack ? 'animate-spin' : ''}`} />
+                        </div>
+                        <div className="truncate">
+                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack of this moment'}</span>
+                          <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Soundtrack Caption'}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundEngine.playSparkle();
+                          if (soundtrackAudioRef.current) {
+                            if (isPlayingSoundtrack) {
+                              soundtrackAudioRef.current.pause();
+                              setIsPlayingSoundtrack(false);
+                            } else {
+                              soundtrackAudioRef.current.play().catch(() => {});
+                              setIsPlayingSoundtrack(true);
+                            }
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                      >
+                        {isPlayingSoundtrack ? (
+                          <>
+                            <Pause className="w-3.5 h-3.5 fill-white" />
+                            <span>Pause</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-white" />
+                            <span>Play Music ♫</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Hidden audio element for soundtrack playback */}
+              {lightboxMemory.musicUrl && !isSpotifyUrl(lightboxMemory.musicUrl) && (
+                <audio
+                  ref={soundtrackAudioRef}
+                  src={lightboxMemory.musicUrl}
+                  onEnded={() => setIsPlayingSoundtrack(false)}
+                  onError={() => setIsPlayingSoundtrack(false)}
+                  className="hidden"
+                />
+              )}
+
               {/* Gallery Navigation Controls */}
               {filteredMemories.length > 1 && (
                 <div className={styles.lightboxNavRow}>
@@ -1364,6 +1543,17 @@ export const LittleArchiveSection: React.FC = () => {
                 <Film className="w-4 h-4" />
                 <span>Upload Video 🎬</span>
               </button>
+
+              <button
+                type="button"
+                onClick={handleOpenMusicPicker}
+                className={`${styles.uploadChoiceBtn} ${
+                  musicUrl || showMusicPicker ? styles.uploadChoiceBtnActive : ''
+                }`}
+              >
+                <Music2 className="w-4 h-4 text-pink-300" />
+                <span>Soundtrack 🎵</span>
+              </button>
             </div>
 
             <input
@@ -1381,6 +1571,119 @@ export const LittleArchiveSection: React.FC = () => {
               className="hidden"
               onChange={handleVideoUpload}
             />
+
+            <input
+              ref={musicFileInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={handleMusicFileUpload}
+            />
+
+            {/* Music / Soundtrack Picker Panel */}
+            {showMusicPicker && (
+              <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-pink-400/30 space-y-3 animate-fade-in text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-pink-200 flex items-center gap-1.5">
+                    <Music2 className="w-4 h-4 text-pink-300" />
+                    <span>Pair this Memory with Music 🎵</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMusicPicker(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-rose-500 text-white flex items-center justify-center transition-all cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => musicFileInputRef.current?.click()}
+                    className="p-2.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 text-white flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 text-center font-medium"
+                  >
+                    <Upload className="w-4 h-4 text-pink-300 shrink-0" />
+                    <span className="truncate">Upload Song from Phone ♫</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="url"
+                      value={customSpotifyUrl}
+                      onChange={(e) => setCustomSpotifyUrl(e.target.value)}
+                      placeholder="Paste Spotify track link..."
+                      className="flex-1 bg-black/40 border border-white/15 rounded-xl px-2.5 py-2 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-emerald-400"
+                    />
+                    <button
+                      type="button"
+                      disabled={isCheckingSpotify || !customSpotifyUrl.trim()}
+                      onClick={handleAttachSpotify}
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-medium cursor-pointer shrink-0 transition-all text-xs"
+                    >
+                      {isCheckingSpotify ? '...' : 'Attach'}
+                    </button>
+                  </div>
+                </div>
+
+                {availableSongs.length > 0 && (
+                  <div className="pt-2 border-t border-white/10 space-y-1.5">
+                    <div className="text-[11px] font-mono text-pink-200/70">Or choose from Sound Garden:</div>
+                    <div className="max-h-36 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                      {availableSongs.map((song) => (
+                        <div
+                          key={song.id}
+                          onClick={() => handleSelectSoundGardenSong(song)}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-pink-500/20 border border-white/10 hover:border-pink-400/40 cursor-pointer transition-all"
+                        >
+                          <div className="truncate pr-2">
+                            <span className="font-medium text-white truncate block">{song.title}</span>
+                            <span className="text-[10px] text-pink-200/60 truncate block">{song.artist}</span>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 shrink-0">
+                            Select ♫
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Soundtrack Attached Preview Pill */}
+            {musicUrl && (
+              <div className="p-3 rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-between text-xs text-pink-200 animate-fade-in shadow-sm">
+                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0">
+                    <Disc3 className="w-4 h-4 text-pink-300 animate-spin" />
+                  </div>
+                  <div className="truncate">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-white truncate">{musicTitle || 'Attached Soundtrack'}</span>
+                      {isSpotifyUrl(musicUrl) && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 font-mono">
+                          Spotify
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-pink-300/70 truncate block">{musicArtist || 'Soundtrack of this moment'}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playSparkle();
+                    setMusicUrl(undefined);
+                    setMusicTitle(undefined);
+                    setMusicArtist(undefined);
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-slate-300 hover:text-rose-300 hover:bg-rose-500/20 cursor-pointer shrink-0 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
 
             {/* Processing Video Spinner */}
             {isProcessingMedia && (

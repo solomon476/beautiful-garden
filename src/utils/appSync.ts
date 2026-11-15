@@ -3,7 +3,7 @@
  * Ensures standalone mobile PWA clients can force-refresh and purge stale service worker caches.
  */
 
-export const CURRENT_APP_VERSION = '5.16.0';
+export const CURRENT_APP_VERSION = '5.17.0';
 
 export async function forceAppSync(): Promise<void> {
   console.log('[AppSync] Initiating force app sync & cache clear...');

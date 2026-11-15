@@ -937,14 +937,14 @@ export const PERMANENTLY_EXCLUDED_MEMORY_IDS = new Set<string>([
   'mem-1794412389282-703c',
   'mem-1794420983599-qc3y',
   'mem-1794736195595-u2p8',
+  'mem-1794739499714-yd98',
+  'mem-1794739598819-589t',
 ]);
 
 export const isExcludedMemory = (m?: { id?: string; title?: string; photoUrl?: string; description?: string; caption?: string }): boolean => {
   if (!m) return true;
   if (m.id && PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id)) return true;
-  if (m.title && (m.title.trim().toLowerCase().includes('night vibes & warm hearts') || m.title.trim().includes('65392'))) return true;
-  if (m.description && m.description.includes('mediaType')) return true;
-  if (m.caption && m.caption.includes('mediaType')) return true;
+  if (m.title && m.title.trim().includes('65392')) return true;
   if (m.title && m.title.trim().toLowerCase().includes('signature noella energy')) return true;
   if (m.photoUrl && (m.photoUrl.includes('photo-balcony.jpg') || m.photoUrl.includes('photo-balcony-peace.jpg'))) return true;
   return false;
@@ -998,18 +998,54 @@ export const memoryArchiveService = {
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
     const rawLocalAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    const localAll = rawLocalAll.map((m) => {
-      // Seed / sample gift memories are ALWAYS pure standalone photos
-      if (isSampleMemory(m.id)) {
+    const localAll = rawLocalAll
+      .filter((m) => !PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id))
+      .map((m) => {
+        let caption = m.caption || '';
+        let description = m.description || '';
+        let musicUrl = m.musicUrl;
+        let musicTitle = m.musicTitle;
+        let musicArtist = m.musicArtist;
+
+        if (caption.trim().startsWith('{')) {
+          try {
+            const p = JSON.parse(caption);
+            caption = p.note || '';
+            if (p.musicUrl && !musicUrl) musicUrl = p.musicUrl;
+            if (p.musicTitle && !musicTitle) musicTitle = p.musicTitle;
+            if (p.musicArtist && !musicArtist) musicArtist = p.musicArtist;
+          } catch {}
+        }
+        if (description.trim().startsWith('{')) {
+          try {
+            const p = JSON.parse(description);
+            description = p.note || '';
+            if (p.musicUrl && !musicUrl) musicUrl = p.musicUrl;
+            if (p.musicTitle && !musicTitle) musicTitle = p.musicTitle;
+            if (p.musicArtist && !musicArtist) musicArtist = p.musicArtist;
+          } catch {}
+        }
+
+        // Seed / sample gift memories are ALWAYS pure standalone photos
+        if (isSampleMemory(m.id)) {
+          return {
+            ...m,
+            caption,
+            description,
+            mediaType: 'photo' as const,
+            videoUrl: undefined,
+            videoMediaId: undefined,
+          };
+        }
         return {
           ...m,
-          mediaType: 'photo' as const,
-          videoUrl: undefined,
-          videoMediaId: undefined,
+          caption,
+          description,
+          musicUrl,
+          musicTitle,
+          musicArtist,
         };
-      }
-      return m;
-    });
+      });
     if (JSON.stringify(rawLocalAll) !== JSON.stringify(localAll)) {
       saveLocal(STORAGE_KEYS.MEMORIES, localAll);
     }
@@ -1033,8 +1069,11 @@ export const memoryArchiveService = {
             let videoMediaId: string | undefined = undefined;
             let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
             let description: string = d.description || '';
+            let musicUrl: string | undefined = undefined;
+            let musicTitle: string | undefined = undefined;
+            let musicArtist: string | undefined = undefined;
 
-            // Check if description is packed JSON containing video metadata
+            // Check if description is packed JSON containing video or music metadata
             if (
               description &&
               typeof description === 'string' &&
@@ -1053,7 +1092,24 @@ export const memoryArchiveService = {
                 if (parsed.mediaType) {
                   mediaType = parsed.mediaType;
                 }
+                if (parsed.musicUrl) {
+                  musicUrl = parsed.musicUrl;
+                }
+                if (parsed.musicTitle) {
+                  musicTitle = parsed.musicTitle;
+                }
+                if (parsed.musicArtist) {
+                  musicArtist = parsed.musicArtist;
+                }
                 description = parsed.note || '';
+              } catch {}
+            }
+
+            let caption: string = d.caption || '';
+            if (caption.trim().startsWith('{')) {
+              try {
+                const parsedCap = JSON.parse(caption);
+                caption = parsedCap.note || '';
               } catch {}
             }
 
@@ -1071,12 +1127,15 @@ export const memoryArchiveService = {
               contributorId: d.contributor_id,
               contributorName: d.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
               title: d.title,
-              caption: d.caption,
+              caption: caption,
               description: description,
               photoUrl: d.photo_url,
               videoUrl: videoUrl,
               videoMediaId: videoMediaId,
               mediaType: mediaType,
+              musicUrl: musicUrl,
+              musicTitle: musicTitle,
+              musicArtist: musicArtist,
               dateTaken: d.date_taken,
               isShared: d.is_shared,
               createdAt: d.created_at,
@@ -1159,6 +1218,9 @@ export const memoryArchiveService = {
             videoUrl: mediaType === 'video' ? videoUrl : undefined,
             videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
             mediaType,
+            musicUrl: c.musicUrl || l?.musicUrl,
+            musicTitle: c.musicTitle || l?.musicTitle,
+            musicArtist: c.musicArtist || l?.musicArtist,
           };
         }));
 
@@ -1223,6 +1285,9 @@ export const memoryArchiveService = {
                 videoUrl: mediaType === 'video' ? videoUrl : undefined,
                 videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
                 mediaType,
+                musicUrl: l.musicUrl,
+                musicTitle: l.musicTitle,
+                musicArtist: l.musicArtist,
               };
             })
         );
@@ -1296,6 +1361,9 @@ export const memoryArchiveService = {
           videoUrl: mediaType === 'video' ? videoUrl : undefined,
           videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
           mediaType,
+          musicUrl: l.musicUrl,
+          musicTitle: l.musicTitle,
+          musicArtist: l.musicArtist,
         };
       })
     );
@@ -1309,6 +1377,9 @@ export const memoryArchiveService = {
     videoUrl?: string;
     videoMediaId?: string;
     mediaType?: 'photo' | 'video';
+    musicUrl?: string;
+    musicTitle?: string;
+    musicArtist?: string;
     dateTaken?: string;
     isShared?: boolean;
   }): Promise<MemoryEntry> {
@@ -1339,6 +1410,9 @@ export const memoryArchiveService = {
       videoUrl: memory.videoUrl,
       videoMediaId: memory.videoMediaId,
       mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
+      musicUrl: memory.musicUrl,
+      musicTitle: memory.musicTitle,
+      musicArtist: memory.musicArtist,
       dateTaken: memory.dateTaken?.trim() || 'Keepsake Date',
       isShared: memory.isShared !== undefined ? memory.isShared : true,
       createdAt: new Date().toISOString(),
@@ -1350,13 +1424,20 @@ export const memoryArchiveService = {
         if (
           entry.mediaType === 'video' ||
           entry.videoUrl ||
-          entry.videoMediaId
+          entry.videoMediaId ||
+          entry.musicUrl ||
+          entry.musicTitle
         ) {
-          // If videoUrl is a local blob: URL, do not sync the dead blob URL to cloud!
-          // Only sync remote URLs or base64 data URLs to cloud
+          // Never store giant base64 video URLs (> 50KB) in Supabase description!
           const syncableVideoUrl =
-            entry.videoUrl && !entry.videoUrl.startsWith('blob:')
+            entry.videoUrl && !entry.videoUrl.startsWith('blob:') && entry.videoUrl.length < 50000
               ? entry.videoUrl
+              : undefined;
+
+          // Similarly keep syncableMusicUrl sane
+          const syncableMusicUrl =
+            entry.musicUrl && (!entry.musicUrl.startsWith('data:') || entry.musicUrl.length < 100000)
+              ? entry.musicUrl
               : undefined;
 
           descriptionToSave = JSON.stringify({
@@ -1364,6 +1445,9 @@ export const memoryArchiveService = {
             videoUrl: syncableVideoUrl,
             videoMediaId: entry.videoMediaId,
             mediaType: entry.mediaType,
+            musicUrl: syncableMusicUrl,
+            musicTitle: entry.musicTitle,
+            musicArtist: entry.musicArtist,
           });
         }
 
