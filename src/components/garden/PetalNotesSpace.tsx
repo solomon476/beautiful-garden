@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Plus,
-  Trash2,
   Lock,
   Globe2,
   X,
@@ -97,14 +96,20 @@ export const PetalNotesSpace: React.FC = () => {
     }
   };
 
-  const handleDelete = async (p: PetalNoteEntry) => {
-    if (p.authorId !== currentUser.id) return;
-    if (window.confirm('Delete this petal note?')) {
-      soundEngine.playSparkle();
-      setPetals((prev) => prev.filter((item) => item.id !== p.id));
-      if (activePetal?.id === p.id) setActivePetal(null);
-      await petalNotesService.deletePetal(p.id);
-      await loadPetals();
+  const handleTogglePrivacy = async (petal: PetalNoteEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundEngine.playSparkle();
+    const updatedShared = !petal.isShared;
+    setPetals((prev) =>
+      prev.map((p) => (p.id === petal.id ? { ...p, isShared: updatedShared } : p))
+    );
+    try {
+      await petalNotesService.togglePetalPrivacy(petal.id);
+    } catch (err) {
+      console.warn('Could not toggle petal privacy:', err);
+      setPetals((prev) =>
+        prev.map((p) => (p.id === petal.id ? { ...p, isShared: petal.isShared } : p))
+      );
     }
   };
 
@@ -397,14 +402,17 @@ export const PetalNotesSpace: React.FC = () => {
                       >
                         <span>{petal.emoji}</span>
                       </div>
-                      <span
+                      <button
+                        type="button"
+                        onClick={(e) => handleTogglePrivacy(petal, e)}
                         className={`${styles.privacyBadge} ${
                           petal.isShared ? styles.privacyBadgeShared : styles.privacyBadgePrivate
                         }`}
+                        title={petal.isShared ? 'Tap to make private' : 'Tap to share with your love'}
                       >
                         {petal.isShared ? <Globe2 className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                         <span>{petal.isShared ? 'Shared 💌' : 'Private 🔒'}</span>
-                      </span>
+                      </button>
                     </div>
 
                     <p className={styles.petalBody}>
@@ -416,20 +424,6 @@ export const PetalNotesSpace: React.FC = () => {
                     <span className={styles.petalAuthorSignature}>
                       From: {isMine ? 'You 🌸' : (petal.authorName || partner.displayName) + ' ✨'}
                     </span>
-                    {isMine && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(petal);
-                        }}
-                        className={styles.deleteBtn}
-                        title="Delete petal"
-                        aria-label="Delete petal"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
               );

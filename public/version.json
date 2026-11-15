@@ -1,5 +1,5 @@
 {
-  "version": "5.21.0",
-  "buildTime": "2026-11-15T13:10:00Z",
-  "release": "revert-v5.20.0-restore-v5.19.0-state"
+  "version": "5.22.0",
+  "buildTime": "2026-11-15T13:25:00Z",
+  "release": "restore-archive-videos-preserve-private-privacy-toggle-v5.22.0"
 }

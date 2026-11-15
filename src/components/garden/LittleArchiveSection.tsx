@@ -24,7 +24,6 @@ import {
   Play,
   Pause,
   Loader2,
-  Trash2,
 } from 'lucide-react';
 import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
@@ -334,21 +333,6 @@ export const LittleArchiveSection: React.FC = () => {
     setIsPlayingSoundtrack(false);
     soundEngine.playSparkle();
     setLightboxMemory(mem);
-  };
-
-  const handleDeleteMemory = async (mem: MemoryEntry) => {
-    const memTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
-    if (!window.confirm(`Are you sure you want to remove "${memTitle}" from the archive?`)) {
-      return;
-    }
-    soundEngine.playChime(392, 0.8, 0.08);
-    handleCloseLightbox();
-    setMemories((prev) => prev.filter((m) => m.id !== mem.id));
-    try {
-      await memoryArchiveService.deleteMemory(mem.id, mem);
-    } catch (err) {
-      console.warn('Delete memory error:', err);
-    }
   };
 
   // Video resolution hook: guarantees live playable Blob URLs from IndexedDB for any video keepsake
@@ -1287,18 +1271,6 @@ export const LittleArchiveSection: React.FC = () => {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteMemory(lightboxMemory);
-                    }}
-                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
-                    title="Delete this keepsake"
-                    aria-label="Delete video"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={handleCloseLightbox}
                     className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
                     aria-label="Close video view"
@@ -1510,18 +1482,6 @@ export const LittleArchiveSection: React.FC = () => {
                   </h3>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteMemory(lightboxMemory);
-                    }}
-                    className={styles.modalCloseBtn}
-                    title="Delete this keepsake"
-                    aria-label="Delete photo"
-                  >
-                    <Trash2 className="w-4 h-4 text-rose-300" />
-                  </button>
                   <button
                     type="button"
                     onClick={handleCloseLightbox}

@@ -86,7 +86,32 @@ export const DEFAULT_INITIAL_SHELF: ShelfEntry[] = [
   },
 ];
 
-export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [];
+export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [
+  {
+    id: 'mem-seed-tree-sunset',
+    contributorId: DEFAULT_PROFILES.solomon.id,
+    contributorName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'Sunset Serenade',
+    caption: 'A quiet golden evening under the shelter of the trees.',
+    description: 'A quiet golden evening under the shelter of the trees.',
+    photoUrl: '/assets/garden/tree_sunset.jpg',
+    dateTaken: 'Nov 2026',
+    isShared: true,
+    createdAt: '2026-11-15T00:00:00.000Z',
+  },
+  {
+    id: 'mem-seed-garden-flower',
+    contributorId: DEFAULT_PROFILES.solomon.id,
+    contributorName: DEFAULT_PROFILES.solomon.displayName,
+    title: 'First Walk in the Garden',
+    caption: 'The moment everything clicked and time stood still.',
+    description: 'The moment everything clicked and time stood still.',
+    photoUrl: '/assets/dreamy_night_garden.jpg',
+    dateTaken: 'Nov 2026',
+    isShared: true,
+    createdAt: '2026-11-15T00:00:00.000Z',
+  },
+];
 
 export const DEFAULT_INITIAL_PETALS: PetalNoteEntry[] = [
   {
@@ -930,7 +955,7 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
-const CLEANUP_KEY_V519 = 'pt_cleanup_memories_v519';
+const CLEANUP_KEY_V522 = 'pt_cleanup_memories_v522';
 
 function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
   return entries.filter(
@@ -940,9 +965,14 @@ function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
       !m.id.startsWith('mem-179441238') &&
       m.id !== 'mem-fresh-private-now' &&
       m.id !== 'mem-private-solomon-1' &&
-      !(m.caption && m.caption.includes('"mediaType"')) &&
-      !(m.title === 'Night Vibes & Warm Hearts' && (!m.videoUrl || m.videoUrl.startsWith('blob:')))
-  );
+      !(m.caption && m.caption.includes('"mediaType"'))
+  ).map((m) => {
+    // Strictly preserve Noella's private photo privacy
+    if (m.id === 'mem-1793965972650-47nv' && m.isShared) {
+      return { ...m, isShared: false };
+    }
+    return m;
+  });
 }
 
 export const memoryArchiveService = {
@@ -954,12 +984,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V519)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V522)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V519, 'true');
+        localStorage.setItem(CLEANUP_KEY_V522, 'true');
       } catch {}
     }
 
@@ -974,12 +1004,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V519)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V522)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V519, 'true');
+        localStorage.setItem(CLEANUP_KEY_V522, 'true');
       } catch {}
     }
 
@@ -1394,6 +1424,32 @@ export const memoryArchiveService = {
     }
   },
 
+  async toggleMemoryPrivacy(id: string): Promise<MemoryEntry> {
+    const local = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const idx = local.findIndex((m) => m.id === id);
+    const target = idx !== -1 ? local[idx] : null;
+    const newShared = target ? !target.isShared : true;
+
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('garden_memories').update({ is_shared: newShared }).eq('id', id);
+      } catch (err) {
+        console.warn('Supabase toggle memory privacy error:', err);
+      }
+    }
+
+    if (target) {
+      target.isShared = newShared;
+      local[idx] = target;
+      saveLocal(STORAGE_KEYS.MEMORIES, local);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('garden-memories-updated'));
+      }
+      return target;
+    }
+    throw new Error('Memory not found');
+  },
+
   // -------------------------------------------------------------
   // Private Garden Recycle Bin Methods (Private per user)
   // -------------------------------------------------------------
@@ -1642,6 +1698,49 @@ export const petalNotesService = {
       throw new Error('Unauthorized: You can only remove your own petal notes.');
     }
     saveLocal(STORAGE_KEYS.PETALS, all.filter((p) => p.id !== id));
+  },
+
+  async togglePetalPrivacy(id: string): Promise<PetalNoteEntry> {
+    const user = authService.getCurrentUser();
+    const partner = authService.getPartner();
+    const all = loadLocal<PetalNoteEntry[]>(STORAGE_KEYS.PETALS, DEFAULT_INITIAL_PETALS);
+    const targetIndex = all.findIndex((p) => p.id === id);
+    let target = targetIndex !== -1 ? all[targetIndex] : null;
+
+    const newShared = target ? !target.isShared : true;
+
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('petal_notes')
+          .update({ is_shared: newShared })
+          .eq('id', id);
+      } catch (err) {
+        console.warn('Supabase toggle petal privacy error:', err);
+      }
+    }
+
+    if (target) {
+      target = { ...target, isShared: newShared };
+      all[targetIndex] = target;
+      saveLocal(STORAGE_KEYS.PETALS, all);
+      return target;
+    }
+
+    const entry: PetalNoteEntry = {
+      id,
+      authorId: user.id,
+      authorName: user.displayName,
+      recipientId: partner.id,
+      body: '',
+      color: '#f472b6',
+      emoji: '🌸',
+      isShared: newShared,
+      createdAt: new Date().toISOString(),
+    };
+    all.unshift(entry);
+    saveLocal(STORAGE_KEYS.PETALS, all);
+    return entry;
   },
 };
 
