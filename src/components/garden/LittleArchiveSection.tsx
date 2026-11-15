@@ -1032,14 +1032,14 @@ export const LittleArchiveSection: React.FC = () => {
           {isVideo ? (
             /* Immersive Full-Screen Cinema Video Player */
             <>
-              {/* Floating Top Header Bar */}
+              {/* Sleek Floating Top Header Bar */}
               <div
-                className="relative z-30 flex items-center justify-between p-3 sm:p-5"
-                style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
+                className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-3.5 sm:p-5 pt-safe select-none"
+                style={{ background: 'linear-gradient(180deg, rgba(5,2,10,0.92) 0%, rgba(5,2,10,0.5) 60%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                  <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
+                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 flex items-center justify-center shrink-0 aspect-square shadow-sm">
                     <Film className="w-4 h-4" />
                   </span>
                   <div className="min-w-0">
@@ -1063,17 +1063,17 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCloseLightbox}
-                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-rose-500 border border-white/30 text-white backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-xl cursor-pointer shrink-0 aspect-square"
                     aria-label="Close video view"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </button>
                 </div>
               </div>
 
               {/* Full-Screen Center Video Stage */}
               <div
-                className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
+                className="absolute inset-0 w-full h-full flex items-center justify-center p-0 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {(activeLightboxVideoUrl || lightboxMemory.videoUrl) ? (
@@ -1085,7 +1085,7 @@ export const LittleArchiveSection: React.FC = () => {
                     playsInline
                     autoPlay
                     preload="auto"
-                    className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+                    className="w-full h-full max-h-screen object-contain mx-auto shadow-2xl cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       const v = e.currentTarget;
@@ -1094,7 +1094,7 @@ export const LittleArchiveSection: React.FC = () => {
                     }}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200">
+                  <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200 z-10">
                     {isLightboxVideoLoading ? (
                       <>
                         <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
@@ -1139,8 +1139,8 @@ export const LittleArchiveSection: React.FC = () => {
 
               {/* Floating Bottom Navigation & Romantic Caption */}
               <div
-                className="relative z-30 p-3 sm:p-5 space-y-2.5"
-                style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
+                className="absolute bottom-0 left-0 right-0 z-40 p-3.5 sm:p-5 pb-safe space-y-2 select-none"
+                style={{ background: 'linear-gradient(0deg, rgba(5,2,10,0.95) 0%, rgba(5,2,10,0.5) 70%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {lightboxMemory.caption && (
