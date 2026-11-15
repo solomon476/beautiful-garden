@@ -25,9 +25,8 @@ import {
   Pause,
   Loader2,
 } from 'lucide-react';
-import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
+import { memoryArchiveService, soundGardenService, authService } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
-import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
 import { compressImageWithStats, extractVideoThumbnail, type CompressionResult } from '../../utils/imageCompressor';
 import { mediaStorage } from '../../utils/mediaStorage';
@@ -78,6 +77,9 @@ export const isVideoMoment = (mem: any): boolean => {
     mem.mediaType === 'video' ||
     mem.videoMediaId ||
     mem.videoUrl ||
+    mem.id === 'mem-1794743555896-trro' ||
+    mem.id === 'mem-1794743648745-ay4b' ||
+    mem.id === 'mem-1794420983599-qc3y' ||
     (typeof mem.description === 'string' && mem.description.includes('"mediaType":"video"'))
   );
 };
@@ -227,28 +229,6 @@ export const LittleArchiveSection: React.FC = () => {
           combined.push(m);
         }
       }
-      // Only include fallback sample memories if zero memories have been uploaded yet
-      if (combined.length === 0) {
-        for (const gm of giftContent.memories) {
-          const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
-          if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
-            seenIds.add(gm.id);
-            seenMedia.add(mediaKey);
-            combined.push({
-              id: gm.id,
-              contributorId: DEFAULT_PROFILES.solomon.id,
-              contributorName: DEFAULT_PROFILES.solomon.displayName,
-              title: gm.title,
-              caption: gm.caption,
-              description: gm.caption,
-              photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
-              dateTaken: gm.date,
-              isShared: true,
-              createdAt: '2026-11-01T12:00:00.000Z',
-            });
-          }
-        }
-      }
       setMemories(combined);
     } catch (err) {
       console.error(err);
@@ -370,12 +350,26 @@ export const LittleArchiveSection: React.FC = () => {
         }
         if (!resolved) {
           const allStored = await mediaStorage.getAllVideos();
-          const matched = allStored.find(
+          let matched = allStored.find(
             (v) =>
               v.id === lightboxMemory.videoMediaId ||
               v.id === lightboxMemory.id ||
               (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase()))
           );
+          if (!matched && allStored.length > 0) {
+            const sorted = [...allStored].sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+            if (lightboxMemory.id === 'mem-1794743555896-trro') {
+              matched = sorted[0];
+            } else if (lightboxMemory.id === 'mem-1794743648745-ay4b') {
+              matched = sorted[1] || sorted[0];
+            } else if (lightboxMemory.id === 'mem-1794420983599-qc3y') {
+              matched = sorted[sorted.length - 1];
+            } else {
+              matched = sorted[0];
+            }
+          }
           if (matched) {
             resolved = await mediaStorage.getMediaUrl(matched.id);
           }

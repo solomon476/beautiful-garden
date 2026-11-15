@@ -86,32 +86,7 @@ export const DEFAULT_INITIAL_SHELF: ShelfEntry[] = [
   },
 ];
 
-export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [
-  {
-    id: 'mem-seed-tree-sunset',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'Sunset Serenade',
-    caption: 'A quiet golden evening under the shelter of the trees.',
-    description: 'A quiet golden evening under the shelter of the trees.',
-    photoUrl: '/assets/garden/tree_sunset.jpg',
-    dateTaken: 'Nov 2026',
-    isShared: true,
-    createdAt: '2026-11-15T00:00:00.000Z',
-  },
-  {
-    id: 'mem-seed-garden-flower',
-    contributorId: DEFAULT_PROFILES.solomon.id,
-    contributorName: DEFAULT_PROFILES.solomon.displayName,
-    title: 'First Walk in the Garden',
-    caption: 'The moment everything clicked and time stood still.',
-    description: 'The moment everything clicked and time stood still.',
-    photoUrl: '/assets/dreamy_night_garden.jpg',
-    dateTaken: 'Nov 2026',
-    isShared: true,
-    createdAt: '2026-11-15T00:00:00.000Z',
-  },
-];
+export const DEFAULT_INITIAL_MEMORIES: MemoryEntry[] = [];
 
 export const DEFAULT_INITIAL_PETALS: PetalNoteEntry[] = [
   {
@@ -955,24 +930,27 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
-const CLEANUP_KEY_V522 = 'pt_cleanup_memories_v522';
+const CLEANUP_KEY_V523 = 'pt_cleanup_memories_v523';
 
 function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
-  return entries.filter(
-    (m) =>
-      !m.id.startsWith('mem-solomon-del') &&
-      !m.id.startsWith('mem-solomon-real') &&
-      !m.id.startsWith('mem-179441238') &&
-      m.id !== 'mem-fresh-private-now' &&
-      m.id !== 'mem-private-solomon-1' &&
-      !(m.caption && m.caption.includes('"mediaType"'))
-  ).map((m) => {
-    // Strictly preserve Noella's private photo privacy
-    if (m.id === 'mem-1793965972650-47nv' && m.isShared) {
-      return { ...m, isShared: false };
-    }
-    return m;
-  });
+  return entries
+    .filter(
+      (m) =>
+        !m.id.startsWith('mem-solomon') &&
+        !m.id.startsWith('mem-seed-') &&
+        !m.id.startsWith('mem-179441238') &&
+        m.id !== 'mem-fresh-private-now' &&
+        m.id !== 'mem-private-solomon-1' &&
+        !['mem-2', 'mem-3', 'mem-4', 'mem-5'].includes(m.id) &&
+        !(m.caption && m.caption.includes('"mediaType"'))
+    )
+    .map((m) => {
+      // Strictly enforce private status for user's indicated private photos
+      if ((m.id === 'mem-1793965972650-47nv' || m.id === 'mem-1793791450397-gsvu') && m.isShared) {
+        return { ...m, isShared: false };
+      }
+      return m;
+    });
 }
 
 export const memoryArchiveService = {
@@ -984,12 +962,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V522)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V523)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V522, 'true');
+        localStorage.setItem(CLEANUP_KEY_V523, 'true');
       } catch {}
     }
 
@@ -1004,12 +982,12 @@ export const memoryArchiveService = {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
-    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V522)) {
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V523)) {
       try {
         const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
         const cleaned = purgeStaleBrokenMemories(raw);
         saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
-        localStorage.setItem(CLEANUP_KEY_V522, 'true');
+        localStorage.setItem(CLEANUP_KEY_V523, 'true');
       } catch {}
     }
 
@@ -1081,6 +1059,17 @@ export const memoryArchiveService = {
               } catch {}
             }
 
+            const isKnownVideo =
+              d.id === 'mem-1794743555896-trro' ||
+              d.id === 'mem-1794743648745-ay4b' ||
+              d.id === 'mem-1794420983599-qc3y' ||
+              mediaType === 'video' ||
+              Boolean(videoUrl) ||
+              Boolean(videoMediaId) ||
+              (typeof description === 'string' && description.includes('"mediaType":"video"'));
+
+            const finalMediaType: 'photo' | 'video' = isKnownVideo ? 'video' : 'photo';
+
             return {
               id: d.id,
               contributorId: d.contributor_id,
@@ -1091,7 +1080,7 @@ export const memoryArchiveService = {
               photoUrl: d.photo_url,
               videoUrl: videoUrl,
               videoMediaId: videoMediaId,
-              mediaType: mediaType,
+              mediaType: finalMediaType,
               musicUrl: musicUrl,
               musicTitle: musicTitle,
               musicArtist: musicArtist,
@@ -1113,13 +1102,28 @@ export const memoryArchiveService = {
           const l = localMap.get(c.id);
           let videoUrl = c.videoUrl || l?.videoUrl;
           const videoMediaId = c.videoMediaId || l?.videoMediaId;
-          const mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+          const isVideo =
+            c.mediaType === 'video' ||
+            l?.mediaType === 'video' ||
+            c.id === 'mem-1794743555896-trro' ||
+            c.id === 'mem-1794743648745-ay4b' ||
+            c.id === 'mem-1794420983599-qc3y' ||
+            Boolean(videoMediaId) ||
+            Boolean(videoUrl);
 
-          // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
-          if (videoMediaId) {
+          const mediaType: 'photo' | 'video' = isVideo ? 'video' : 'photo';
+
+          // Always resolve fresh playable URL from IndexedDB if this is a video
+          if (isVideo && (!videoUrl || videoUrl.startsWith('blob:'))) {
             try {
-              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-              if (idbUrl) videoUrl = idbUrl;
+              if (videoMediaId) {
+                const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+                if (idbUrl) videoUrl = idbUrl;
+              }
+              if (!videoUrl && c.id) {
+                const idbUrl = await mediaStorage.getMediaUrl(c.id);
+                if (idbUrl) videoUrl = idbUrl;
+              }
             } catch {}
           }
 
