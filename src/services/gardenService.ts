@@ -930,6 +930,21 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
+const CLEANUP_KEY_V519 = 'pt_cleanup_memories_v519';
+
+function purgeStaleBrokenMemories(entries: MemoryEntry[]): MemoryEntry[] {
+  return entries.filter(
+    (m) =>
+      !m.id.startsWith('mem-solomon-del') &&
+      !m.id.startsWith('mem-solomon-real') &&
+      !m.id.startsWith('mem-179441238') &&
+      m.id !== 'mem-fresh-private-now' &&
+      m.id !== 'mem-private-solomon-1' &&
+      !(m.caption && m.caption.includes('"mediaType"')) &&
+      !(m.title === 'Night Vibes & Warm Hearts' && (!m.videoUrl || m.videoUrl.startsWith('blob:')))
+  );
+}
+
 export const memoryArchiveService = {
   getDeletedMemoryIds(): string[] {
     return loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
@@ -938,6 +953,16 @@ export const memoryArchiveService = {
   getCachedMemories(): MemoryEntry[] {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
+
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V519)) {
+      try {
+        const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+        const cleaned = purgeStaleBrokenMemories(raw);
+        saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
+        localStorage.setItem(CLEANUP_KEY_V519, 'true');
+      } catch {}
+    }
+
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     return localAll
@@ -948,6 +973,15 @@ export const memoryArchiveService = {
   async getMemories(): Promise<MemoryEntry[]> {
     const user = authService.getCurrentUser();
     const deletedIds = new Set(this.getDeletedMemoryIds());
+
+    if (typeof window !== 'undefined' && !localStorage.getItem(CLEANUP_KEY_V519)) {
+      try {
+        const raw = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+        const cleaned = purgeStaleBrokenMemories(raw);
+        saveLocal(STORAGE_KEYS.MEMORIES, cleaned);
+        localStorage.setItem(CLEANUP_KEY_V519, 'true');
+      } catch {}
+    }
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
@@ -1082,7 +1116,13 @@ export const memoryArchiveService = {
 
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
         const resolvedLocalEntries = await Promise.all(
-          localVisible.filter((m) => !cloudIds.has(m.id)).map(async (l) => {
+          localVisible
+            .filter((m) => !cloudIds.has(m.id))
+            .filter((l) => {
+              const age = l.createdAt ? Date.now() - new Date(l.createdAt).getTime() : 0;
+              return age > 0 && age < 5 * 60 * 1000;
+            })
+            .map(async (l) => {
             let videoUrl = l.videoUrl;
             if (l.videoMediaId) {
               try {

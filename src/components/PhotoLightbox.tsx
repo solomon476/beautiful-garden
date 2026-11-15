@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 import { authService } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
-import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
+import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
+import { mediaStorage } from '../utils/mediaStorage';
 
 interface PhotoLightboxProps {
   memory: MemoryItem | null;
@@ -44,8 +45,72 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   const [isCoverMode, setIsCoverMode] = useState<boolean>(true);
   const [likeToast, setLikeToast] = useState<string | null>(null);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+
+  const isVideo = isVideoMoment(memory as any);
+
+  useEffect(() => {
+    if (!memory || !isVideo) {
+      setActiveVideoUrl(null);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsVideoLoading(true);
+
+    (async () => {
+      try {
+        let resolved: string | null = null;
+        const memAny = memory as any;
+        if (memAny.videoMediaId) {
+          resolved = await mediaStorage.getMediaUrl(memAny.videoMediaId);
+        }
+        if (!resolved && memory.id) {
+          resolved = await mediaStorage.getMediaUrl(memory.id);
+        }
+        if (!resolved && memory.videoUrl?.startsWith('data:video/')) {
+          const blob = mediaStorage.dataUrlToBlob(memory.videoUrl);
+          resolved = URL.createObjectURL(blob);
+        }
+        if (!resolved && memory.videoUrl && !memory.videoUrl.startsWith('blob:')) {
+          resolved = memory.videoUrl;
+        }
+        if (!resolved) {
+          const allStored = await mediaStorage.getAllVideos();
+          const matched = allStored.find(
+            (v) =>
+              v.id === memAny.videoMediaId ||
+              v.id === memory.id ||
+              (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase()))
+          );
+          if (matched) {
+            resolved = await mediaStorage.getMediaUrl(matched.id);
+          }
+        }
+        if (!resolved && memory.videoUrl) {
+          resolved = memory.videoUrl;
+        }
+
+        if (isMounted) {
+          setActiveVideoUrl(resolved);
+          setIsVideoLoading(false);
+        }
+      } catch {
+        if (isMounted) {
+          setActiveVideoUrl(memory.videoUrl || null);
+          setIsVideoLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [memory, isVideo]);
 
   useEffect(() => {
     if (!memory) return;
@@ -133,7 +198,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   };
 
   // 1. Immersive Full-Screen Cinema Theater View for Videos
-  if (memory.videoUrl) {
+  if (isVideo) {
     const videoContent = (
       <div
         className="fixed inset-0 flex flex-col justify-between select-none animate-fade-in"
@@ -199,22 +264,37 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
           onClick={(e) => e.stopPropagation()}
         >
-          <video
-            key={memory.id}
-            src={memory.videoUrl}
-            poster={memory.photoUrl}
-            controls
-            playsInline
-            autoPlay
-            preload="auto"
-            className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              const v = e.currentTarget;
-              if (v.paused) v.play().catch(() => {});
-              else v.pause();
-            }}
-          />
+          {activeVideoUrl ? (
+            <video
+              key={activeVideoUrl}
+              src={activeVideoUrl}
+              poster={memory.photoUrl}
+              controls
+              playsInline
+              autoPlay
+              preload="auto"
+              className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                const v = e.currentTarget;
+                if (v.paused) v.play().catch(() => {});
+                else v.pause();
+              }}
+            />
+          ) : isVideoLoading ? (
+            <div className="flex flex-col items-center justify-center p-8 text-pink-200">
+              <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
+              <p className="text-sm font-medium">Preparing cinema video player...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6 text-center text-pink-200 max-w-sm mx-auto">
+              <Film className="w-12 h-12 text-pink-400/60 mb-3" />
+              <p className="font-semibold text-white">Video Keepsake</p>
+              <p className="text-xs text-pink-300/80 mt-1 mb-4">
+                Video stored locally on this phone.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Floating Bottom Navigation & Caption Bar */}

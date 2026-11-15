@@ -119,6 +119,83 @@ export const mediaStorage = {
   },
 
   /**
+   * Stores a file or blob in IndexedDB with a specific custom ID
+   */
+  async saveFileWithId(id: string, fileOrBlob: File | Blob, customName?: string): Promise<StoredMediaItem> {
+    const name = customName || (fileOrBlob as File).name || `Garden-File-${id}`;
+    const type = fileOrBlob.type || 'application/octet-stream';
+    const size = fileOrBlob.size || 0;
+
+    let blobUrl = '';
+    if (typeof window !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
+      try {
+        blobUrl = window.URL.createObjectURL(fileOrBlob);
+        this.blobUrlCache.set(id, blobUrl);
+      } catch {}
+    }
+
+    let dataUrl = '';
+    if (size < 1.5 * 1024 * 1024) {
+      try {
+        dataUrl = await this.readFileAsDataUrl(fileOrBlob);
+      } catch {}
+    }
+
+    const item: StoredMediaItem = {
+      id,
+      name,
+      type,
+      size,
+      blob: fileOrBlob,
+      dataUrl: dataUrl || blobUrl,
+      blobUrl: blobUrl || dataUrl,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const db = await openDB();
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(item);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('Could not save to IndexedDB with custom ID', err);
+    }
+
+    return item;
+  },
+
+  /**
+   * Retrieves all stored video items from IndexedDB
+   */
+  async getAllVideos(): Promise<StoredMediaItem[]> {
+    try {
+      const db = await openDB();
+      return new Promise<StoredMediaItem[]>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = () => {
+          const all = (req.result || []) as StoredMediaItem[];
+          const videos = all.filter(
+            (item) =>
+              item.type?.startsWith('video/') ||
+              item.id?.startsWith('media-') ||
+              item.name?.match(/\.(mp4|mov|webm|m4v|3gp|mkv)$/i)
+          );
+          resolve(videos);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    } catch {
+      return [];
+    }
+  },
+
+  /**
    * Retrieves a playable media URL for a given media ID from IndexedDB
    */
   async getMediaUrl(id: string): Promise<string | null> {

@@ -196,7 +196,7 @@ export async function compressImage(
  */
 export async function extractVideoThumbnail(
   file: File | Blob,
-  seekTime: number = 0.5
+  seekTime: number = 1.0
 ): Promise<{ thumbnailUrl: string; duration: number }> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined') {
@@ -213,6 +213,7 @@ export async function extractVideoThumbnail(
     video.src = blobUrl;
 
     let hasResolved = false;
+    let attempts = 0;
     const cleanup = () => {
       try {
         URL.revokeObjectURL(blobUrl);
@@ -228,14 +229,13 @@ export async function extractVideoThumbnail(
     }, 6000);
 
     video.onloadedmetadata = () => {
-      const targetTime = Math.min(seekTime, (video.duration || 1) / 2);
+      const dur = video.duration || 1;
+      const targetTime = Math.min(seekTime, Math.max(0.5, dur / 2));
       video.currentTime = targetTime;
     };
 
     video.onseeked = () => {
       if (hasResolved) return;
-      hasResolved = true;
-      clearTimeout(timeout);
 
       try {
         const canvas = document.createElement('canvas');
@@ -246,7 +246,31 @@ export async function extractVideoThumbnail(
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          // Sample center pixels to detect pitch-black frames
+          const imgData = ctx.getImageData(
+            Math.floor(canvas.width / 4),
+            Math.floor(canvas.height / 4),
+            Math.floor(canvas.width / 2),
+            Math.floor(canvas.height / 2)
+          );
+          let totalLum = 0;
+          const pixelCount = imgData.data.length / 4;
+          for (let i = 0; i < imgData.data.length; i += 16) {
+            totalLum += imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2];
+          }
+          const avgLum = totalLum / (pixelCount / 4);
+
+          // If frame is pitch black (e.g. video fades in from black) and we haven't tried a later time, seek forward
+          if (avgLum < 12 && attempts === 0 && (video.duration || 0) > 2) {
+            attempts++;
+            video.currentTime = Math.min(2.5, (video.duration || 3) / 2);
+            return;
+          }
+
           const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.85);
+          hasResolved = true;
+          clearTimeout(timeout);
           cleanup();
           resolve({ thumbnailUrl, duration: video.duration || 0 });
           return;
@@ -254,6 +278,8 @@ export async function extractVideoThumbnail(
       } catch (err) {
         console.warn('[extractVideoThumbnail] Failed to capture video frame:', err);
       }
+      hasResolved = true;
+      clearTimeout(timeout);
       cleanup();
       resolve({ thumbnailUrl: '/assets/garden/card_archive.jpg', duration: video.duration || 0 });
     };

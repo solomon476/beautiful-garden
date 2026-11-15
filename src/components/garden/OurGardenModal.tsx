@@ -145,12 +145,19 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
   useEffect(() => {
     if (!isOpen) return;
 
-    // Push initial garden state
-    window.history.pushState({ gardenModal: true, tab: activeTab }, '');
+    let hasPushed = false;
+    if (typeof window !== 'undefined') {
+      try {
+        if (!window.history.state?.gardenModal) {
+          window.history.pushState({ gardenModal: true, tab: activeTab }, '');
+          hasPushed = true;
+        }
+      } catch {}
+    }
 
     const handlePopState = (e: PopStateEvent) => {
       if (!e.state || !e.state.gardenModal) {
-        // Phone back button pressed from root of modal -> close modal back to main page
+        // Phone back button pressed -> close modal back to main page cleanly
         onCloseRef.current();
       } else if (e.state.tab) {
         setActiveTab(e.state.tab);
@@ -160,6 +167,11 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
+      if (hasPushed && typeof window !== 'undefined' && window.history.state?.gardenModal) {
+        try {
+          window.history.back();
+        } catch {}
+      }
     };
   }, [isOpen]);
 
@@ -168,23 +180,33 @@ export const OurGardenModal: React.FC<OurGardenModalProps> = ({ isOpen, onClose,
   const handleSelectTab = (tab: TabKey) => {
     soundEngine.playSparkle();
     setActiveTab(tab);
-    window.history.pushState({ gardenModal: true, tab }, '');
+    if (typeof window !== 'undefined') {
+      try {
+        // Use replaceState to NEVER trap the user with endless history entries
+        window.history.replaceState({ gardenModal: true, tab }, '');
+      } catch {}
+    }
   };
 
   const handleGoBackToSanctuary = () => {
     soundEngine.playSparkle();
     setActiveTab('garden');
-    window.history.pushState({ gardenModal: true, tab: 'garden' }, '');
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.replaceState({ gardenModal: true, tab: 'garden' }, '');
+      } catch {}
+    }
   };
 
   const handleGoHome = () => {
     soundEngine.playSparkle();
     if (typeof window !== 'undefined') {
       try {
-        window.history.pushState(null, '', window.location.pathname);
-      } catch (e) {
-        console.warn('History pushState error', e);
-      }
+        if (window.history.state?.gardenModal) {
+          window.history.back();
+          return;
+        }
+      } catch {}
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     onClose();

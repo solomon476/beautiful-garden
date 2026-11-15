@@ -24,6 +24,7 @@ import {
   Play,
   Pause,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
@@ -69,6 +70,33 @@ export const formatMemoryDisplayTitle = (
     return trimmed.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
   }
 
+  return trimmed;
+};
+
+export const isVideoMoment = (mem: any): boolean => {
+  if (!mem) return false;
+  return Boolean(
+    mem.mediaType === 'video' ||
+    mem.videoMediaId ||
+    mem.videoUrl ||
+    (typeof mem.description === 'string' && mem.description.includes('"mediaType":"video"'))
+  );
+};
+
+export const formatMemoryDisplayCaption = (caption?: string, description?: string): string => {
+  let text = caption || description || '';
+  if (typeof text === 'string' && text.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text);
+      text = parsed.note || '';
+    } catch {
+      text = '';
+    }
+  }
+  const trimmed = (text || '').trim();
+  if (!trimmed || trimmed === '{"mediaType":"video"}' || trimmed.startsWith('{"')) {
+    return 'A timeless moment in our story.';
+  }
   return trimmed;
 };
 
@@ -178,6 +206,8 @@ export const LittleArchiveSection: React.FC = () => {
 
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -277,12 +307,24 @@ export const LittleArchiveSection: React.FC = () => {
     return () => window.removeEventListener('garden-open-memory' as any, handleOpenMemoryEvent);
   }, [memories]);
 
+  const handleOpenLightbox = (mem: MemoryEntry) => {
+    soundEngine.playSparkle();
+    setLightboxMemory(mem);
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ archiveLightbox: true, memId: mem.id }, '');
+      } catch {}
+    }
+  };
+
   const handleCloseLightbox = () => {
     if (soundtrackAudioRef.current) {
       soundtrackAudioRef.current.pause();
     }
     setIsPlayingSoundtrack(false);
     setLightboxMemory(null);
+    setActiveVideoUrl(null);
+    setIsVideoLoading(false);
   };
 
   const handleNavigateLightbox = (mem: MemoryEntry) => {
@@ -293,6 +335,103 @@ export const LittleArchiveSection: React.FC = () => {
     soundEngine.playSparkle();
     setLightboxMemory(mem);
   };
+
+  const handleDeleteMemory = async (mem: MemoryEntry) => {
+    const memTitle = formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken);
+    if (!window.confirm(`Are you sure you want to remove "${memTitle}" from the archive?`)) {
+      return;
+    }
+    soundEngine.playChime(392, 0.8, 0.08);
+    handleCloseLightbox();
+    setMemories((prev) => prev.filter((m) => m.id !== mem.id));
+    try {
+      await memoryArchiveService.deleteMemory(mem.id, mem);
+    } catch (err) {
+      console.warn('Delete memory error:', err);
+    }
+  };
+
+  // Video resolution hook: guarantees live playable Blob URLs from IndexedDB for any video keepsake
+  useEffect(() => {
+    if (!lightboxMemory) {
+      setActiveVideoUrl(null);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    if (!isVideoMoment(lightboxMemory)) {
+      setActiveVideoUrl(null);
+      setIsVideoLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsVideoLoading(true);
+
+    (async () => {
+      try {
+        let resolved: string | null = null;
+        if (lightboxMemory.videoMediaId) {
+          resolved = await mediaStorage.getMediaUrl(lightboxMemory.videoMediaId);
+        }
+        if (!resolved && lightboxMemory.id) {
+          resolved = await mediaStorage.getMediaUrl(lightboxMemory.id);
+        }
+        if (!resolved && lightboxMemory.videoUrl?.startsWith('data:video/')) {
+          const blob = mediaStorage.dataUrlToBlob(lightboxMemory.videoUrl);
+          resolved = URL.createObjectURL(blob);
+        }
+        if (!resolved && lightboxMemory.videoUrl && !lightboxMemory.videoUrl.startsWith('blob:')) {
+          resolved = lightboxMemory.videoUrl;
+        }
+        if (!resolved) {
+          const allStored = await mediaStorage.getAllVideos();
+          const matched = allStored.find(
+            (v) =>
+              v.id === lightboxMemory.videoMediaId ||
+              v.id === lightboxMemory.id ||
+              (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase()))
+          );
+          if (matched) {
+            resolved = await mediaStorage.getMediaUrl(matched.id);
+          }
+        }
+        if (!resolved && lightboxMemory.videoUrl) {
+          resolved = lightboxMemory.videoUrl;
+        }
+
+        if (isMounted) {
+          setActiveVideoUrl(resolved);
+          setIsVideoLoading(false);
+        }
+      } catch {
+        if (isMounted) {
+          setActiveVideoUrl(lightboxMemory.videoUrl || null);
+          setIsVideoLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [lightboxMemory]);
+
+  // Phone Back Button: closes open Lightbox instead of navigating away or exiting to Chrome
+  useEffect(() => {
+    if (!lightboxMemory) return;
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (!e.state || !e.state.archiveLightbox) {
+        handleCloseLightbox();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [lightboxMemory]);
 
   const handleOpenAdd = () => {
     soundEngine.playSparkle();
@@ -468,6 +607,16 @@ export const LittleArchiveSection: React.FC = () => {
         dateTaken: dateTaken || 'Special Day',
         isShared,
       });
+
+      // Also persist video in IndexedDB under newEntry.id for instant playback resolution
+      if (videoMediaId && newEntry.id) {
+        try {
+          const stored = await mediaStorage.getFile(videoMediaId);
+          if (stored?.blob) {
+            await mediaStorage.saveFileWithId(newEntry.id, stored.blob, stored.name);
+          }
+        } catch {}
+      }
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
@@ -754,15 +903,13 @@ export const LittleArchiveSection: React.FC = () => {
                 id={`archive-card-${mem.id}`}
                 className="archive-card group"
                 onClick={() => {
-                  soundEngine.playSparkle();
-                  setLightboxMemory(mem);
+                  handleOpenLightbox(mem);
                 }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    soundEngine.playSparkle();
-                    setLightboxMemory(mem);
+                    handleOpenLightbox(mem);
                   }
                 }}
               >
@@ -779,7 +926,7 @@ export const LittleArchiveSection: React.FC = () => {
                   />
 
                   {/* Video Play Icon Overlay */}
-                  {mem.videoUrl && (
+                  {isVideoMoment(mem) && (
                     <div className={styles.videoPlayBadgeOverlay}>
                       <div className={styles.videoPlayIconCircle}>
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -802,7 +949,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </button>
 
                   {/* Photo or Video count badge */}
-                  {mem.videoUrl ? (
+                  {isVideoMoment(mem) ? (
                     <div className="archive-card-photo-count bg-black/70 text-amber-200 border border-amber-300/40">
                       <Film className="w-2.5 h-2.5 text-amber-300" />
                       <span>Video</span>
@@ -837,8 +984,7 @@ export const LittleArchiveSection: React.FC = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        soundEngine.playSparkle();
-                        setLightboxMemory(mem);
+                        handleOpenLightbox(mem);
                       }}
                       className="text-slate-300 hover:text-white p-1 rounded-full cursor-pointer"
                       title="View memory"
@@ -855,9 +1001,9 @@ export const LittleArchiveSection: React.FC = () => {
                   {/* Note Caption Preview */}
                   <p
                     className="archive-card-note line-clamp-2"
-                    title={mem.caption || mem.description || 'A timeless moment in our story.'}
+                    title={formatMemoryDisplayCaption(mem.caption, mem.description)}
                   >
-                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
+                    “{formatMemoryDisplayCaption(mem.caption, mem.description)}” ♡
                   </p>
 
                   {/* Date */}
@@ -911,8 +1057,7 @@ export const LittleArchiveSection: React.FC = () => {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          soundEngine.playSparkle();
-                          setLightboxMemory(mem);
+                          handleOpenLightbox(mem);
                         }}
                         className="text-slate-300 hover:text-pink-300 p-0.5 cursor-pointer"
                         title="Fullscreen"
@@ -943,8 +1088,7 @@ export const LittleArchiveSection: React.FC = () => {
                 id={`archive-card-${mem.id}`}
                 className="keepsake-album-card group cursor-pointer"
                 onClick={() => {
-                  soundEngine.playSparkle();
-                  setLightboxMemory(mem);
+                  handleOpenLightbox(mem);
                 }}
               >
                 {/* Header */}
@@ -974,7 +1118,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
 
                   {/* Video Play Icon Overlay */}
-                  {mem.videoUrl && (
+                  {isVideoMoment(mem) && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -983,7 +1127,7 @@ export const LittleArchiveSection: React.FC = () => {
                   )}
 
                   {/* Video Clip Badge */}
-                  {mem.videoUrl && (
+                  {isVideoMoment(mem) && (
                     <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-mono text-amber-200 border border-amber-300/40 flex items-center gap-1.5 z-10">
                       <Film className="w-3 h-3 text-amber-300" />
                       <span>Video Clip</span>
@@ -994,8 +1138,7 @@ export const LittleArchiveSection: React.FC = () => {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      soundEngine.playSparkle();
-                      setLightboxMemory(mem);
+                      handleOpenLightbox(mem);
                     }}
                     className="absolute bottom-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-pink-500 transition-colors z-10"
                     title="Fullscreen"
@@ -1012,7 +1155,7 @@ export const LittleArchiveSection: React.FC = () => {
                 {/* Complete Unclipped Note */}
                 <div className="p-4 rounded-2xl bg-white/[0.06] border border-pink-300/30 my-2">
                   <p className="keepsake-album-text">
-                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
+                    “{formatMemoryDisplayCaption(mem.caption, mem.description)}” ♡
                   </p>
                 </div>
 
@@ -1091,15 +1234,16 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* 3. Lightbox Modal */}
       {lightboxMemory && (() => {
+        const isCurrentVideo = isVideoMoment(lightboxMemory);
         const modalContent = (
           <div
             className={
-              lightboxMemory.videoUrl
+              isCurrentVideo
                 ? 'fixed inset-0 flex flex-col justify-between select-none animate-fade-in'
                 : styles.modalBackdrop
             }
             style={
-              lightboxMemory.videoUrl
+              isCurrentVideo
                 ? {
                     zIndex: 99999,
                     backgroundColor: '#05020a',
@@ -1110,7 +1254,7 @@ export const LittleArchiveSection: React.FC = () => {
             }
             onClick={handleCloseLightbox}
           >
-          {lightboxMemory.videoUrl ? (
+          {isCurrentVideo ? (
             /* Immersive Full-Screen Cinema Video Player */
             <>
               {/* Floating Top Header Bar */}
@@ -1143,6 +1287,18 @@ export const LittleArchiveSection: React.FC = () => {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMemory(lightboxMemory);
+                    }}
+                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                    title="Delete this keepsake"
+                    aria-label="Delete video"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleCloseLightbox}
                     className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
                     aria-label="Close video view"
@@ -1157,22 +1313,61 @@ export const LittleArchiveSection: React.FC = () => {
                 className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                <video
-                  key={lightboxMemory.id}
-                  src={lightboxMemory.videoUrl}
-                  poster={lightboxMemory.photoUrl}
-                  controls
-                  playsInline
-                  autoPlay
-                  preload="auto"
-                  className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const v = e.currentTarget;
-                    if (v.paused) v.play().catch(() => {});
-                    else v.pause();
-                  }}
-                />
+                {activeVideoUrl ? (
+                  <video
+                    key={activeVideoUrl}
+                    src={activeVideoUrl}
+                    poster={lightboxMemory.photoUrl}
+                    controls
+                    playsInline
+                    autoPlay
+                    preload="auto"
+                    className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const v = e.currentTarget;
+                      if (v.paused) v.play().catch(() => {});
+                      else v.pause();
+                    }}
+                  />
+                ) : isVideoLoading ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-pink-200">
+                    <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
+                    <p className="text-sm font-medium">Preparing cinema video player...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center text-pink-200 max-w-sm mx-auto">
+                    <Film className="w-12 h-12 text-pink-400/60 mb-3" />
+                    <p className="font-semibold text-white">Video Keepsake</p>
+                    <p className="text-xs text-pink-300/80 mt-1 mb-4">
+                      Video file is saved locally on your phone. If storage was refreshed, choose the video file to play:
+                    </p>
+                    <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-medium text-xs cursor-pointer shadow-lg active:scale-95 transition-all">
+                      <Play className="w-4 h-4 fill-white" />
+                      <span>Select Video from Gallery</span>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const saved = await mediaStorage.saveFile(file, file.name);
+                              const url = saved.blobUrl || saved.dataUrl;
+                              setActiveVideoUrl(url);
+                              if (lightboxMemory) {
+                                await mediaStorage.saveFileWithId(lightboxMemory.id, file, file.name);
+                              }
+                            } catch (err) {
+                              console.warn('Could not re-link video:', err);
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Floating Bottom Navigation & Romantic Caption */}
@@ -1181,9 +1376,9 @@ export const LittleArchiveSection: React.FC = () => {
                 style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {lightboxMemory.caption && (
+                {formatMemoryDisplayCaption(lightboxMemory.caption, lightboxMemory.description) && (
                   <p className="font-handwriting text-xl sm:text-2xl text-center text-pink-100/90 leading-snug drop-shadow-md px-3 line-clamp-2">
-                    “{lightboxMemory.caption}” ♡
+                    “{formatMemoryDisplayCaption(lightboxMemory.caption, lightboxMemory.description)}” ♡
                   </p>
                 )}
 
@@ -1314,14 +1509,28 @@ export const LittleArchiveSection: React.FC = () => {
                     {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   </h3>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCloseLightbox}
-                  className={styles.modalCloseBtn}
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMemory(lightboxMemory);
+                    }}
+                    className={styles.modalCloseBtn}
+                    title="Delete this keepsake"
+                    aria-label="Delete photo"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-300" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseLightbox}
+                    className={styles.modalCloseBtn}
+                    aria-label="Close"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <div className={styles.lightboxImageStage}>
@@ -1332,9 +1541,9 @@ export const LittleArchiveSection: React.FC = () => {
                 />
               </div>
 
-              {lightboxMemory.caption && (
+              {formatMemoryDisplayCaption(lightboxMemory.caption, lightboxMemory.description) && (
                 <p className={styles.lightboxCaption}>
-                  “{lightboxMemory.caption}” ♡
+                  “{formatMemoryDisplayCaption(lightboxMemory.caption, lightboxMemory.description)}” ♡
                 </p>
               )}
 
