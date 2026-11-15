@@ -15,6 +15,7 @@ import {
 } from '../../services/celebrationService';
 import type { HangoutEntry } from '../../types/garden';
 import { soundEngine } from '../../utils/audio';
+import confetti from 'canvas-confetti';
 import styles from './LoveMilestoneWidget.module.css';
 
 interface LoveMilestoneWidgetProps {
@@ -204,7 +205,31 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
     soundEngine.playSparkle();
     setSelectedCelebrationId(id);
     setCountdownMode('celebrations');
+    const celebration = celebrations.find((c) => c.id === id);
+    if (celebration && celebration.isToday) {
+      try {
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#f472b6', '#fb7185', '#34d399', '#fcd34d', '#ffffff'],
+        });
+      } catch {}
+    }
   };
+
+  useEffect(() => {
+    if (activeCelebration && activeCelebration.isToday) {
+      try {
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#f472b6', '#fb7185', '#34d399', '#fcd34d', '#ffffff'],
+        });
+      } catch {}
+    }
+  }, [activeCelebration?.id, activeCelebration?.isToday]);
 
   return (
     <div className={styles.widgetContainer}>
@@ -300,6 +325,9 @@ export const LoveMilestoneWidget: React.FC<LoveMilestoneWidgetProps> = ({ onSele
                 <p className="text-xs text-pink-100 font-serif italic">
                   “{activeCelebration.subtitle}”
                 </p>
+                <div className="mt-2 text-xl tracking-widest animate-pulse select-none">
+                  🌸 🌺 🌷 💐 🌹 🎄 ❄️
+                </div>
               </div>
             ) : celebrationCountdownParts ? (
               /* Live Ticking Countdown Digits to Birthday / Holiday */

@@ -251,10 +251,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/15 hover:bg-rose-500 border border-white/25 text-white active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-lg backdrop-blur-md shrink-0 aspect-square"
               aria-label="Close video view"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>

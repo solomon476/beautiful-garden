@@ -79,7 +79,6 @@ export const isVideoMoment = (mem: any): boolean => {
     mem.videoUrl ||
     mem.id === 'mem-1794743555896-trro' ||
     mem.id === 'mem-1794743648745-ay4b' ||
-    mem.id === 'mem-1794420983599-qc3y' ||
     (typeof mem.description === 'string' && mem.description.includes('"mediaType":"video"'))
   );
 };
@@ -364,8 +363,6 @@ export const LittleArchiveSection: React.FC = () => {
               matched = sorted[0];
             } else if (lightboxMemory.id === 'mem-1794743648745-ay4b') {
               matched = sorted[1] || sorted[0];
-            } else if (lightboxMemory.id === 'mem-1794420983599-qc3y') {
-              matched = sorted[sorted.length - 1];
             } else {
               matched = sorted[0];
             }
@@ -1266,10 +1263,10 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCloseLightbox}
-                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/15 hover:bg-rose-500 border border-white/25 text-white active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-lg backdrop-blur-md shrink-0 aspect-square"
                     aria-label="Close video view"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                 </div>
               </div>
@@ -1479,7 +1476,7 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCloseLightbox}
-                    className={styles.modalCloseBtn}
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all flex items-center justify-center cursor-pointer shadow-md backdrop-blur-md shrink-0 aspect-square"
                     aria-label="Close"
                   >
                     <X className="w-4 h-4" />
