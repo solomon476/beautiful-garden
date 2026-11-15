@@ -6,6 +6,10 @@ import {
   X,
   ZoomIn,
   Sparkles,
+  Upload,
+  Mic,
+  Music2,
+  Disc3,
   ChevronLeft,
   ChevronRight,
   Layers,
@@ -20,43 +24,22 @@ import {
   Play,
   Pause,
   Loader2,
-  Music2,
-  Disc3,
-  Upload,
 } from 'lucide-react';
-import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES, isExcludedMemory, isSampleMemory, PERMANENTLY_EXCLUDED_MEMORY_IDS } from '../../services/gardenService';
+import { memoryArchiveService, soundGardenService, authService, DEFAULT_PROFILES } from '../../services/gardenService';
 import type { MemoryEntry, UserProfile, SongEntry } from '../../types/garden';
 import { giftContent } from '../../data/giftContent';
 import { soundEngine } from '../../utils/audio';
 import { compressImageWithStats, extractVideoThumbnail, type CompressionResult } from '../../utils/imageCompressor';
 import { mediaStorage } from '../../utils/mediaStorage';
-import { isSpotifyUrl, fetchSpotifyOEmbed } from '../../utils/spotify';
 import { DecoratedPrivacyToggle } from './DecoratedPrivacyToggle';
+import { VoiceNoteRecorder } from './VoiceNoteRecorder';
+import { GardenAudioPlayer } from './GardenAudioPlayer';
 import { OnThisDayTimeMachine } from './OnThisDayTimeMachine';
 import { getOnThisDayFlashbacks } from '../../services/onThisDayService';
 import { notificationService } from '../../services/notificationService';
 import { generateRomanticMetadata, isRawMachineName } from '../../services/aiCaptionService';
+import { fetchSpotifyOEmbed, isSpotifyUrl } from '../../utils/spotify';
 import styles from './LittleArchiveSection.module.css';
-
-export const getCleanMemoryCaption = (caption?: string, description?: string): string => {
-  if (caption && caption.trim().length > 0 && !caption.includes('mediaType') && !caption.trim().startsWith('{')) {
-    return caption.trim();
-  }
-  if (description && description.trim().length > 0 && !description.includes('mediaType') && !description.trim().startsWith('{')) {
-    return description.trim();
-  }
-  for (const raw of [caption, description]) {
-    if (raw && raw.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.note && typeof parsed.note === 'string' && parsed.note.trim()) {
-          return parsed.note.trim();
-        }
-      } catch {}
-    }
-  }
-  return 'A timeless moment in our story.';
-};
 
 export const formatMemoryDisplayTitle = (
   title: string,
@@ -89,17 +72,6 @@ export const formatMemoryDisplayTitle = (
   return trimmed;
 };
 
-export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
-  if (!m) return false;
-  // Sample gift memories are always pure standalone photos
-  if (m.id && isSampleMemory(m.id)) return false;
-  if (m.id && PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id)) return false;
-  if (m.mediaType === 'video') return true;
-  if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
-  if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
-  return false;
-};
-
 export const LittleArchiveSection: React.FC = () => {
   const [memories, setMemories] = useState<MemoryEntry[]>(() => {
     const cached = memoryArchiveService.getCachedMemories();
@@ -122,6 +94,18 @@ export const LittleArchiveSection: React.FC = () => {
   const [lastLikedMemoryId, setLastLikedMemoryId] = useState<string | null>(null);
   const [likedCards, setLikedCards] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  // Soundtrack / Music state
+  const [musicUrl, setMusicUrl] = useState<string | undefined>(undefined);
+  const [musicTitle, setMusicTitle] = useState<string | undefined>(undefined);
+  const [musicArtist, setMusicArtist] = useState<string | undefined>(undefined);
+  const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
+  const [availableSongs, setAvailableSongs] = useState<SongEntry[]>([]);
+  const [customSpotifyUrl, setCustomSpotifyUrl] = useState<string>('');
+  const [isCheckingSpotify, setIsCheckingSpotify] = useState<boolean>(false);
+  const [isPlayingSoundtrack, setIsPlayingSoundtrack] = useState<boolean>(false);
+  const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
+  const musicFileInputRef = useRef<HTMLInputElement | null>(null);
   const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
 
   const flashbacks = useMemo(() => getOnThisDayFlashbacks(memories), [memories]);
@@ -140,7 +124,7 @@ export const LittleArchiveSection: React.FC = () => {
       const mem = memories.find((m) => m.id === id);
       const displayTitle = mem ? formatMemoryDisplayTitle(mem.title, mem.caption, mem.dateTaken) : 'Memory';
       const partner = authService.getPartner();
-      const user = currentUser;
+      const user = authService.getCurrentUser();
 
       // Realtime notification to partner
       notificationService.sendNotification({
@@ -179,93 +163,21 @@ export const LittleArchiveSection: React.FC = () => {
   const [caption, setCaption] = useState<string>('');
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
+  const [cloudVideoUrl, setCloudVideoUrl] = useState<string | undefined>(undefined);
   const [videoMediaId, setVideoMediaId] = useState<string | undefined>(undefined);
   const [mediaType, setMediaType] = useState<'photo' | 'video'>('photo');
   const [videoDuration, setVideoDuration] = useState<number | undefined>(undefined);
   const [isProcessingMedia, setIsProcessingMedia] = useState<boolean>(false);
+  const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | undefined>(undefined);
+  const [audioFileName, setAudioFileName] = useState<string | undefined>(undefined);
+  const [showRecorder, setShowRecorder] = useState<boolean>(false);
   const [dateTaken, setDateTaken] = useState<string>('');
   const [isShared, setIsShared] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Soundtrack / Music Caption state
-  const [musicUrl, setMusicUrl] = useState<string | undefined>(undefined);
-  const [musicTitle, setMusicTitle] = useState<string | undefined>(undefined);
-  const [musicArtist, setMusicArtist] = useState<string | undefined>(undefined);
-  const [showMusicPicker, setShowMusicPicker] = useState<boolean>(false);
-  const [availableSongs, setAvailableSongs] = useState<SongEntry[]>([]);
-  const [customSpotifyUrl, setCustomSpotifyUrl] = useState<string>('');
-  const [isCheckingSpotify, setIsCheckingSpotify] = useState<boolean>(false);
-  const [isPlayingSoundtrack, setIsPlayingSoundtrack] = useState<boolean>(false);
-  const soundtrackAudioRef = useRef<HTMLAudioElement | null>(null);
-  const musicFileInputRef = useRef<HTMLInputElement | null>(null);
-
   // Lightbox preview
   const [lightboxMemory, setLightboxMemory] = useState<MemoryEntry | null>(null);
-  const [activeLightboxVideoUrl, setActiveLightboxVideoUrl] = useState<string | null>(null);
-  const [isLightboxVideoLoading, setIsLightboxVideoLoading] = useState<boolean>(false);
-
-  // Active resolution of video stream URL for Lightbox cinema player
-  useEffect(() => {
-    if (!lightboxMemory) {
-      setActiveLightboxVideoUrl(null);
-      setIsLightboxVideoLoading(false);
-      return;
-    }
-
-    if (!isVideoMoment(lightboxMemory)) {
-      setActiveLightboxVideoUrl(null);
-      setIsLightboxVideoLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    if (lightboxMemory.videoUrl && !lightboxMemory.videoUrl.startsWith('blob:null')) {
-      setActiveLightboxVideoUrl(lightboxMemory.videoUrl);
-    } else {
-      setIsLightboxVideoLoading(true);
-    }
-
-    (async () => {
-      try {
-        let resolved: string | null = null;
-        if (lightboxMemory.videoMediaId) {
-          resolved = await mediaStorage.getMediaUrl(lightboxMemory.videoMediaId);
-        }
-        if (!resolved && lightboxMemory.id) {
-          resolved = await mediaStorage.getMediaUrl(lightboxMemory.id);
-        }
-        if (!resolved) {
-          const storedVideos = await mediaStorage.getAllVideos();
-          const matched = storedVideos.find(
-            (v) =>
-              v.id === lightboxMemory.videoMediaId ||
-              v.id === lightboxMemory.id ||
-              (lightboxMemory.title && v.name && v.name.toLowerCase().includes(lightboxMemory.title.toLowerCase())) ||
-              (lightboxMemory.id.includes('-') && lightboxMemory.id.split('-')[1]?.length >= 10 && v.id.includes(lightboxMemory.id.split('-')[1].slice(0, 10)))
-          );
-          if (matched) {
-            resolved = await mediaStorage.getMediaUrl(matched.id);
-          }
-        }
-        if (isMounted) {
-          if (resolved) {
-            setActiveLightboxVideoUrl(resolved);
-            setMemories((prev) =>
-              prev.map((m) => (m.id === lightboxMemory.id ? { ...m, videoUrl: resolved!, mediaType: 'video' } : m))
-            );
-          }
-          setIsLightboxVideoLoading(false);
-        }
-      } catch {
-        if (isMounted) setIsLightboxVideoLoading(false);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [lightboxMemory]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const videoInputRef = useRef<HTMLInputElement | null>(null);
@@ -276,20 +188,23 @@ export const LittleArchiveSection: React.FC = () => {
       if (memories.length === 0) setLoading(true);
       const list = await memoryArchiveService.getMemories();
       const seenIds = new Set<string>();
+      const seenMedia = new Set<string>();
       const combined: MemoryEntry[] = [];
       for (const m of list) {
-        if (isExcludedMemory(m)) continue;
-        if (!seenIds.has(m.id)) {
+        const mediaKey = m.videoMediaId || m.videoUrl || m.photoUrl || m.id;
+        if (!seenIds.has(m.id) && !seenMedia.has(mediaKey)) {
           seenIds.add(m.id);
+          seenMedia.add(mediaKey);
           combined.push(m);
         }
       }
       // Only include fallback sample memories if zero memories have been uploaded yet
       if (combined.length === 0) {
         for (const gm of giftContent.memories) {
-          if (isExcludedMemory(gm)) continue;
-          if (!seenIds.has(gm.id)) {
+          const mediaKey = gm.videoMediaId || gm.videoUrl || gm.photoUrl || gm.id;
+          if (!seenIds.has(gm.id) && !seenMedia.has(mediaKey)) {
             seenIds.add(gm.id);
+            seenMedia.add(mediaKey);
             combined.push({
               id: gm.id,
               contributorId: DEFAULT_PROFILES.solomon.id,
@@ -298,7 +213,6 @@ export const LittleArchiveSection: React.FC = () => {
               caption: gm.caption,
               description: gm.caption,
               photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
-              mediaType: 'photo',
               dateTaken: gm.date,
               isShared: true,
               createdAt: '2026-11-01T12:00:00.000Z',
@@ -306,7 +220,7 @@ export const LittleArchiveSection: React.FC = () => {
           }
         }
       }
-      setMemories(combined.filter((m) => !isExcludedMemory(m)));
+      setMemories(combined);
     } catch (err) {
       console.error(err);
     } finally {
@@ -368,7 +282,6 @@ export const LittleArchiveSection: React.FC = () => {
       soundtrackAudioRef.current.pause();
     }
     setIsPlayingSoundtrack(false);
-    setActiveLightboxVideoUrl(null);
     setLightboxMemory(null);
   };
 
@@ -378,7 +291,6 @@ export const LittleArchiveSection: React.FC = () => {
     }
     setIsPlayingSoundtrack(false);
     soundEngine.playSparkle();
-    setActiveLightboxVideoUrl(mem.videoUrl || null);
     setLightboxMemory(mem);
   };
 
@@ -388,79 +300,24 @@ export const LittleArchiveSection: React.FC = () => {
     setCaption('');
     setPhotoUrl('');
     setVideoUrl(undefined);
+    setCloudVideoUrl(undefined);
     setVideoMediaId(undefined);
     setMediaType('photo');
     setVideoDuration(undefined);
     setIsProcessingMedia(false);
-    setCompressionStats(null);
+    setVoiceNoteUrl(undefined);
+    setAudioFileName(undefined);
+    setShowRecorder(false);
     setMusicUrl(undefined);
     setMusicTitle(undefined);
     setMusicArtist(undefined);
     setShowMusicPicker(false);
     setCustomSpotifyUrl('');
+    setCompressionStats(null);
     setDateTaken('');
     setIsShared(true);
     setErrorMsg(null);
     setIsAdding(true);
-  };
-
-  const handleOpenMusicPicker = async () => {
-    soundEngine.playSparkle();
-    setShowMusicPicker((prev) => !prev);
-    if (availableSongs.length === 0) {
-      try {
-        const songs = await soundGardenService.getSongs();
-        setAvailableSongs(songs);
-      } catch (e) {
-        console.warn('Could not load songs for picker:', e);
-      }
-    }
-  };
-
-  const handleMusicFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      soundEngine.playSparkle();
-      const cleanName = file.name.replace(/\.[^/.]+$/, '');
-      const dataUrl = await mediaStorage.readFileAsDataUrl(file);
-      setMusicUrl(dataUrl);
-      setMusicTitle(cleanName);
-      setMusicArtist(currentUser.displayName || 'Us');
-      setShowMusicPicker(false);
-    } catch (err) {
-      console.warn('[Archive] Could not read music file:', err);
-    }
-  };
-
-  const handleAttachSpotify = async () => {
-    if (!customSpotifyUrl.trim()) return;
-    setIsCheckingSpotify(true);
-    soundEngine.playSparkle();
-    try {
-      const oembed = await fetchSpotifyOEmbed(customSpotifyUrl.trim());
-      setMusicUrl(customSpotifyUrl.trim());
-      setMusicTitle(oembed?.title || 'Spotify Soundtrack');
-      setMusicArtist(oembed?.artist || 'Spotify');
-      setCustomSpotifyUrl('');
-      setShowMusicPicker(false);
-    } catch {
-      setMusicUrl(customSpotifyUrl.trim());
-      setMusicTitle('Spotify Soundtrack');
-      setMusicArtist('Spotify');
-      setCustomSpotifyUrl('');
-      setShowMusicPicker(false);
-    } finally {
-      setIsCheckingSpotify(false);
-    }
-  };
-
-  const handleSelectSoundGardenSong = (song: SongEntry) => {
-    soundEngine.playSparkle();
-    setMusicUrl(song.audioUrl || song.musicUrl);
-    setMusicTitle(song.title);
-    setMusicArtist(song.artist);
-    setShowMusicPicker(false);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -519,6 +376,18 @@ export const LittleArchiveSection: React.FC = () => {
       setVideoMediaId(saved.id);
       setMediaType('video');
 
+      // 3. For video clips under 7MB, read base64 data URL for cross-device cloud sync to partner
+      if (file.size <= 7 * 1024 * 1024) {
+        try {
+          const syncDataUrl = await mediaStorage.readFileAsDataUrl(file);
+          setCloudVideoUrl(syncDataUrl);
+        } catch (e) {
+          console.warn('[VideoUpload] Could not generate base64 for cloud sync:', e);
+        }
+      } else {
+        setCloudVideoUrl(undefined);
+      }
+
       // AI Romantic title and caption suggestion if user hasn't typed one or name is machine numbers
       if (!title || isRawMachineName(title) || isRawMachineName(file.name)) {
         setIsGeneratingAi(true);
@@ -555,6 +424,13 @@ export const LittleArchiveSection: React.FC = () => {
     }
   };
 
+  const handleVoiceNoteRecorded = (dataUrl: string, _durationSec: number, name: string) => {
+    soundEngine.playSparkle();
+    setVoiceNoteUrl(dataUrl);
+    setAudioFileName(name);
+    setShowRecorder(false);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSaving) return; // Prevent double submit
@@ -581,9 +457,11 @@ export const LittleArchiveSection: React.FC = () => {
         caption: finalCaption,
         description: finalCaption,
         photoUrl: photoUrl || '/assets/garden/card_archive.jpg',
-        videoUrl: videoUrl,
+        videoUrl: cloudVideoUrl || videoUrl,
         videoMediaId,
         mediaType,
+        voiceNoteUrl,
+        audioFileName,
         musicUrl,
         musicTitle,
         musicArtist,
@@ -593,13 +471,10 @@ export const LittleArchiveSection: React.FC = () => {
 
       soundEngine.playChime(523.25, 1.2, 0.08);
       setIsAdding(false);
-      // For immediate local display, preserve the instant blobUrl and music info
+      // For immediate local display, preserve the instant blobUrl
       const localPlayableEntry: MemoryEntry = {
         ...newEntry,
         videoUrl: videoUrl || newEntry.videoUrl,
-        musicUrl: musicUrl || newEntry.musicUrl,
-        musicTitle: musicTitle || newEntry.musicTitle,
-        musicArtist: musicArtist || newEntry.musicArtist,
       };
       setMemories((prev) => [localPlayableEntry, ...prev.filter((m) => m.id !== newEntry.id)]);
       await loadMemories();
@@ -610,9 +485,68 @@ export const LittleArchiveSection: React.FC = () => {
     }
   };
 
+  const handleOpenMusicPicker = async () => {
+    soundEngine.playSparkle();
+    setShowMusicPicker((prev) => !prev);
+    if (availableSongs.length === 0) {
+      try {
+        const songs = await soundGardenService.getSongs();
+        setAvailableSongs(songs);
+      } catch (e) {
+        console.warn('Could not load songs for picker:', e);
+      }
+    }
+  };
+
+  const handleMusicFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      soundEngine.playSparkle();
+      const cleanName = file.name.replace(/\.[^/.]+$/, '');
+      const dataUrl = await mediaStorage.readFileAsDataUrl(file);
+      setMusicUrl(dataUrl);
+      setMusicTitle(cleanName);
+      setMusicArtist(currentUser.displayName);
+      setShowMusicPicker(false);
+    } catch (err) {
+      console.warn('[Archive] Could not read music file:', err);
+    }
+  };
+
+  const handleAttachSpotify = async () => {
+    if (!customSpotifyUrl.trim()) return;
+    setIsCheckingSpotify(true);
+    soundEngine.playSparkle();
+    try {
+      const oembed = await fetchSpotifyOEmbed(customSpotifyUrl.trim());
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle(oembed?.title || 'Spotify Soundtrack');
+      setMusicArtist(oembed?.artist || 'Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } catch {
+      setMusicUrl(customSpotifyUrl.trim());
+      setMusicTitle('Spotify Soundtrack');
+      setMusicArtist('Spotify');
+      setCustomSpotifyUrl('');
+      setShowMusicPicker(false);
+    } finally {
+      setIsCheckingSpotify(false);
+    }
+  };
+
+  const handleSelectSoundGardenSong = (song: SongEntry) => {
+    soundEngine.playSparkle();
+    setMusicUrl(song.audioUrl || song.musicUrl);
+    setMusicTitle(song.title);
+    setMusicArtist(song.artist);
+    setShowMusicPicker(false);
+  };
+
   const deletedIds = new Set(memoryArchiveService.getDeletedMemoryIds());
   const filteredMemories = memories
-    .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
+    .filter((m) => !deletedIds.has(m.id))
     .filter((m) => {
       if (activeFilter === 'all') return true;
       if (activeFilter === 'shared') return m.isShared;
@@ -689,7 +623,7 @@ export const LittleArchiveSection: React.FC = () => {
             <span className="text-pink-300">📸 🎬</span>
           </h3>
           <p className="text-xs text-pink-200/90 font-serif italic mt-0.5 leading-tight">
-            Add photos and video clips to our shared keepsake album ♡
+            Add photos, video clips, and voice memories ♡
           </p>
         </div>
       </div>
@@ -845,7 +779,7 @@ export const LittleArchiveSection: React.FC = () => {
                   />
 
                   {/* Video Play Icon Overlay */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className={styles.videoPlayBadgeOverlay}>
                       <div className={styles.videoPlayIconCircle}>
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -868,7 +802,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </button>
 
                   {/* Photo or Video count badge */}
-                  {isVideoMoment(mem) ? (
+                  {mem.videoUrl ? (
                     <div className="archive-card-photo-count bg-black/70 text-amber-200 border border-amber-300/40">
                       <Film className="w-2.5 h-2.5 text-amber-300" />
                       <span>Video</span>
@@ -877,6 +811,17 @@ export const LittleArchiveSection: React.FC = () => {
                     <div className="archive-card-photo-count">
                       <ImageIcon className="w-2.5 h-2.5" />
                       <span>1</span>
+                    </div>
+                  )}
+
+                  {/* Soundtrack badge */}
+                  {(mem.musicTitle || mem.musicUrl) && (
+                    <div
+                      className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] text-pink-200 border border-pink-400/40 flex items-center gap-1 max-w-[85%] truncate z-10 shadow-sm"
+                      title={mem.musicTitle || 'Soundtrack'}
+                    >
+                      <Disc3 className="w-2.5 h-2.5 text-pink-300 shrink-0" />
+                      <span className="truncate">{mem.musicTitle || 'Soundtrack'}</span>
                     </div>
                   )}
                 </div>
@@ -910,24 +855,28 @@ export const LittleArchiveSection: React.FC = () => {
                   {/* Note Caption Preview */}
                   <p
                     className="archive-card-note line-clamp-2"
-                    title={getCleanMemoryCaption(mem.caption, mem.description)}
+                    title={mem.caption || mem.description || 'A timeless moment in our story.'}
                   >
-                    “{getCleanMemoryCaption(mem.caption, mem.description)}” ♡
+                    “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
                   </p>
-
-                  {/* Soundtrack / Music Caption Pill */}
-                  {mem.musicTitle && (
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-400/25 text-[10px] text-pink-200 font-mono truncate max-w-full my-1">
-                      <Music2 className="w-3 h-3 text-pink-300 shrink-0" />
-                      <span className="truncate">{mem.musicTitle}</span>
-                    </div>
-                  )}
 
                   {/* Date */}
                   <div className="archive-card-date">
                     <Calendar className="w-3 h-3 text-pink-300/80" />
                     <span>{mem.dateTaken || 'Special Day'}</span>
                   </div>
+
+                  {/* Voice note if attached */}
+                  {mem.voiceNoteUrl && (
+                    <div className="my-1" onClick={(e) => e.stopPropagation()}>
+                      <GardenAudioPlayer
+                        src={mem.voiceNoteUrl}
+                        title={`Voice Memo: ${displayTitle}`}
+                        subtitle={`Recorded by ${mem.contributorName || 'Garden'}`}
+                        isVoiceNote={true}
+                      />
+                    </div>
+                  )}
 
                   {/* Footer Stats & Actions */}
                   <div className="archive-card-footer">
@@ -1025,7 +974,7 @@ export const LittleArchiveSection: React.FC = () => {
                   </div>
 
                   {/* Video Play Icon Overlay */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 text-white flex items-center justify-center shadow-lg border-2 border-white/90">
                         <Play className="w-5 h-5 fill-white text-white ml-0.5" />
@@ -1034,7 +983,7 @@ export const LittleArchiveSection: React.FC = () => {
                   )}
 
                   {/* Video Clip Badge */}
-                  {isVideoMoment(mem) && (
+                  {mem.videoUrl && (
                     <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-xs font-mono text-amber-200 border border-amber-300/40 flex items-center gap-1.5 z-10">
                       <Film className="w-3 h-3 text-amber-300" />
                       <span>Video Clip</span>
@@ -1066,6 +1015,33 @@ export const LittleArchiveSection: React.FC = () => {
                     “{mem.caption || mem.description || 'A timeless moment in our story.'}” ♡
                   </p>
                 </div>
+
+                {/* Voice Note if attached */}
+                {mem.voiceNoteUrl && (
+                  <div className="my-2" onClick={(e) => e.stopPropagation()}>
+                    <GardenAudioPlayer
+                      src={mem.voiceNoteUrl}
+                      title={`Voice Memo: ${displayTitle}`}
+                      subtitle={`Recorded by ${mem.contributorName || 'Garden'}`}
+                      isVoiceNote={true}
+                    />
+                  </div>
+                )}
+
+                {/* Soundtrack if attached */}
+                {(mem.musicTitle || mem.musicUrl) && (
+                  <div className="my-2 p-3 rounded-2xl bg-pink-500/10 border border-pink-400/25 flex items-center gap-2.5 text-xs text-pink-200">
+                    <div className="w-7 h-7 rounded-full bg-pink-500/20 border border-pink-400/30 flex items-center justify-center shrink-0">
+                      <Disc3 className="w-4 h-4 text-pink-300" />
+                    </div>
+                    <div className="truncate">
+                      <span className="font-semibold text-white truncate block">{mem.musicTitle || 'Soundtrack of this moment'}</span>
+                      {mem.musicArtist && (
+                        <span className="text-[11px] text-pink-300/70 truncate block">{mem.musicArtist}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-3 border-t border-pink-300/20 text-xs">
@@ -1115,16 +1091,15 @@ export const LittleArchiveSection: React.FC = () => {
 
       {/* 3. Lightbox Modal */}
       {lightboxMemory && (() => {
-        const isVideo = isVideoMoment(lightboxMemory);
         const modalContent = (
           <div
             className={
-              isVideo
+              lightboxMemory.videoUrl
                 ? 'fixed inset-0 flex flex-col justify-between select-none animate-fade-in'
                 : styles.modalBackdrop
             }
             style={
-              isVideo
+              lightboxMemory.videoUrl
                 ? {
                     zIndex: 99999,
                     backgroundColor: '#05020a',
@@ -1135,17 +1110,17 @@ export const LittleArchiveSection: React.FC = () => {
             }
             onClick={handleCloseLightbox}
           >
-          {isVideo ? (
+          {lightboxMemory.videoUrl ? (
             /* Immersive Full-Screen Cinema Video Player */
             <>
-              {/* Sleek Floating Top Header Bar */}
+              {/* Floating Top Header Bar */}
               <div
-                className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-3.5 sm:p-5 pt-safe select-none"
-                style={{ background: 'linear-gradient(180deg, rgba(5,2,10,0.92) 0%, rgba(5,2,10,0.5) 60%, transparent 100%)' }}
+                className="relative z-30 flex items-center justify-between p-3 sm:p-5"
+                style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 flex items-center justify-center shrink-0 aspect-square shadow-sm">
+                  <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
                     <Film className="w-4 h-4" />
                   </span>
                   <div className="min-w-0">
@@ -1169,90 +1144,123 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCloseLightbox}
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-rose-500 border border-white/30 text-white backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-xl cursor-pointer shrink-0 aspect-square"
+                    className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
                     aria-label="Close video view"
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               {/* Full-Screen Center Video Stage */}
               <div
-                className="absolute inset-0 w-full h-full flex items-center justify-center p-0 overflow-hidden"
+                className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                {(activeLightboxVideoUrl || lightboxMemory.videoUrl) ? (
-                  <video
-                    key={lightboxMemory.id + (activeLightboxVideoUrl || lightboxMemory.videoUrl)}
-                    src={activeLightboxVideoUrl || lightboxMemory.videoUrl}
-                    poster={lightboxMemory.photoUrl}
-                    controls
-                    playsInline
-                    autoPlay
-                    preload="auto"
-                    className="w-full h-full max-h-screen object-contain mx-auto shadow-2xl cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const v = e.currentTarget;
-                      if (v.paused) v.play().catch(() => {});
-                      else v.pause();
-                    }}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200 z-10">
-                    {isLightboxVideoLoading ? (
-                      <>
-                        <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
-                        <p className="text-sm font-medium">Preparing cinema video player...</p>
-                      </>
-                    ) : (
-                      <>
-                        <Film className="w-12 h-12 text-pink-400/50 mb-3" />
-                        <p className="text-sm font-medium">Video Clip</p>
-                        <p className="text-xs text-pink-300/70 mt-1 mb-3">Stored on device • Tap below if you'd like to load the video file</p>
-                        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-xs text-pink-200 cursor-pointer transition-all active:scale-95 shadow-md">
-                          <Film className="w-3.5 h-3.5 text-pink-300" />
-                          <span>Select Video to Play</span>
-                          <input
-                            type="file"
-                            accept="video/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                try {
-                                  const saved = await mediaStorage.saveFile(file, file.name);
-                                  const url = saved.blobUrl || saved.dataUrl;
-                                  setActiveLightboxVideoUrl(url);
-                                  setMemories((prev) =>
-                                    prev.map((m) =>
-                                      m.id === lightboxMemory.id
-                                        ? { ...m, videoUrl: url, videoMediaId: saved.id, mediaType: 'video' }
-                                        : m
-                                    )
-                                  );
-                                } catch {}
-                              }
-                            }}
-                          />
-                        </label>
-                      </>
-                    )}
-                  </div>
-                )}
+                <video
+                  key={lightboxMemory.id}
+                  src={lightboxMemory.videoUrl}
+                  poster={lightboxMemory.photoUrl}
+                  controls
+                  playsInline
+                  autoPlay
+                  preload="auto"
+                  className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const v = e.currentTarget;
+                    if (v.paused) v.play().catch(() => {});
+                    else v.pause();
+                  }}
+                />
               </div>
 
               {/* Floating Bottom Navigation & Romantic Caption */}
               <div
-                className="absolute bottom-0 left-0 right-0 z-40 p-3.5 sm:p-5 pb-safe space-y-2 select-none"
-                style={{ background: 'linear-gradient(0deg, rgba(5,2,10,0.95) 0%, rgba(5,2,10,0.5) 70%, transparent 100%)' }}
+                className="relative z-30 p-3 sm:p-5 space-y-2.5"
+                style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {lightboxMemory.caption && (
                   <p className="font-handwriting text-xl sm:text-2xl text-center text-pink-100/90 leading-snug drop-shadow-md px-3 line-clamp-2">
                     “{lightboxMemory.caption}” ♡
                   </p>
+                )}
+
+                {lightboxMemory.voiceNoteUrl && (
+                  <div className="max-w-md mx-auto">
+                    <GardenAudioPlayer
+                      src={lightboxMemory.voiceNoteUrl}
+                      title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                      subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                      isVoiceNote={true}
+                    />
+                  </div>
+                )}
+
+                {/* Soundtrack if attached to video */}
+                {lightboxMemory.musicUrl && (
+                  <div className="max-w-md mx-auto">
+                    {isSpotifyUrl(lightboxMemory.musicUrl) ? (
+                      <a
+                        href={lightboxMemory.musicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-xs text-white hover:bg-emerald-500/25 transition-all shadow-md"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Music2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                          <div className="truncate">
+                            <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                            <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Spotify'}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 shrink-0">
+                          Open Spotify ↗
+                        </span>
+                      </a>
+                    ) : (
+                      <div className="flex items-center justify-between p-2.5 rounded-2xl bg-pink-500/15 border border-pink-400/30 text-xs text-white shadow-md">
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div className={`w-8 h-8 rounded-full bg-pink-500/30 border border-pink-400/40 flex items-center justify-center shrink-0 ${isPlayingSoundtrack ? 'ring-2 ring-pink-400/60' : ''}`}>
+                            <Disc3 className={`w-4 h-4 text-pink-300 ${isPlayingSoundtrack ? 'animate-spin' : ''}`} />
+                          </div>
+                          <div className="truncate">
+                            <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                            <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Garden Soundtrack'}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundEngine.playSparkle();
+                            if (soundtrackAudioRef.current) {
+                              if (isPlayingSoundtrack) {
+                                soundtrackAudioRef.current.pause();
+                                setIsPlayingSoundtrack(false);
+                              } else {
+                                soundtrackAudioRef.current.play().catch(() => {});
+                                setIsPlayingSoundtrack(true);
+                              }
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-full bg-pink-500 hover:bg-pink-600 text-white font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer shrink-0"
+                        >
+                          {isPlayingSoundtrack ? (
+                            <>
+                              <Pause className="w-3.5 h-3.5 fill-white" />
+                              <span>Pause</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-3.5 h-3.5 fill-white" />
+                              <span>Play Music ♫</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Bottom Navigation Row — Permanent Kept Keepsake */}
@@ -1306,33 +1314,14 @@ export const LittleArchiveSection: React.FC = () => {
                     {formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   </h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundEngine.playSparkle();
-                      setMemories((prev) =>
-                        prev.map((m) =>
-                          m.id === lightboxMemory.id ? { ...m, mediaType: 'video' } : m
-                        )
-                      );
-                      setLightboxMemory((prev) => (prev ? { ...prev, mediaType: 'video' } : null));
-                    }}
-                    className="px-2.5 py-1 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                    title="Play as Video in Cinema Player"
-                  >
-                    <Film className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Watch Video</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCloseLightbox}
-                    className={styles.modalCloseBtn}
-                    aria-label="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseLightbox}
+                  className={styles.modalCloseBtn}
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <div className={styles.lightboxImageStage}>
@@ -1340,21 +1329,27 @@ export const LittleArchiveSection: React.FC = () => {
                   src={lightboxMemory.photoUrl}
                   alt={formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}
                   className={styles.lightboxMainImage}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/garden/card_archive.jpg';
-                  }}
                 />
               </div>
 
-              {getCleanMemoryCaption(lightboxMemory.caption, lightboxMemory.description) !== 'A timeless moment in our story.' && (
+              {lightboxMemory.caption && (
                 <p className={styles.lightboxCaption}>
-                  “{getCleanMemoryCaption(lightboxMemory.caption, lightboxMemory.description)}” ♡
+                  “{lightboxMemory.caption}” ♡
                 </p>
               )}
 
-              {/* Attached Soundtrack / Music Player Bar */}
+              {lightboxMemory.voiceNoteUrl && (
+                <GardenAudioPlayer
+                  src={lightboxMemory.voiceNoteUrl}
+                  title={`Voice Note: ${formatMemoryDisplayTitle(lightboxMemory.title, lightboxMemory.caption, lightboxMemory.dateTaken)}`}
+                  subtitle={`Recorded by ${lightboxMemory.contributorName || 'Garden'}`}
+                  isVoiceNote={true}
+                />
+              )}
+
+              {/* Soundtrack Player if attached to photo */}
               {lightboxMemory.musicUrl && (
-                <div className="w-full my-2.5">
+                <div className="w-full">
                   {isSpotifyUrl(lightboxMemory.musicUrl) ? (
                     <a
                       href={lightboxMemory.musicUrl}
@@ -1362,13 +1357,11 @@ export const LittleArchiveSection: React.FC = () => {
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 text-xs text-white hover:bg-emerald-500/25 transition-all shadow-md"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-400/40 flex items-center justify-center shrink-0">
-                          <Disc3 className="w-4 h-4 text-emerald-300" />
-                        </div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Music2 className="w-4 h-4 text-emerald-300 shrink-0" />
                         <div className="truncate">
-                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Spotify Soundtrack'}</span>
-                          <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Open in Spotify'}</span>
+                          <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack'}</span>
+                          <span className="text-[10px] text-emerald-200/70 truncate block">{lightboxMemory.musicArtist || 'Spotify'}</span>
                         </div>
                       </div>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 shrink-0">
@@ -1383,7 +1376,7 @@ export const LittleArchiveSection: React.FC = () => {
                         </div>
                         <div className="truncate">
                           <span className="font-medium text-white truncate block">{lightboxMemory.musicTitle || 'Soundtrack of this moment'}</span>
-                          <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Soundtrack Caption'}</span>
+                          <span className="text-[10px] text-pink-200/70 truncate block">{lightboxMemory.musicArtist || 'Garden Soundtrack'}</span>
                         </div>
                       </div>
                       <button
@@ -1419,7 +1412,7 @@ export const LittleArchiveSection: React.FC = () => {
                 </div>
               )}
 
-              {/* Hidden audio element for soundtrack playback */}
+              {/* Hidden audio element for local/custom audio soundtrack playback */}
               {lightboxMemory.musicUrl && !isSpotifyUrl(lightboxMemory.musicUrl) && (
                 <audio
                   ref={soundtrackAudioRef}
@@ -1529,7 +1522,7 @@ export const LittleArchiveSection: React.FC = () => {
                   photoUrl && !videoUrl ? styles.uploadChoiceBtnActive : ''
                 }`}
               >
-                <Camera className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 <span>Upload Photo 📸</span>
               </button>
 
@@ -1546,12 +1539,23 @@ export const LittleArchiveSection: React.FC = () => {
 
               <button
                 type="button"
+                onClick={() => setShowRecorder(!showRecorder)}
+                className={`${styles.uploadChoiceBtn} ${
+                  showRecorder || voiceNoteUrl ? styles.uploadChoiceBtnActive : ''
+                }`}
+              >
+                <Mic className="w-4 h-4" />
+                <span>Voice Note</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleOpenMusicPicker}
                 className={`${styles.uploadChoiceBtn} ${
                   musicUrl || showMusicPicker ? styles.uploadChoiceBtnActive : ''
                 }`}
               >
-                <Music2 className="w-4 h-4 text-pink-300" />
+                <Music2 className="w-4 h-4" />
                 <span>Soundtrack 🎵</span>
               </button>
             </div>
@@ -1580,6 +1584,22 @@ export const LittleArchiveSection: React.FC = () => {
               onChange={handleMusicFileUpload}
             />
 
+            {/* Processing Video Spinner */}
+            {isProcessingMedia && (
+              <div className="p-4 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center justify-center gap-3 text-xs text-pink-200 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-pink-300" />
+                <span>Processing video clip & generating keepsake poster frame... ✨</span>
+              </div>
+            )}
+
+            {/* Voice Recorder */}
+            {showRecorder && (
+              <VoiceNoteRecorder
+                onRecorded={handleVoiceNoteRecorded}
+                onCancel={() => setShowRecorder(false)}
+              />
+            )}
+
             {/* Music / Soundtrack Picker Panel */}
             {showMusicPicker && (
               <div className="p-3.5 rounded-2xl bg-white/[0.06] border border-pink-400/30 space-y-3 animate-fade-in text-xs">
@@ -1591,7 +1611,7 @@ export const LittleArchiveSection: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowMusicPicker(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-rose-500 text-white flex items-center justify-center transition-all cursor-pointer"
+                    className="text-pink-300/70 hover:text-white p-1"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -1634,13 +1654,13 @@ export const LittleArchiveSection: React.FC = () => {
                         <div
                           key={song.id}
                           onClick={() => handleSelectSoundGardenSong(song)}
-                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-pink-500/20 border border-white/10 hover:border-pink-400/40 cursor-pointer transition-all"
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-pink-500/20 cursor-pointer border border-transparent hover:border-pink-400/30 transition-all text-xs"
                         >
                           <div className="truncate pr-2">
-                            <span className="font-medium text-white truncate block">{song.title}</span>
+                            <span className="text-white font-medium truncate block">{song.title}</span>
                             <span className="text-[10px] text-pink-200/60 truncate block">{song.artist}</span>
                           </div>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 shrink-0">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/30 text-pink-200 shrink-0 font-mono">
                             Select ♫
                           </span>
                         </div>
@@ -1651,7 +1671,86 @@ export const LittleArchiveSection: React.FC = () => {
               </div>
             )}
 
-            {/* Soundtrack Attached Preview Pill */}
+            {/* Video Preview */}
+            {videoUrl && (
+              <div className="relative rounded-2xl overflow-hidden max-h-60 border border-pink-400/30 shadow-md bg-black/60">
+                <video
+                  src={videoUrl}
+                  poster={photoUrl}
+                  controls
+                  playsInline
+                  className="w-full max-h-60 object-contain mx-auto"
+                />
+                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[11px] font-mono text-pink-200 flex items-center gap-1.5">
+                  <Film className="w-3.5 h-3.5 text-pink-300" />
+                  <span>Video Clip {videoDuration ? `(${Math.round(videoDuration)}s)` : ''}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoUrl(undefined);
+                    setMediaType('photo');
+                    setPhotoUrl('');
+                    setVideoDuration(undefined);
+                  }}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                  title="Remove video"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {/* Photo Preview (when photo selected and no video) */}
+            {photoUrl && !videoUrl && (
+              <div className="space-y-2">
+                <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
+                  <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoUrl('');
+                      setCompressionStats(null);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Smart Mobile Compression Badge */}
+                {compressionStats && compressionStats.reductionPercent > 0 && (
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in shadow-sm">
+                    <span className="flex items-center gap-1.5 font-medium truncate pr-2">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                      <span className="truncate">Instant Upload Optimizer</span>
+                    </span>
+                    <span className="font-mono text-[11px] text-white shrink-0 bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-400/30">
+                      {compressionStats.originalFormatted} → {compressionStats.compressedFormatted} ({compressionStats.reductionPercent}% faster ⚡)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Voice Note Preview */}
+            {voiceNoteUrl && (
+              <div className="p-3 rounded-2xl bg-purple-500/15 border border-purple-400/30 flex items-center justify-between text-xs text-purple-200">
+                <span className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-purple-300" />
+                  <span>Voice Note Attached</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVoiceNoteUrl(undefined)}
+                  className="text-slate-400 hover:text-rose-300 cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            {/* Soundtrack Preview Pill */}
             {musicUrl && (
               <div className="p-3 rounded-2xl bg-pink-500/15 border border-pink-400/30 flex items-center justify-between text-xs text-pink-200 animate-fade-in shadow-sm">
                 <div className="flex items-center gap-2.5 min-w-0 pr-2">
@@ -1682,77 +1781,6 @@ export const LittleArchiveSection: React.FC = () => {
                 >
                   Remove
                 </button>
-              </div>
-            )}
-
-            {/* Processing Video Spinner */}
-            {isProcessingMedia && (
-              <div className="p-4 rounded-2xl bg-pink-500/10 border border-pink-400/30 flex items-center justify-center gap-3 text-xs text-pink-200 animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin text-pink-300" />
-                <span>Processing video clip & generating keepsake poster frame... ✨</span>
-              </div>
-            )}
-
-            {/* Video Preview */}
-            {videoUrl && (
-              <div className="relative rounded-2xl overflow-hidden max-h-60 border border-pink-400/30 shadow-md bg-black/60">
-                <video
-                  src={videoUrl}
-                  poster={photoUrl}
-                  controls
-                  playsInline
-                  className="w-full max-h-60 object-contain mx-auto"
-                />
-                <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-[11px] font-mono text-pink-200 flex items-center gap-1.5">
-                  <Film className="w-3.5 h-3.5 text-pink-300" />
-                  <span>Video Clip {videoDuration ? `(${Math.round(videoDuration)}s)` : ''}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVideoUrl(undefined);
-                    setMediaType('photo');
-                    setPhotoUrl('');
-                    setVideoDuration(undefined);
-                  }}
-                  className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
-                  title="Remove video"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {/* Photo Preview (when photo selected and no video) */}
-            {photoUrl && !videoUrl && (
-              <div className="space-y-2">
-                <div className="relative rounded-2xl overflow-hidden max-h-52 border border-white/20 shadow-md">
-                  <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPhotoUrl('');
-                      setCompressionStats(null);
-                    }}
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-rose-500 text-white border border-white/20 flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-110 active:scale-95 shrink-0 aspect-square p-0"
-                    title="Remove photo"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Smart Mobile Compression Badge */}
-                {compressionStats && compressionStats.reductionPercent > 0 && (
-                  <div className="p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in shadow-sm">
-                    <span className="flex items-center gap-1.5 font-medium truncate pr-2">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
-                      <span className="truncate">Instant Upload Optimizer</span>
-                    </span>
-                    <span className="font-mono text-[11px] text-white shrink-0 bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-400/30">
-                      {compressionStats.originalFormatted} → {compressionStats.compressedFormatted} ({compressionStats.reductionPercent}% faster ⚡)
-                    </span>
-                  </div>
-                )}
               </div>
             )}
 

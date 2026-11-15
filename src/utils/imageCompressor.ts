@@ -196,7 +196,7 @@ export async function compressImage(
  */
 export async function extractVideoThumbnail(
   file: File | Blob,
-  seekTime: number = 1.5
+  seekTime: number = 0.5
 ): Promise<{ thumbnailUrl: string; duration: number }> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined') {
@@ -213,7 +213,6 @@ export async function extractVideoThumbnail(
     video.src = blobUrl;
 
     let hasResolved = false;
-    let seekAttempts = 0;
     const cleanup = () => {
       try {
         URL.revokeObjectURL(blobUrl);
@@ -226,15 +225,17 @@ export async function extractVideoThumbnail(
         cleanup();
         resolve({ thumbnailUrl: '/assets/garden/card_archive.jpg', duration: video.duration || 0 });
       }
-    }, 8000);
+    }, 6000);
 
     video.onloadedmetadata = () => {
-      const initialSeek = Math.min(seekTime, Math.max(0.5, (video.duration || 2) * 0.25));
-      video.currentTime = initialSeek;
+      const targetTime = Math.min(seekTime, (video.duration || 1) / 2);
+      video.currentTime = targetTime;
     };
 
     video.onseeked = () => {
       if (hasResolved) return;
+      hasResolved = true;
+      clearTimeout(timeout);
 
       try {
         const canvas = document.createElement('canvas');
@@ -245,27 +246,6 @@ export async function extractVideoThumbnail(
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          // Test brightness to prevent black fade-in frame
-          try {
-            const sampleW = Math.min(canvas.width, 30);
-            const sampleH = Math.min(canvas.height, 30);
-            const sampleData = ctx.getImageData(0, 0, sampleW, sampleH).data;
-            let sum = 0;
-            for (let i = 0; i < sampleData.length; i += 4) {
-              sum += (sampleData[i] + sampleData[i + 1] + sampleData[i + 2]) / 3;
-            }
-            const avgLuma = sum / (sampleData.length / 4);
-
-            if (avgLuma < 8 && seekAttempts < 2 && (video.duration || 0) > 2.0) {
-              seekAttempts++;
-              video.currentTime = Math.min(video.duration * 0.4, video.currentTime + 1.5);
-              return;
-            }
-          } catch {}
-
-          hasResolved = true;
-          clearTimeout(timeout);
           const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.85);
           cleanup();
           resolve({ thumbnailUrl, duration: video.duration || 0 });
@@ -274,8 +254,6 @@ export async function extractVideoThumbnail(
       } catch (err) {
         console.warn('[extractVideoThumbnail] Failed to capture video frame:', err);
       }
-      hasResolved = true;
-      clearTimeout(timeout);
       cleanup();
       resolve({ thumbnailUrl: '/assets/garden/card_archive.jpg', duration: video.duration || 0 });
     };

@@ -597,7 +597,7 @@ export const notificationService = {
   },
 
   sendNotification(params: {
-    type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood' | 'question';
+    type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood';
     title: string;
     message: string;
     targetTab: string;

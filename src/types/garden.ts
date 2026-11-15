@@ -69,12 +69,21 @@ export interface MemoryEntry {
   videoUrl?: string;
   videoMediaId?: string;
   mediaType?: 'photo' | 'video';
+  voiceNoteUrl?: string;
+  audioFileName?: string;
   musicUrl?: string;
   musicTitle?: string;
   musicArtist?: string;
   dateTaken?: string;
   isShared: boolean;
   createdAt: string;
+}
+
+export interface DeletedMemoryItem {
+  id: string;
+  originalMemory: MemoryEntry;
+  deletedAt: string;
+  deletedBy: string; // userId of person who moved it to bin
 }
 
 export interface PetalNoteEntry {
@@ -107,7 +116,7 @@ export interface HangoutEntry {
 
 export interface GardenNotification {
   id: string;
-  type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood' | 'question';
+  type: 'letter' | 'petal' | 'song' | 'shelf' | 'memory' | 'date' | 'mood';
   title: string;
   message: string;
   targetTab: string;

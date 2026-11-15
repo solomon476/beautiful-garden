@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Heart, Sparkles, Film, Maximize2, Minimize2 } from 'lucide-react';
 import type { MemoryItem } from '../data/giftContent';
 import { soundEngine } from '../utils/audio';
 import { authService } from '../services/gardenService';
 import { notificationService } from '../services/notificationService';
-import { formatMemoryDisplayTitle, isVideoMoment } from './garden/LittleArchiveSection';
-import { mediaStorage } from '../utils/mediaStorage';
+import { formatMemoryDisplayTitle } from './garden/LittleArchiveSection';
 
 interface PhotoLightboxProps {
   memory: MemoryItem | null;
@@ -45,69 +44,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
   const [isCoverMode, setIsCoverMode] = useState<boolean>(true);
   const [likeToast, setLikeToast] = useState<string | null>(null);
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
-  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
-
-  const isVideo = isVideoMoment(memory as any);
-
-  useEffect(() => {
-    if (!memory) {
-      setActiveVideoUrl(null);
-      setIsVideoLoading(false);
-      return;
-    }
-
-    if (!isVideo) {
-      setActiveVideoUrl(null);
-      setIsVideoLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-    if (memory.videoUrl && !memory.videoUrl.startsWith('blob:null')) {
-      setActiveVideoUrl(memory.videoUrl);
-    } else {
-      setIsVideoLoading(true);
-    }
-
-    (async () => {
-      try {
-        let resolved: string | null = null;
-        const memAny = memory as any;
-        if (memAny.videoMediaId) {
-          resolved = await mediaStorage.getMediaUrl(memAny.videoMediaId);
-        }
-        if (!resolved && memory.id) {
-          resolved = await mediaStorage.getMediaUrl(memory.id);
-        }
-        if (!resolved) {
-          const storedVideos = await mediaStorage.getAllVideos();
-          const matched = storedVideos.find(
-            (v) =>
-              v.id === memAny.videoMediaId ||
-              v.id === memory.id ||
-              (memory.title && v.name && v.name.toLowerCase().includes(memory.title.toLowerCase())) ||
-              (memory.id.includes('-') && memory.id.split('-')[1]?.length >= 10 && v.id.includes(memory.id.split('-')[1].slice(0, 10)))
-          );
-          if (matched) {
-            resolved = await mediaStorage.getMediaUrl(matched.id);
-          }
-        }
-        if (isMounted) {
-          if (resolved) setActiveVideoUrl(resolved);
-          setIsVideoLoading(false);
-        }
-      } catch {
-        if (isMounted) setIsVideoLoading(false);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [memory]);
 
   useEffect(() => {
     if (!memory) return;
@@ -195,7 +133,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   };
 
   // 1. Immersive Full-Screen Cinema Theater View for Videos
-  if (isVideoMoment(memory as any)) {
+  if (memory.videoUrl) {
     const videoContent = (
       <div
         className="fixed inset-0 flex flex-col justify-between select-none animate-fade-in"
@@ -207,10 +145,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         }}
         onClick={onClose}
       >
-        {/* Sleek Floating Top Header Bar */}
+        {/* Floating Top Header Bar */}
         <div
-          className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-3.5 sm:p-5 pt-safe select-none"
-          style={{ background: 'linear-gradient(180deg, rgba(5,2,10,0.92) 0%, rgba(5,2,10,0.5) 60%, transparent 100%)' }}
+          className="relative z-30 flex items-center justify-between p-3 sm:p-5"
+          style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {likeToast && (
@@ -219,7 +157,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             </div>
           )}
           <div className="flex items-center gap-2.5 min-w-0 pr-2">
-            <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 flex items-center justify-center shrink-0 aspect-square shadow-sm">
+            <span className="p-2 rounded-xl bg-pink-500/20 border border-pink-400/40 text-pink-300 shrink-0">
               <Film className="w-4 h-4" />
             </span>
             <div className="min-w-0">
@@ -239,7 +177,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <button
               type="button"
               onClick={handleLike}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-pink-400 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md flex items-center justify-center shrink-0 aspect-square"
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-pink-400 active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
               title="Like this video"
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-pink-500 text-pink-500' : ''}`} />
@@ -248,77 +186,41 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-rose-500 border border-white/30 text-white backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-xl cursor-pointer shrink-0 aspect-square"
+              className="p-2.5 rounded-full bg-white/10 hover:bg-rose-500 border border-white/20 text-white active:scale-90 transition-all cursor-pointer shadow-lg backdrop-blur-md"
               aria-label="Close video view"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Full-Screen Video Stage */}
         <div
-          className="absolute inset-0 w-full h-full flex items-center justify-center p-0 overflow-hidden"
+          className="flex-1 w-full flex items-center justify-center p-1 sm:p-4 overflow-hidden relative"
           onClick={(e) => e.stopPropagation()}
         >
-          {(activeVideoUrl || memory.videoUrl) ? (
-            <video
-              key={memory.id + (activeVideoUrl || memory.videoUrl)}
-              src={activeVideoUrl || memory.videoUrl}
-              poster={memory.photoUrl}
-              controls
-              playsInline
-              autoPlay
-              preload="auto"
-              className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                const v = e.currentTarget;
-                if (v.paused) v.play().catch(() => {});
-                else v.pause();
-              }}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center p-8 text-center text-pink-200">
-              {isVideoLoading ? (
-                <>
-                  <Loader2 className="w-10 h-10 animate-spin text-pink-400 mb-3" />
-                  <p className="text-sm font-medium">Preparing cinema video player...</p>
-                </>
-              ) : (
-                <>
-                  <Film className="w-12 h-12 text-pink-400/50 mb-3" />
-                  <p className="text-sm font-medium">Video Clip</p>
-                  <p className="text-xs text-pink-300/70 mt-1 mb-3">Stored on device • Tap below if you'd like to load the video file</p>
-                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-xs text-pink-200 cursor-pointer transition-all active:scale-95 shadow-md">
-                    <Film className="w-3.5 h-3.5 text-pink-300" />
-                    <span>Select Video to Play</span>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            const saved = await mediaStorage.saveFile(file, file.name);
-                            const url = saved.blobUrl || saved.dataUrl;
-                            setActiveVideoUrl(url);
-                          } catch {}
-                        }
-                      }}
-                    />
-                  </label>
-                </>
-              )}
-            </div>
-          )}
+          <video
+            key={memory.id}
+            src={memory.videoUrl}
+            poster={memory.photoUrl}
+            controls
+            playsInline
+            autoPlay
+            preload="auto"
+            className="w-full h-full max-h-[82vh] sm:max-h-[86vh] object-contain mx-auto rounded-xl sm:rounded-2xl shadow-2xl cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              const v = e.currentTarget;
+              if (v.paused) v.play().catch(() => {});
+              else v.pause();
+            }}
+          />
         </div>
 
         {/* Floating Bottom Navigation & Caption Bar */}
         <div
-          className="absolute bottom-0 left-0 right-0 z-40 p-3.5 sm:p-5 pb-safe space-y-2 select-none"
-          style={{ background: 'linear-gradient(0deg, rgba(5,2,10,0.95) 0%, rgba(5,2,10,0.5) 70%, transparent 100%)' }}
+          className="relative z-30 p-3 sm:p-5 space-y-2"
+          style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 70%, transparent 100%)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {memory.caption && (
@@ -393,10 +295,10 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
           </button>
 
-          {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+          {memory.videoUrl ? (
             <video
-              key={memory.id + (activeVideoUrl || memory.videoUrl || '')}
-              src={activeVideoUrl || memory.videoUrl}
+              key={memory.id}
+              src={memory.videoUrl}
               poster={memory.photoUrl}
               controls
               playsInline
@@ -424,7 +326,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             />
           )}
           <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-medium text-pink-200 border border-pink-400/30 flex items-center gap-1.5 z-10 pointer-events-none">
-            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+            {memory.videoUrl ? (
               <>
                 <Film className="w-3 h-3 text-amber-300" />
                 <span>Video Keepsake 🎬</span>
@@ -438,7 +340,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
           </div>
 
           {/* Optional Fit/Fill Toggle & Interactive Heart Button on Photo */}
-          {!(activeVideoUrl || memory.videoUrl || isVideo) && (
+          {!memory.videoUrl && (
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
               <button
                 type="button"
@@ -487,7 +389,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-800 truncate px-2">
               {memory.title}
             </h3>
-            {(activeVideoUrl || memory.videoUrl || isVideo) ? (
+            {memory.videoUrl ? (
               <button
                 type="button"
                 onClick={handleLike}

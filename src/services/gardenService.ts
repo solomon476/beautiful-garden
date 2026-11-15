@@ -11,6 +11,7 @@ import type {
   SongEntry,
   ShelfEntry,
   MemoryEntry,
+  DeletedMemoryItem,
   PetalNoteEntry,
   HangoutEntry,
   QuestionResponseEntry,
@@ -318,6 +319,7 @@ const STORAGE_KEYS = {
   SONGS: 'perfect_time_songs',
   SHELF: 'perfect_time_shelf',
   MEMORIES: 'perfect_time_archive_memories',
+  DELETED_MEMORIES: 'perfect_time_deleted_memories_v1',
   DELETED_MEMORY_IDS: 'perfect_time_deleted_memory_ids_v1',
   PETALS: 'perfect_time_petal_notes',
   HANGOUTS: 'perfect_time_hangouts',
@@ -928,40 +930,9 @@ export const shelfService = {
 // ==============================================================================
 // Feature D: Our Little Archive (Memories)
 // ==============================================================================
-export const PERMANENTLY_EXCLUDED_MEMORY_IDS = new Set<string>([
-  'mem-1',
-  'mem-6',
-  'mem-solomon-del-test',
-  'mem-solomon-real-1',
-  'mem-1794412387784-01sm',
-  'mem-1794412389282-703c',
-  'mem-1794420983599-qc3y',
-  'mem-1794736195595-u2p8',
-  'mem-1794739499714-yd98',
-  'mem-1794739598819-589t',
-]);
-
-export const isExcludedMemory = (m?: { id?: string; title?: string; photoUrl?: string; description?: string; caption?: string }): boolean => {
-  if (!m) return true;
-  if (m.id && PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id)) return true;
-  if (m.title && m.title.trim().includes('65392')) return true;
-  if (m.title && m.title.trim().toLowerCase().includes('signature noella energy')) return true;
-  if (m.photoUrl && (m.photoUrl.includes('photo-balcony.jpg') || m.photoUrl.includes('photo-balcony-peace.jpg'))) return true;
-  return false;
-};
-
-export const isSampleMemory = (id?: string | null): boolean => {
-  if (!id) return false;
-  if (/^mem-[1-9]$/.test(id)) return true;
-  if (id.startsWith('seed-')) return true;
-  if (id === 'mem-fresh-private-now') return true;
-  return false;
-};
-
 export const memoryArchiveService = {
   getDeletedMemoryIds(): string[] {
-    const userDeleted = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
-    return Array.from(new Set([...userDeleted, ...PERMANENTLY_EXCLUDED_MEMORY_IDS]));
+    return loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
   },
 
   getCachedMemories(): MemoryEntry[] {
@@ -970,26 +941,8 @@ export const memoryArchiveService = {
     const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     return localAll
-      .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
-      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared))
-      .map((m) => {
-        if (isSampleMemory(m.id)) {
-          return {
-            ...m,
-            videoUrl: undefined,
-            videoMediaId: undefined,
-            mediaType: 'photo' as const,
-          };
-        }
-        const isVideo =
-          m.mediaType === 'video' ||
-          Boolean(m.videoMediaId) ||
-          Boolean(m.videoUrl);
-        return {
-          ...m,
-          mediaType: isVideo ? ('video' as const) : ('photo' as const),
-        };
-      });
+      .filter((m) => !deletedIds.has(m.id))
+      .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
   },
 
   async getMemories(): Promise<MemoryEntry[]> {
@@ -997,62 +950,10 @@ export const memoryArchiveService = {
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
-    const rawLocalAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
-    const localAll = rawLocalAll
-      .filter((m) => !PERMANENTLY_EXCLUDED_MEMORY_IDS.has(m.id))
-      .map((m) => {
-        let caption = m.caption || '';
-        let description = m.description || '';
-        let musicUrl = m.musicUrl;
-        let musicTitle = m.musicTitle;
-        let musicArtist = m.musicArtist;
-
-        if (caption.trim().startsWith('{')) {
-          try {
-            const p = JSON.parse(caption);
-            caption = p.note || '';
-            if (p.musicUrl && !musicUrl) musicUrl = p.musicUrl;
-            if (p.musicTitle && !musicTitle) musicTitle = p.musicTitle;
-            if (p.musicArtist && !musicArtist) musicArtist = p.musicArtist;
-          } catch {}
-        }
-        if (description.trim().startsWith('{')) {
-          try {
-            const p = JSON.parse(description);
-            description = p.note || '';
-            if (p.musicUrl && !musicUrl) musicUrl = p.musicUrl;
-            if (p.musicTitle && !musicTitle) musicTitle = p.musicTitle;
-            if (p.musicArtist && !musicArtist) musicArtist = p.musicArtist;
-          } catch {}
-        }
-
-        // Seed / sample gift memories are ALWAYS pure standalone photos
-        if (isSampleMemory(m.id)) {
-          return {
-            ...m,
-            caption,
-            description,
-            mediaType: 'photo' as const,
-            videoUrl: undefined,
-            videoMediaId: undefined,
-          };
-        }
-        return {
-          ...m,
-          caption,
-          description,
-          musicUrl,
-          musicTitle,
-          musicArtist,
-        };
-      });
-    if (JSON.stringify(rawLocalAll) !== JSON.stringify(localAll)) {
-      saveLocal(STORAGE_KEYS.MEMORIES, localAll);
-    }
-
+    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
     const isAuthed = authService.isAuthenticated();
     const localVisible = localAll
-      .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
+      .filter((m) => !deletedIds.has(m.id))
       .filter((m) => (isAuthed ? m.contributorId === user.id || m.isShared : m.isShared));
 
     if (isLiveSupabaseConfigured && supabase) {
@@ -1069,15 +970,16 @@ export const memoryArchiveService = {
             let videoMediaId: string | undefined = undefined;
             let mediaType: 'photo' | 'video' = d.media_type || (videoUrl ? 'video' : 'photo');
             let description: string = d.description || '';
+
             let musicUrl: string | undefined = undefined;
             let musicTitle: string | undefined = undefined;
             let musicArtist: string | undefined = undefined;
 
-            // Check if description is packed JSON containing video or music metadata
+            // Check if description is packed JSON containing video or soundtrack metadata
             if (
               description &&
               typeof description === 'string' &&
-              description.trim().startsWith('{')
+              description.startsWith('{')
             ) {
               try {
                 const parsed = JSON.parse(description);
@@ -1101,25 +1003,18 @@ export const memoryArchiveService = {
                 if (parsed.musicArtist) {
                   musicArtist = parsed.musicArtist;
                 }
-                description = parsed.note || '';
+                if (parsed.note !== undefined) {
+                  description = parsed.note;
+                }
               } catch {}
             }
 
-            let caption: string = d.caption || '';
-            if (caption.trim().startsWith('{')) {
+            let caption = d.caption || '';
+            if (typeof caption === 'string' && caption.startsWith('{')) {
               try {
-                const parsedCap = JSON.parse(caption);
-                caption = parsedCap.note || '';
+                const parsed = JSON.parse(caption);
+                caption = parsed.note || '';
               } catch {}
-            }
-
-            // Seed/sample memories are ALWAYS standalone photos
-            if (isSampleMemory(d.id)) {
-              mediaType = 'photo';
-              videoUrl = undefined;
-              videoMediaId = undefined;
-            } else if (d.id === 'mem-1793791572597-emdc') {
-              mediaType = 'video';
             }
 
             return {
@@ -1141,82 +1036,43 @@ export const memoryArchiveService = {
               createdAt: d.created_at,
             };
           })
-          .filter((d) => !deletedIds.has(d.id) && !isExcludedMemory(d));
+          .filter((d) => !deletedIds.has(d.id));
 
         // Filter cloud entries by privacy (private memories only visible to contributor)
         const visibleCloudEntries = cloudEntries.filter((d) =>
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
-        // Retrieve stored videos from local IndexedDB for auto-recovery of real videos
-        const storedVideos = await mediaStorage.getAllVideos();
-
         // Merge: preserve videoUrl & mediaType from local cache or IndexedDB
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
         const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
-          if (isSampleMemory(c.id)) {
-            return {
-              ...c,
-              videoUrl: undefined,
-              videoMediaId: undefined,
-              mediaType: 'photo' as const,
-            };
+          let videoUrl = c.videoUrl || l?.videoUrl;
+          const videoMediaId = c.videoMediaId || l?.videoMediaId;
+          const mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+
+          // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
+          if (videoMediaId) {
+            try {
+              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+              if (idbUrl) videoUrl = idbUrl;
+            } catch {}
           }
 
-          let videoUrl = c.videoUrl || l?.videoUrl;
-          let videoMediaId = c.videoMediaId || l?.videoMediaId;
-          let mediaType: 'photo' | 'video' =
-            c.id === 'mem-1793791572597-emdc'
-              ? 'video'
-              : c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
-
-          if (mediaType === 'video' || c.id === 'mem-1793791572597-emdc') {
-            mediaType = 'video';
-            // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
-            if (videoMediaId) {
-              try {
-                const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-                if (idbUrl) {
-                  videoUrl = idbUrl;
-                }
-              } catch {}
-            }
-
-            // Exact ID matching only if videoUrl is missing and memory is marked as video
-            if (!videoUrl && storedVideos.length > 0) {
-              const matched = storedVideos.find((v) =>
-                (videoMediaId && v.id === videoMediaId) ||
-                (c.id && v.id === c.id) ||
-                (c.id === 'mem-1793791572597-emdc') ||
-                (storedVideos.length === 1 && !isSampleMemory(c.id)) ||
-                (c.title && v.name && v.name.toLowerCase().includes(c.title.toLowerCase())) ||
-                (c.id && c.id.includes('-') && c.id.split('-')[1]?.length >= 10 && v.id.includes(c.id.split('-')[1].slice(0, 10)))
-              );
-              if (matched) {
-                const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-                if (idbUrl) {
-                  videoUrl = idbUrl;
-                  videoMediaId = matched.id;
-                }
-              }
-            }
-
-            // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
-            if (videoUrl && videoUrl.startsWith('data:video/')) {
-              try {
-                const blob = mediaStorage.dataUrlToBlob(videoUrl);
-                videoUrl = URL.createObjectURL(blob);
-              } catch (err) {
-                console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
-              }
+          // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
+          if (videoUrl && videoUrl.startsWith('data:video/')) {
+            try {
+              const blob = mediaStorage.dataUrlToBlob(videoUrl);
+              videoUrl = URL.createObjectURL(blob);
+            } catch (err) {
+              console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
             }
           }
 
           return {
             ...c,
-            videoUrl: mediaType === 'video' ? videoUrl : undefined,
-            videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
+            videoUrl,
+            videoMediaId,
             mediaType,
             musicUrl: c.musicUrl || l?.musicUrl,
             musicTitle: c.musicTitle || l?.musicTitle,
@@ -1226,73 +1082,25 @@ export const memoryArchiveService = {
 
         const cloudIds = new Set(mergedCloudEntries.map((e) => e.id));
         const resolvedLocalEntries = await Promise.all(
-          localVisible
-            .filter((m) => !cloudIds.has(m.id) && !isExcludedMemory(m))
-            .map(async (l) => {
-              if (isSampleMemory(l.id)) {
-                return {
-                  ...l,
-                  videoUrl: undefined,
-                  videoMediaId: undefined,
-                  mediaType: 'photo' as const,
-                };
-              }
-
-              let videoUrl = l.videoUrl;
-              let videoMediaId = l.videoMediaId;
-              let mediaType: 'photo' | 'video' =
-                l.id === 'mem-1793791572597-emdc'
-                  ? 'video'
-                  : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
-
-              if (mediaType === 'video' || l.id === 'mem-1793791572597-emdc') {
-                mediaType = 'video';
-                if (videoMediaId) {
-                  try {
-                    const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-                    if (idbUrl) {
-                      videoUrl = idbUrl;
-                    }
-                  } catch {}
-                }
-                if (!videoUrl && storedVideos.length > 0) {
-                  const matched = storedVideos.find((v) =>
-                    (videoMediaId && v.id === videoMediaId) ||
-                    (l.id && v.id === l.id) ||
-                    (l.id === 'mem-1793791572597-emdc') ||
-                    (storedVideos.length === 1 && !isSampleMemory(l.id)) ||
-                    (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
-                    (l.id && l.id.includes('-') && l.id.split('-')[1]?.length >= 10 && v.id.includes(l.id.split('-')[1].slice(0, 10)))
-                  );
-                  if (matched) {
-                    const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-                    if (idbUrl) {
-                      videoUrl = idbUrl;
-                      videoMediaId = matched.id;
-                    }
-                  }
-                }
-                if (videoUrl && videoUrl.startsWith('data:video/')) {
-                  try {
-                    const blob = mediaStorage.dataUrlToBlob(videoUrl);
-                    videoUrl = URL.createObjectURL(blob);
-                  } catch {}
-                }
-              }
-
-              return {
-                ...l,
-                videoUrl: mediaType === 'video' ? videoUrl : undefined,
-                videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
-                mediaType,
-                musicUrl: l.musicUrl,
-                musicTitle: l.musicTitle,
-                musicArtist: l.musicArtist,
-              };
-            })
+          localVisible.filter((m) => !cloudIds.has(m.id)).map(async (l) => {
+            let videoUrl = l.videoUrl;
+            if (l.videoMediaId) {
+              try {
+                const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+                if (idbUrl) videoUrl = idbUrl;
+              } catch {}
+            }
+            if (videoUrl && videoUrl.startsWith('data:video/')) {
+              try {
+                const blob = mediaStorage.dataUrlToBlob(videoUrl);
+                videoUrl = URL.createObjectURL(blob);
+              } catch {}
+            }
+            return { ...l, videoUrl };
+          })
         );
 
-        const fullEntries = [...resolvedLocalEntries, ...mergedCloudEntries].filter((m) => !isExcludedMemory(m));
+        const fullEntries = [...resolvedLocalEntries, ...mergedCloudEntries];
         // Cache to local storage so subsequent opens are instant with ZERO delay or placeholder flicker!
         saveLocal(STORAGE_KEYS.MEMORIES, fullEntries);
         return fullEntries;
@@ -1300,71 +1108,22 @@ export const memoryArchiveService = {
     }
 
     // Fallback: local only with resolved IndexedDB video URLs
-    const storedVideosFallback = await mediaStorage.getAllVideos();
     return Promise.all(
-      localVisible
-        .filter((l) => !isExcludedMemory(l))
-        .map(async (l) => {
-        if (isSampleMemory(l.id)) {
-          return {
-            ...l,
-            videoUrl: undefined,
-            videoMediaId: undefined,
-            mediaType: 'photo' as const,
-          };
-        }
-
+      localVisible.map(async (l) => {
         let videoUrl = l.videoUrl;
-        let videoMediaId = l.videoMediaId;
-        let mediaType: 'photo' | 'video' =
-          l.id === 'mem-1793791572597-emdc'
-            ? 'video'
-            : l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
-
-        if (mediaType === 'video' || l.id === 'mem-1793791572597-emdc') {
-          mediaType = 'video';
-          if (videoMediaId) {
-            try {
-              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-              if (idbUrl) {
-                videoUrl = idbUrl;
-              }
-            } catch {}
-          }
-          if (!videoUrl && storedVideosFallback.length > 0) {
-            const matched = storedVideosFallback.find((v) =>
-              (videoMediaId && v.id === videoMediaId) ||
-              (l.id && v.id === l.id) ||
-              (l.id === 'mem-1793791572597-emdc') ||
-              (storedVideosFallback.length === 1 && !isSampleMemory(l.id)) ||
-              (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase())) ||
-              (l.id && l.id.includes('-') && l.id.split('-')[1]?.length >= 10 && v.id.includes(l.id.split('-')[1].slice(0, 10)))
-            );
-            if (matched) {
-              const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-              if (idbUrl) {
-                videoUrl = idbUrl;
-                videoMediaId = matched.id;
-              }
-            }
-          }
-          if (videoUrl && videoUrl.startsWith('data:video/')) {
-            try {
-              const blob = mediaStorage.dataUrlToBlob(videoUrl);
-              videoUrl = URL.createObjectURL(blob);
-            } catch {}
-          }
+        if (l.videoMediaId) {
+          try {
+            const idbUrl = await mediaStorage.getMediaUrl(l.videoMediaId);
+            if (idbUrl) videoUrl = idbUrl;
+          } catch {}
         }
-
-        return {
-          ...l,
-          videoUrl: mediaType === 'video' ? videoUrl : undefined,
-          videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
-          mediaType,
-          musicUrl: l.musicUrl,
-          musicTitle: l.musicTitle,
-          musicArtist: l.musicArtist,
-        };
+        if (videoUrl && videoUrl.startsWith('data:video/')) {
+          try {
+            const blob = mediaStorage.dataUrlToBlob(videoUrl);
+            videoUrl = URL.createObjectURL(blob);
+          } catch {}
+        }
+        return { ...l, videoUrl };
       })
     );
   },
@@ -1377,6 +1136,8 @@ export const memoryArchiveService = {
     videoUrl?: string;
     videoMediaId?: string;
     mediaType?: 'photo' | 'video';
+    voiceNoteUrl?: string;
+    audioFileName?: string;
     musicUrl?: string;
     musicTitle?: string;
     musicArtist?: string;
@@ -1410,6 +1171,8 @@ export const memoryArchiveService = {
       videoUrl: memory.videoUrl,
       videoMediaId: memory.videoMediaId,
       mediaType: memory.mediaType || (memory.videoUrl || memory.videoMediaId ? 'video' : 'photo'),
+      voiceNoteUrl: memory.voiceNoteUrl,
+      audioFileName: memory.audioFileName,
       musicUrl: memory.musicUrl,
       musicTitle: memory.musicTitle,
       musicArtist: memory.musicArtist,
@@ -1428,16 +1191,10 @@ export const memoryArchiveService = {
           entry.musicUrl ||
           entry.musicTitle
         ) {
-          // Never store giant base64 video URLs (> 50KB) in Supabase description!
+          // Never sync dead blob URLs or giant base64 video URLs (> 50KB) to Supabase description
           const syncableVideoUrl =
             entry.videoUrl && !entry.videoUrl.startsWith('blob:') && entry.videoUrl.length < 50000
               ? entry.videoUrl
-              : undefined;
-
-          // Similarly keep syncableMusicUrl sane
-          const syncableMusicUrl =
-            entry.musicUrl && (!entry.musicUrl.startsWith('data:') || entry.musicUrl.length < 100000)
-              ? entry.musicUrl
               : undefined;
 
           descriptionToSave = JSON.stringify({
@@ -1445,7 +1202,7 @@ export const memoryArchiveService = {
             videoUrl: syncableVideoUrl,
             videoMediaId: entry.videoMediaId,
             mediaType: entry.mediaType,
-            musicUrl: syncableMusicUrl,
+            musicUrl: entry.musicUrl,
             musicTitle: entry.musicTitle,
             musicArtist: entry.musicArtist,
           });
@@ -1509,6 +1266,213 @@ export const memoryArchiveService = {
     }
 
     return entry;
+  },
+
+  async deleteMemory(id: string, memoryFallback?: MemoryEntry): Promise<void> {
+    const user = authService.getCurrentUser();
+    // 1. Locate the item being deleted from local storage, fallback, or cloud
+    const localActive = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    let target = memoryFallback || localActive.find((m) => m.id === id);
+
+    // If still not found, fetch from Supabase
+    if (!target && isLiveSupabaseConfigured && supabase) {
+      try {
+        const { data } = await supabase.from('garden_memories').select('*').eq('id', id).maybeSingle();
+        if (data) {
+          target = {
+            id: data.id,
+            contributorId: data.contributor_id,
+            contributorName: data.contributor_id === DEFAULT_PROFILES.noella.id ? 'Noella' : 'Solomon',
+            title: data.title,
+            caption: data.caption,
+            description: data.description,
+            photoUrl: data.photo_url,
+            videoUrl: data.video_url,
+            dateTaken: data.date_taken,
+            isShared: data.is_shared,
+            createdAt: data.created_at,
+          };
+        }
+      } catch (err) {
+        console.warn('[Archive] Could not fetch target memory before delete:', err);
+      }
+    }
+
+    // Strict ownership: Neither partner can EVER delete a memory posted by the other!
+    if (target && target.contributorId && target.contributorId !== user.id) {
+      console.warn('[Archive] Unauthorized: You can only move memories you personally posted to the bin.');
+      return;
+    }
+
+    // 2. Add ID to DELETED_MEMORY_IDS so it immediately disappears everywhere
+    const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveLocal(STORAGE_KEYS.DELETED_MEMORY_IDS, deletedIds);
+    }
+
+    // 3. Move into Garden Recycle Bin with user attribution (Private on either side)
+    const binItems = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const alreadyInBin = binItems.some((b) => b.id === id);
+    if (!alreadyInBin) {
+      const deletedEntry: DeletedMemoryItem = {
+        id,
+        originalMemory: target || {
+          id,
+          contributorId: user.id,
+          contributorName: user.displayName,
+          title: 'Treasured Keepsake ♡',
+          caption: 'Memories kept in bloom',
+          photoUrl: '/assets/memories/photo-holding-hands.jpg',
+          isShared: true,
+          createdAt: new Date().toISOString(),
+        },
+        deletedAt: new Date().toISOString(),
+        deletedBy: user.id,
+      };
+      binItems.unshift(deletedEntry);
+      saveLocal(STORAGE_KEYS.DELETED_MEMORIES, binItems);
+    }
+
+    // 4. Remove from active local array
+    saveLocal(STORAGE_KEYS.MEMORIES, localActive.filter((m) => m.id !== id));
+
+    // 5. Delete from cloud database if available
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('garden_memories').delete().eq('id', id).eq('contributor_id', user.id);
+      } catch (err) {
+        console.warn('[Archive] Cloud delete failed:', err);
+      }
+    }
+
+    // 6. Broadcast event so Archive, Scrapbook and More Tab Bin update instantly
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
+      window.dispatchEvent(new Event('garden-memory-deleted'));
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+  },
+
+  // -------------------------------------------------------------
+  // Private Garden Recycle Bin Methods (Private per user)
+  // -------------------------------------------------------------
+  getDeletedMemories(userId?: string): DeletedMemoryItem[] {
+    const user = authService.getCurrentUser();
+    const targetUserId = userId || user.id;
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const activeMemories = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+
+    // Heal any legacy bin items where photoUrl fell back to dreamy_night_garden
+    let hasHealed = false;
+    const healed = allDeleted.map((item) => {
+      if (item.originalMemory && item.originalMemory.photoUrl === '/assets/dreamy_night_garden.jpg') {
+        const found = activeMemories.find((m) => m.id === item.id);
+        if (found && found.photoUrl && found.photoUrl !== '/assets/dreamy_night_garden.jpg') {
+          hasHealed = true;
+          return {
+            ...item,
+            originalMemory: {
+              ...item.originalMemory,
+              photoUrl: found.photoUrl,
+              title: found.title || item.originalMemory.title,
+              caption: found.caption || item.originalMemory.caption,
+            },
+          };
+        }
+      }
+      return item;
+    });
+
+    if (hasHealed) {
+      saveLocal(STORAGE_KEYS.DELETED_MEMORIES, healed);
+    }
+
+    // Completely private! Solomon only sees items deleted by Solomon; Noella sees items deleted by Noella.
+    return healed.filter(
+      (item) =>
+        item.deletedBy === targetUserId ||
+        (user.username && item.deletedBy === user.username) ||
+        (targetUserId === 'user-solomon-uuid' && item.deletedBy === 'solomon') ||
+        (targetUserId === 'user-noella-uuid' && (item.deletedBy === 'noella' || item.deletedBy === 'ella'))
+    );
+  },
+
+  getDeletedCount(userId?: string): number {
+    return this.getDeletedMemories(userId).length;
+  },
+
+  async restoreMemory(id: string): Promise<boolean> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    const item = allDeleted.find((b) => b.id === id);
+    if (!item) return false;
+
+    // Remove from bin
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORIES,
+      allDeleted.filter((b) => b.id !== id)
+    );
+
+    // Remove from deleted IDs
+    const deletedIds = loadLocal<string[]>(STORAGE_KEYS.DELETED_MEMORY_IDS, []);
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORY_IDS,
+      deletedIds.filter((did) => did !== id)
+    );
+
+    // Add back to active memories
+    const active = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    if (!active.some((m) => m.id === item.originalMemory.id)) {
+      active.unshift(item.originalMemory);
+      saveLocal(STORAGE_KEYS.MEMORIES, active);
+    }
+
+    // Cloud re-add if available
+    if (isLiveSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('garden_memories').upsert({
+          id: item.originalMemory.id,
+          contributor_id: item.originalMemory.contributorId,
+          title: item.originalMemory.title,
+          caption: item.originalMemory.caption,
+          description: item.originalMemory.description,
+          photo_url: item.originalMemory.photoUrl,
+          date_taken: item.originalMemory.dateTaken,
+          is_shared: item.originalMemory.isShared,
+        });
+      } catch (e) {
+        console.warn('Cloud restore error', e);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-memories-updated'));
+      window.dispatchEvent(new Event('garden-memory-added'));
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+
+    return true;
+  },
+
+  async permanentlyDelete(id: string): Promise<void> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    saveLocal(
+      STORAGE_KEYS.DELETED_MEMORIES,
+      allDeleted.filter((b) => b.id !== id)
+    );
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
+  },
+
+  async emptyBin(userId: string): Promise<void> {
+    const allDeleted = loadLocal<DeletedMemoryItem[]>(STORAGE_KEYS.DELETED_MEMORIES, []);
+    // Keep other partner's deleted items untouched
+    const kept = allDeleted.filter((b) => b.deletedBy !== userId);
+    saveLocal(STORAGE_KEYS.DELETED_MEMORIES, kept);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('garden-bin-updated'));
+    }
   },
 };
 

@@ -893,10 +893,9 @@
 }
 
 .modalCloseBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  aspect-ratio: 1 / 1;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--arc-radius-pill);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--arc-muted);
@@ -905,7 +904,6 @@
   justify-content: center;
   cursor: pointer;
   transition: all 180ms ease;
-  flex-shrink: 0;
 }
 
 .modalCloseBtn:hover {

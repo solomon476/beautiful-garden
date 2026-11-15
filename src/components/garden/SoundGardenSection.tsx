@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Music,
   ExternalLink,
+  Trash2,
   X,
   Play,
   Pause,
@@ -292,6 +293,19 @@ export const SoundGardenSection: React.FC = () => {
     }
   };
 
+  const handleDelete = async (song: SongEntry) => {
+    if (window.confirm(`Remove "${song.title}" from Sound Garden?`)) {
+      try {
+        await soundGardenService.deleteSong(song.id);
+        soundEngine.playChime(440, 0.8, 0.08);
+        setSelectedSong(null);
+        await loadSongs();
+      } catch (err: any) {
+        console.error('Delete error', err);
+        alert(err?.message || 'Could not delete song.');
+      }
+    }
+  };
 
   const isSongLiked = (song: SongEntry | null): boolean => {
     if (!song) return false;
@@ -1654,7 +1668,15 @@ export const SoundGardenSection: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-purple-400/20 flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-purple-400/20 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => handleDelete(selectedSong)}
+                className="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Track</span>
+              </button>
 
               {selectedSong.musicUrl ? (
                 isSpotifyUrl(selectedSong.musicUrl) ? (
