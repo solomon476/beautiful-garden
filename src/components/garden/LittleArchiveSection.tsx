@@ -66,17 +66,12 @@ export const formatMemoryDisplayTitle = (
 
 export const isVideoMoment = (m?: MemoryEntry | any | null): boolean => {
   if (!m) return false;
-  if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
+  // Sample gift memories (mem-1 through mem-9 or seed-*) are always pure photos
+  if (m.id && (/^mem-[1-9]$/.test(m.id) || m.id.startsWith('seed-'))) return false;
+  if (m.mediaType === 'photo') return false;
   if (m.mediaType === 'video') return true;
+  if (m.videoUrl && typeof m.videoUrl === 'string' && m.videoUrl.trim().length > 0 && !m.videoUrl.startsWith('blob:null')) return true;
   if (m.videoMediaId && typeof m.videoMediaId === 'string' && m.videoMediaId.trim().length > 0) return true;
-  if (
-    m.description &&
-    typeof m.description === 'string' &&
-    (m.description.includes('"mediaType":"video"') ||
-      m.description.includes('"videoUrl"') ||
-      m.description.includes('"videoMediaId"'))
-  )
-    return true;
   return false;
 };
 
@@ -267,6 +262,7 @@ export const LittleArchiveSection: React.FC = () => {
               caption: gm.caption,
               description: gm.caption,
               photoUrl: gm.photoUrl || '/assets/dreamy_night_garden.jpg',
+              mediaType: 'photo',
               dateTaken: gm.date,
               isShared: true,
               createdAt: '2026-11-01T12:00:00.000Z',

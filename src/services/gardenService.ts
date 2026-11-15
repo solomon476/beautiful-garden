@@ -973,7 +973,23 @@ export const memoryArchiveService = {
     const deletedIds = new Set(this.getDeletedMemoryIds());
 
     // Always load local cache first — this guarantees newly uploaded photos show immediately
-    const localAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const rawLocalAll = loadLocal<MemoryEntry[]>(STORAGE_KEYS.MEMORIES, []);
+    const localAll = rawLocalAll.map((m) => {
+      // Seed / sample gift memories are ALWAYS pure standalone photos
+      if (/^mem-[1-9]$/.test(m.id) || m.id.startsWith('seed-') || m.mediaType === 'photo') {
+        return {
+          ...m,
+          mediaType: 'photo' as const,
+          videoUrl: undefined,
+          videoMediaId: undefined,
+        };
+      }
+      return m;
+    });
+    if (JSON.stringify(rawLocalAll) !== JSON.stringify(localAll)) {
+      saveLocal(STORAGE_KEYS.MEMORIES, localAll);
+    }
+
     const isAuthed = authService.isAuthenticated();
     const localVisible = localAll
       .filter((m) => !deletedIds.has(m.id) && !isExcludedMemory(m))
@@ -1032,6 +1048,13 @@ export const memoryArchiveService = {
               } catch {}
             }
 
+            // Seed/sample memories or explicit photo entries are ALWAYS standalone photos
+            if (mediaType === 'photo' || /^mem-[1-9]$/.test(d.id) || (typeof d.id === 'string' && d.id.startsWith('seed-'))) {
+              mediaType = 'photo';
+              videoUrl = undefined;
+              videoMediaId = undefined;
+            }
+
             return {
               id: d.id,
               contributorId: d.contributor_id,
@@ -1058,61 +1081,68 @@ export const memoryArchiveService = {
           isAuthed ? d.contributorId === user.id || d.isShared : d.isShared
         );
 
-        // Retrieve stored videos from local IndexedDB for auto-recovery
+        // Retrieve stored videos from local IndexedDB for auto-recovery of real videos
         const storedVideos = await mediaStorage.getAllVideos();
 
         // Merge: preserve videoUrl & mediaType from local cache or IndexedDB
         const localMap = new Map<string, MemoryEntry>(localVisible.map((l) => [l.id, l]));
         const mergedCloudEntries = await Promise.all(visibleCloudEntries.map(async (c) => {
           const l = localMap.get(c.id);
+          const isSample = /^mem-[1-9]$/.test(c.id) || c.id.startsWith('seed-');
+          if (isSample || c.mediaType === 'photo' || (l && l.mediaType === 'photo')) {
+            return {
+              ...c,
+              videoUrl: undefined,
+              videoMediaId: undefined,
+              mediaType: 'photo' as const,
+            };
+          }
+
           let videoUrl = c.videoUrl || l?.videoUrl;
           let videoMediaId = c.videoMediaId || l?.videoMediaId;
-          let mediaType = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+          let mediaType: 'photo' | 'video' = c.mediaType || l?.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
 
-          // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
-          if (videoMediaId) {
-            try {
-              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-              if (idbUrl) {
-                videoUrl = idbUrl;
-                mediaType = 'video';
-              }
-            } catch {}
-          }
+          if (mediaType === 'video') {
+            // Always resolve fresh Blob URL from IndexedDB if videoMediaId is present
+            if (videoMediaId) {
+              try {
+                const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+                if (idbUrl) {
+                  videoUrl = idbUrl;
+                }
+              } catch {}
+            }
 
-          // If video still missing, attempt auto-recovery from storedVideos in IndexedDB
-          if (!videoUrl && storedVideos.length > 0) {
-            const matched = storedVideos.find((v) =>
-              v.id === videoMediaId ||
-              v.id === c.id ||
-              (c.id && c.id.startsWith('mem-') && v.id.includes(c.id.replace('mem-', '').slice(0, 8))) ||
-              (c.title && v.name && v.name.toLowerCase().includes(c.title.toLowerCase()))
-            );
-            if (matched) {
-              const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-              if (idbUrl) {
-                videoUrl = idbUrl;
-                videoMediaId = matched.id;
-                mediaType = 'video';
+            // Exact ID matching only if videoUrl is missing and memory is marked as video
+            if (!videoUrl && storedVideos.length > 0) {
+              const matched = storedVideos.find((v) =>
+                (videoMediaId && v.id === videoMediaId) ||
+                (c.id && v.id === c.id)
+              );
+              if (matched) {
+                const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+                if (idbUrl) {
+                  videoUrl = idbUrl;
+                  videoMediaId = matched.id;
+                }
               }
             }
-          }
 
-          // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
-          if (videoUrl && videoUrl.startsWith('data:video/')) {
-            try {
-              const blob = mediaStorage.dataUrlToBlob(videoUrl);
-              videoUrl = URL.createObjectURL(blob);
-              mediaType = 'video';
-            } catch (err) {
-              console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
+            // If videoUrl is a base64 data URL, convert to streaming Blob URL for full mobile/browser compatibility
+            if (videoUrl && videoUrl.startsWith('data:video/')) {
+              try {
+                const blob = mediaStorage.dataUrlToBlob(videoUrl);
+                videoUrl = URL.createObjectURL(blob);
+              } catch (err) {
+                console.warn('[Archive] Could not convert dataUrl to blob URL:', err);
+              }
             }
           }
 
           return {
             ...c,
-            videoUrl,
-            videoMediaId,
+            videoUrl: mediaType === 'video' ? videoUrl : undefined,
+            videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
             mediaType,
             musicUrl: c.musicUrl || l?.musicUrl,
             musicTitle: c.musicTitle || l?.musicTitle,
@@ -1125,42 +1155,56 @@ export const memoryArchiveService = {
           localVisible
             .filter((m) => !cloudIds.has(m.id) && !isExcludedMemory(m))
             .map(async (l) => {
+              const isSample = /^mem-[1-9]$/.test(l.id) || l.id.startsWith('seed-');
+              if (isSample || l.mediaType === 'photo') {
+                return {
+                  ...l,
+                  videoUrl: undefined,
+                  videoMediaId: undefined,
+                  mediaType: 'photo' as const,
+                };
+              }
+
               let videoUrl = l.videoUrl;
               let videoMediaId = l.videoMediaId;
-              let mediaType = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
-              if (videoMediaId) {
-                try {
-                  const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-                  if (idbUrl) {
-                    videoUrl = idbUrl;
-                    mediaType = 'video';
-                  }
-                } catch {}
-              }
-              if (!videoUrl && storedVideos.length > 0) {
-                const matched = storedVideos.find((v) =>
-                  v.id === videoMediaId ||
-                  v.id === l.id ||
-                  (l.id && l.id.startsWith('mem-') && v.id.includes(l.id.replace('mem-', '').slice(0, 8))) ||
-                  (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase()))
-                );
-                if (matched) {
-                  const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-                  if (idbUrl) {
-                    videoUrl = idbUrl;
-                    videoMediaId = matched.id;
-                    mediaType = 'video';
+              let mediaType: 'photo' | 'video' = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+
+              if (mediaType === 'video') {
+                if (videoMediaId) {
+                  try {
+                    const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+                    if (idbUrl) {
+                      videoUrl = idbUrl;
+                    }
+                  } catch {}
+                }
+                if (!videoUrl && storedVideos.length > 0) {
+                  const matched = storedVideos.find((v) =>
+                    (videoMediaId && v.id === videoMediaId) ||
+                    (l.id && v.id === l.id)
+                  );
+                  if (matched) {
+                    const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+                    if (idbUrl) {
+                      videoUrl = idbUrl;
+                      videoMediaId = matched.id;
+                    }
                   }
                 }
+                if (videoUrl && videoUrl.startsWith('data:video/')) {
+                  try {
+                    const blob = mediaStorage.dataUrlToBlob(videoUrl);
+                    videoUrl = URL.createObjectURL(blob);
+                  } catch {}
+                }
               }
-              if (videoUrl && videoUrl.startsWith('data:video/')) {
-                try {
-                  const blob = mediaStorage.dataUrlToBlob(videoUrl);
-                  videoUrl = URL.createObjectURL(blob);
-                  mediaType = 'video';
-                } catch {}
-              }
-              return { ...l, videoUrl, videoMediaId, mediaType };
+
+              return {
+                ...l,
+                videoUrl: mediaType === 'video' ? videoUrl : undefined,
+                videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
+                mediaType,
+              };
             })
         );
 
@@ -1177,42 +1221,56 @@ export const memoryArchiveService = {
       localVisible
         .filter((l) => !isExcludedMemory(l))
         .map(async (l) => {
+        const isSample = /^mem-[1-9]$/.test(l.id) || l.id.startsWith('seed-');
+        if (isSample || l.mediaType === 'photo') {
+          return {
+            ...l,
+            videoUrl: undefined,
+            videoMediaId: undefined,
+            mediaType: 'photo' as const,
+          };
+        }
+
         let videoUrl = l.videoUrl;
         let videoMediaId = l.videoMediaId;
-        let mediaType = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
-        if (videoMediaId) {
-          try {
-            const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
-            if (idbUrl) {
-              videoUrl = idbUrl;
-              mediaType = 'video';
-            }
-          } catch {}
-        }
-        if (!videoUrl && storedVideosFallback.length > 0) {
-          const matched = storedVideosFallback.find((v) =>
-            v.id === videoMediaId ||
-            v.id === l.id ||
-            (l.id && l.id.startsWith('mem-') && v.id.includes(l.id.replace('mem-', '').slice(0, 8))) ||
-            (l.title && v.name && v.name.toLowerCase().includes(l.title.toLowerCase()))
-          );
-          if (matched) {
-            const idbUrl = await mediaStorage.getMediaUrl(matched.id);
-            if (idbUrl) {
-              videoUrl = idbUrl;
-              videoMediaId = matched.id;
-              mediaType = 'video';
+        let mediaType: 'photo' | 'video' = l.mediaType || (videoMediaId || videoUrl ? 'video' : 'photo');
+
+        if (mediaType === 'video') {
+          if (videoMediaId) {
+            try {
+              const idbUrl = await mediaStorage.getMediaUrl(videoMediaId);
+              if (idbUrl) {
+                videoUrl = idbUrl;
+              }
+            } catch {}
+          }
+          if (!videoUrl && storedVideosFallback.length > 0) {
+            const matched = storedVideosFallback.find((v) =>
+              (videoMediaId && v.id === videoMediaId) ||
+              (l.id && v.id === l.id)
+            );
+            if (matched) {
+              const idbUrl = await mediaStorage.getMediaUrl(matched.id);
+              if (idbUrl) {
+                videoUrl = idbUrl;
+                videoMediaId = matched.id;
+              }
             }
           }
+          if (videoUrl && videoUrl.startsWith('data:video/')) {
+            try {
+              const blob = mediaStorage.dataUrlToBlob(videoUrl);
+              videoUrl = URL.createObjectURL(blob);
+            } catch {}
+          }
         }
-        if (videoUrl && videoUrl.startsWith('data:video/')) {
-          try {
-            const blob = mediaStorage.dataUrlToBlob(videoUrl);
-            videoUrl = URL.createObjectURL(blob);
-            mediaType = 'video';
-          } catch {}
-        }
-        return { ...l, videoUrl, videoMediaId, mediaType };
+
+        return {
+          ...l,
+          videoUrl: mediaType === 'video' ? videoUrl : undefined,
+          videoMediaId: mediaType === 'video' ? videoMediaId : undefined,
+          mediaType,
+        };
       })
     );
   },
